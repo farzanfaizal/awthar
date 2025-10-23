@@ -22,9 +22,9 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">For Customers</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/browse"><a className="hover:text-foreground">Browse Services</a></Link></li>
-              <li><Link href="/categories"><a className="hover:text-foreground">Categories</a></Link></li>
-              <li><Link href="/how-it-works"><a className="hover:text-foreground">How It Works</a></Link></li>
+              <li><Link href="/browse" className="hover:text-foreground">Browse Services</Link></li>
+              <li><Link href="/categories" className="hover:text-foreground">Categories</Link></li>
+              <li><Link href="/how-it-works" className="hover:text-foreground">How It Works</Link></li>
             </ul>
           </div>
 
@@ -32,9 +32,9 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">For Providers</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/api/login"><a className="hover:text-foreground">List Your Services</a></Link></li>
-              <li><Link href="/dashboard"><a className="hover:text-foreground">Provider Dashboard</a></Link></li>
-              <li><Link href="/pricing"><a className="hover:text-foreground">Pricing</a></Link></li>
+              <li><Link href="/api/login" className="hover:text-foreground">List Your Services</Link></li>
+              <li><Link href="/dashboard" className="hover:text-foreground">Provider Dashboard</Link></li>
+              <li><Link href="/pricing" className="hover:text-foreground">Pricing</Link></li>
             </ul>
           </div>
 
@@ -42,10 +42,10 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Company</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/about"><a className="hover:text-foreground">About Us</a></Link></li>
-              <li><Link href="/contact"><a className="hover:text-foreground">Contact</a></Link></li>
-              <li><Link href="/terms"><a className="hover:text-foreground">Terms of Service</a></Link></li>
-              <li><Link href="/privacy"><a className="hover:text-foreground">Privacy Policy</a></Link></li>
+              <li><Link href="/about" className="hover:text-foreground">About Us</Link></li>
+              <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
+              <li><Link href="/terms" className="hover:text-foreground">Terms of Service</Link></li>
+              <li><Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link></li>
             </ul>
           </div>
         </div>
