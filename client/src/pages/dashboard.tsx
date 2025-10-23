@@ -41,22 +41,28 @@ export default function Dashboard() {
   const { isAuthenticated, isLoading, isProvider } = useAuth();
   const [location] = useLocation();
 
-  if (isLoading) {
+  useEffect(() => {
+    // Redirect unauthenticated users to login
+    if (!isLoading && !isAuthenticated) {
+      window.location.href = "/api/login";
+    }
+  }, [isLoading, isAuthenticated]);
+
+  // Show loading during auth check or while redirecting
+  if (isLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" data-testid="dashboard-loading">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          <p className="text-sm text-muted-foreground">
+            {!isAuthenticated ? "Redirecting to login..." : "Loading..."}
+          </p>
         </div>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    window.location.href = "/api/login";
-    return null;
-  }
-
+  // Redirect non-providers to home
   if (!isProvider) {
     return <Redirect to="/" />;
   }
