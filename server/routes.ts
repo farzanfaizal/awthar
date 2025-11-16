@@ -37,11 +37,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Auth endpoints
-  app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
+  app.get("/api/auth/user", async (req: any, res) => {
     try {
       const userId = getUserId(req);
 
-      // In demo mode without auth, return null
+      // Return null if not authenticated (instead of 401)
       if (!userId) {
         return res.json(null);
       }
