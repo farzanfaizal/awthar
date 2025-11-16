@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: awthar
+    runtime: node
+    region: singapore
+    plan: free
+    branch: claude/awthar-initial-setup-014eQ1zR8knxQNvbeBCLCWmY
+    buildCommand: npm install && npm run build && npm run db:push
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+    autoDeploy: true
