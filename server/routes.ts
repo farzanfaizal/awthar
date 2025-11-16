@@ -11,13 +11,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup Replit Auth
   await setupAuth(app);
 
+  // Helper to safely get userId (works with and without auth)
+  const getUserId = (req: any): string | null => {
+    return req.user?.claims?.sub || null;
+  };
+
   // Middleware to require provider role
   const requireProvider = async (req: any, res: any, next: any) => {
-    const userId = req.user?.claims?.sub;
+    const userId = getUserId(req);
     if (!userId) {
+      // In demo mode without auth, skip provider check
+      if (!process.env.REPLIT_DOMAINS) {
+        console.log("⚠️  Provider check skipped - demo mode");
+        return next();
+      }
       return res.status(401).json({ message: "Unauthorized" });
     }
-    
+
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
     });
@@ -25,14 +35,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (user?.role !== "provider" && user?.role !== "both") {
       return res.status(403).json({ message: "Provider access required" });
     }
-    
+
     next();
   };
 
   // Auth endpoints
   app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
+
+      // In demo mode without auth, return null
+      if (!userId) {
+        return res.json(null);
+      }
+
       const user = await db.query.users.findFirst({
         where: eq(users.id, userId),
       });
@@ -143,7 +159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/services", isAuthenticated, requireProvider, async (req: any, res) => {
     try {
       // Get provider profile
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const providerProfile = await db.query.providerProfiles.findFirst({
         where: eq(providerProfiles.userId, userId),
       });
@@ -177,7 +193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Service not found" });
       }
 
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       if (service.provider.userId !== userId) {
         return res.status(403).json({ message: "Not authorized to update this service" });
       }
@@ -195,7 +211,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/services/:id", isAuthenticated, requireProvider, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const service = await db.query.services.findFirst({
         where: eq(services.id, req.params.id),
         with: {
@@ -247,7 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/providers", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       // Check if provider profile already exists
       const existing = await db.query.providerProfiles.findFirst({
         where: eq(providerProfiles.userId, userId),
@@ -277,7 +293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/providers/me/profile", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const provider = await db.query.providerProfiles.findFirst({
         where: eq(providerProfiles.userId, userId),
         with: {
@@ -316,7 +332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/reviews", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const validatedData = insertReviewSchema.parse({
         ...req.body,
         customerId: userId,
@@ -347,7 +363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Conversations
   app.get("/api/conversations", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const userConversations = await db.query.conversations.findMany({
         where: or(
           eq(conversations.customerId, userId),
@@ -377,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/conversations", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const validatedData = insertConversationSchema.parse({
         ...req.body,
         customerId: userId,
@@ -401,7 +417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Conversation not found" });
       }
 
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       if (conversation.customerId !== userId && conversation.providerId !== userId) {
         return res.status(403).json({ message: "Not authorized to view this conversation" });
       }

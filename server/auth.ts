@@ -10,9 +10,8 @@ import { db } from "./db";
 import { users, type UpsertUser } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
-if (!process.env.REPLIT_DOMAINS) {
-  throw new Error("Environment variable REPLIT_DOMAINS not provided");
-}
+// Check if Replit Auth is configured
+const isReplitAuthEnabled = !!process.env.REPLIT_DOMAINS;
 
 const getOidcConfig = memoize(
   async () => {
@@ -85,6 +84,26 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Skip Replit Auth setup if not configured (e.g., on Render)
+  if (!isReplitAuthEnabled) {
+    console.log("⚠️  Replit Auth not configured - running in demo mode without authentication");
+
+    // Provide mock auth endpoints
+    app.get("/api/login", (_req, res) => {
+      res.status(501).json({ message: "Authentication not configured" });
+    });
+
+    app.get("/api/callback", (_req, res) => {
+      res.status(501).json({ message: "Authentication not configured" });
+    });
+
+    app.get("/api/logout", (_req, res) => {
+      res.status(501).json({ message: "Authentication not configured" });
+    });
+
+    return;
+  }
+
   const config = await getOidcConfig();
 
   const verify: VerifyFunction = async (
@@ -140,6 +159,12 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // Skip authentication check if Replit Auth is not configured
+  if (!isReplitAuthEnabled) {
+    console.log("⚠️  Auth check skipped - demo mode");
+    return next();
+  }
+
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user.expires_at) {
