@@ -23,14 +23,13 @@ The code is ready on branch: `claude/awthar-initial-setup-014eQ1zR8knxQNvbeBCLCW
    Region: Singapore
    Branch: claude/awthar-initial-setup-014eQ1zR8knxQNvbeBCLCWmY
    Runtime: Node
-   Build Command: npm install && npm run build && npm run db:push
-   Start Command: npm start
+   Build Command: npm install --include=dev && npm run build && npm run db:push
+   Start Command: NODE_ENV=production npm start
    Instance Type: Free
    ```
 
 4. **Environment Variables** (click "Advanced"):
    ```
-   NODE_ENV = production
    DATABASE_URL = postgresql://neondb_owner:npg_2Xw1ESIlbfsW@ep-falling-math-a11wgsc6-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
    SESSION_SECRET = [Click Generate]
    ```

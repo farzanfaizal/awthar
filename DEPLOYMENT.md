@@ -29,8 +29,8 @@ postgresql://neondb_owner:npg_2Xw1ESIlbfsW@ep-falling-math-a11wgsc6-pooler.ap-so
    - **Region**: Singapore (or closest to your users)
    - **Branch**: `claude/awthar-initial-setup-014eQ1zR8knxQNvbeBCLCWmY`
    - **Runtime**: Node
-   - **Build Command**: `npm install && npm run build && npm run db:push`
-   - **Start Command**: `npm start`
+   - **Build Command**: `npm install --include=dev && npm run build && npm run db:push`
+   - **Start Command**: `NODE_ENV=production npm start`
    - **Instance Type**: Free
 
 3. **Set Environment Variables**
@@ -38,7 +38,6 @@ postgresql://neondb_owner:npg_2Xw1ESIlbfsW@ep-falling-math-a11wgsc6-pooler.ap-so
 
    | Key | Value |
    |-----|-------|
-   | `NODE_ENV` | `production` |
    | `DATABASE_URL` | `postgresql://neondb_owner:npg_2Xw1ESIlbfsW@ep-falling-math-a11wgsc6-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require` |
    | `SESSION_SECRET` | Click "Generate" to create a secure random value |
 
@@ -94,7 +93,7 @@ If you need to seed your database with initial categories or data:
 ### Build Fails
 - Check the build logs in Render dashboard
 - Ensure all dependencies are in `package.json`
-- Verify `NODE_ENV=production` is set
+- Make sure build command includes `--include=dev` to install dev dependencies
 
 ### Database Connection Issues
 - Verify `DATABASE_URL` is set correctly with `sslmode=require`
