@@ -9,6 +9,7 @@ import connectPg from "connect-pg-simple";
 import { db } from "./db";
 import { users, type UpsertUser } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { setupLocalAuth } from "./auth-local";
 
 // Check if Replit Auth is configured
 const isReplitAuthEnabled = !!process.env.REPLIT_DOMAINS;
@@ -84,23 +85,10 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Skip Replit Auth setup if not configured (e.g., on Render)
+  // Use Local Auth if Replit Auth is not configured (e.g., on Render)
   if (!isReplitAuthEnabled) {
-    console.log("⚠️  Replit Auth not configured - running in demo mode without authentication");
-
-    // Provide mock auth endpoints
-    app.get("/api/login", (_req, res) => {
-      res.status(501).json({ message: "Authentication not configured" });
-    });
-
-    app.get("/api/callback", (_req, res) => {
-      res.status(501).json({ message: "Authentication not configured" });
-    });
-
-    app.get("/api/logout", (_req, res) => {
-      res.status(501).json({ message: "Authentication not configured" });
-    });
-
+    console.log("✅ Using Local Authentication (email/password)");
+    setupLocalAuth(app);
     return;
   }
 
@@ -159,12 +147,15 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  // Skip authentication check if Replit Auth is not configured
+  // For Local Auth, simple check if user is authenticated
   if (!isReplitAuthEnabled) {
-    console.log("⚠️  Auth check skipped - demo mode");
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
     return next();
   }
 
+  // Replit Auth logic with token refresh
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user.expires_at) {

@@ -44,7 +44,7 @@ export default function Dashboard() {
   useEffect(() => {
     // Redirect unauthenticated users to login
     if (!isLoading && !isAuthenticated) {
-      window.location.href = "/api/login";
+      window.location.href = "/login";
     }
   }, [isLoading, isAuthenticated]);
 

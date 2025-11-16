@@ -277,7 +277,7 @@ export default function Landing() {
                 Browse Services
               </Button>
             </Link>
-            <Link href="/api/login">
+            <Link href="/signup">
               <Button size="lg" variant="outline" className="rounded-xl px-8 text-base font-semibold bg-white/10 hover:bg-white/20 border-white/40 text-white backdrop-blur-sm" data-testid="button-cta-provider">
                 Become a Provider
               </Button>

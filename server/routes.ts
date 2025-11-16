@@ -11,20 +11,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup Replit Auth
   await setupAuth(app);
 
-  // Helper to safely get userId (works with and without auth)
+  // Helper to safely get userId (works with both Replit Auth and Local Auth)
   const getUserId = (req: any): string | null => {
-    return req.user?.claims?.sub || null;
+    // For Local Auth: user ID is directly in req.user.id
+    // For Replit Auth: user ID is in req.user.claims.sub
+    return req.user?.id || req.user?.claims?.sub || null;
   };
 
   // Middleware to require provider role
   const requireProvider = async (req: any, res: any, next: any) => {
     const userId = getUserId(req);
     if (!userId) {
-      // In demo mode without auth, skip provider check
-      if (!process.env.REPLIT_DOMAINS) {
-        console.log("⚠️  Provider check skipped - demo mode");
-        return next();
-      }
       return res.status(401).json({ message: "Unauthorized" });
     }
 

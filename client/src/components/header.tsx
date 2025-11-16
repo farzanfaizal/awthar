@@ -1,12 +1,29 @@
 import { Link } from "wouter";
-import { Search, MapPin, Menu } from "lucide-react";
+import { Search, MapPin, Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Header() {
   const { isAuthenticated, user, isProvider } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -55,30 +72,53 @@ export function Header() {
                     </svg>
                   </Button>
                 </Link>
-                <Link href="/profile" asChild>
-                  <Button variant="ghost" size="icon" className="rounded-lg" data-testid="link-profile">
-                    {user?.profileImageUrl ? (
-                      <img
-                        src={user.profileImageUrl}
-                        alt={user.firstName || "Profile"}
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
-                        {user?.firstName?.[0] || user?.email?.[0] || "U"}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-lg" data-testid="link-profile">
+                      {user?.profileImageUrl ? (
+                        <img
+                          src={user.profileImageUrl}
+                          alt={user.firstName || "Profile"}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
+                          {user?.firstName?.[0] || user?.email?.[0] || "U"}
+                        </div>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {user?.firstName} {user?.lastName}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user?.email}
+                        </p>
                       </div>
-                    )}
-                  </Button>
-                </Link>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             ) : (
               <>
-                <Button variant="ghost" className="rounded-lg" onClick={() => window.location.href = "/api/login"} data-testid="button-login">
-                  Log In
-                </Button>
-                <Button variant="default" className="rounded-lg" onClick={() => window.location.href = "/api/login"} data-testid="button-signup">
-                  Sign Up
-                </Button>
+                <Link href="/login" asChild>
+                  <Button variant="ghost" className="rounded-lg" data-testid="button-login">
+                    Log In
+                  </Button>
+                </Link>
+                <Link href="/signup" asChild>
+                  <Button variant="default" className="rounded-lg" data-testid="button-signup">
+                    Sign Up
+                  </Button>
+                </Link>
               </>
             )}
             <ThemeToggle />
