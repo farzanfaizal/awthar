@@ -12,6 +12,7 @@ import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import BecomeProvider from "@/pages/become-provider";
+import AdminDashboard from "@/pages/admin/dashboard";
 
 function Router() {
   const { isLoading } = useAuth();
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/browse" component={Browse} />
       <Route path="/become-provider" component={BecomeProvider} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>
   );

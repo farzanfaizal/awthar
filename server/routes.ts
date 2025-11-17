@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, isAuthenticated } from "./auth";
 import { db } from "./db";
-import { users, providerProfiles, services, categories, bookings, reviews, conversations, messages } from "@shared/schema";
+import { users, providerProfiles, services, categories, bookings, reviews, conversations, messages, complaints } from "@shared/schema";
 import { eq, and, desc, sql, ilike, or, gte } from "drizzle-orm";
 import { insertServiceSchema, insertProviderProfileSchema, insertReviewSchema, insertMessageSchema, insertConversationSchema } from "@shared/schema";
 import { WebSocketServer, WebSocket } from "ws";
@@ -31,6 +31,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     if (user?.role !== "provider" && user?.role !== "both") {
       return res.status(403).json({ message: "Provider access required" });
+    }
+
+    next();
+  };
+
+  // Middleware to require admin role
+  const requireAdmin = async (req: any, res: any, next: any) => {
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+
+    if (user?.role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
     }
 
     next();
@@ -428,6 +446,335 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.json(conversationMessages);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ==================== ADMIN ENDPOINTS ====================
+
+  // Admin Dashboard - Statistics
+  app.get("/api/admin/dashboard", isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      // Get counts
+      const [userCountResult] = await db.select({ count: sql<number>`count(*)` }).from(users);
+      const [providerCountResult] = await db.select({ count: sql<number>`count(*)` }).from(providerProfiles);
+      const [serviceCountResult] = await db.select({ count: sql<number>`count(*)` }).from(services);
+      const [pendingProviderCountResult] = await db.select({ count: sql<number>`count(*)` }).from(providerProfiles).where(eq(providerProfiles.verificationStatus, "pending"));
+      const [pendingServiceCountResult] = await db.select({ count: sql<number>`count(*)` }).from(services).where(eq(services.status, "pending_review"));
+      const [complaintCountResult] = await db.select({ count: sql<number>`count(*)` }).from(complaints).where(eq(complaints.status, "pending"));
+
+      res.json({
+        totalUsers: Number(userCountResult.count),
+        totalProviders: Number(providerCountResult.count),
+        totalServices: Number(serviceCountResult.count),
+        pendingProviders: Number(pendingProviderCountResult.count),
+        pendingServices: Number(pendingServiceCountResult.count),
+        pendingComplaints: Number(complaintCountResult.count),
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin - List Providers with Filters
+  app.get("/api/admin/providers", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { status, limit = "50", offset = "0" } = req.query;
+
+      let query = db.query.providerProfiles.findMany({
+        with: {
+          user: true,
+        },
+        orderBy: [desc(providerProfiles.createdAt)],
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+      });
+
+      const allProviders = await query;
+
+      // Filter by status if provided
+      const filtered = status
+        ? allProviders.filter(p => p.verificationStatus === status)
+        : allProviders;
+
+      res.json(filtered);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin - Verify Provider
+  app.post("/api/admin/providers/:id/verify", isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const [updatedProvider] = await db
+        .update(providerProfiles)
+        .set({
+          verificationStatus: "verified",
+          updatedAt: new Date(),
+        })
+        .where(eq(providerProfiles.id, req.params.id))
+        .returning();
+
+      if (!updatedProvider) {
+        return res.status(404).json({ message: "Provider not found" });
+      }
+
+      res.json(updatedProvider);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin - Reject Provider
+  app.post("/api/admin/providers/:id/reject", isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const { reason } = req.body;
+
+      const [updatedProvider] = await db
+        .update(providerProfiles)
+        .set({
+          verificationStatus: "rejected",
+          updatedAt: new Date(),
+        })
+        .where(eq(providerProfiles.id, req.params.id))
+        .returning();
+
+      if (!updatedProvider) {
+        return res.status(404).json({ message: "Provider not found" });
+      }
+
+      // TODO: Send notification to provider with rejection reason
+
+      res.json(updatedProvider);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin - List Services with Filters
+  app.get("/api/admin/services", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { status, limit = "50", offset = "0" } = req.query;
+
+      let queryBuilder = db.query.services.findMany({
+        with: {
+          provider: {
+            with: {
+              user: true,
+            },
+          },
+          category: true,
+        },
+        orderBy: [desc(services.createdAt)],
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+      });
+
+      const allServices = await queryBuilder;
+
+      // Filter by status if provided
+      const filtered = status
+        ? allServices.filter(s => s.status === status)
+        : allServices;
+
+      res.json(filtered);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin - Approve Service
+  app.post("/api/admin/services/:id/approve", isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const [updatedService] = await db
+        .update(services)
+        .set({
+          status: "active",
+          updatedAt: new Date(),
+        })
+        .where(eq(services.id, req.params.id))
+        .returning();
+
+      if (!updatedService) {
+        return res.status(404).json({ message: "Service not found" });
+      }
+
+      res.json(updatedService);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin - Reject Service
+  app.post("/api/admin/services/:id/reject", isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const { reason } = req.body;
+
+      const [updatedService] = await db
+        .update(services)
+        .set({
+          status: "rejected",
+          updatedAt: new Date(),
+        })
+        .where(eq(services.id, req.params.id))
+        .returning();
+
+      if (!updatedService) {
+        return res.status(404).json({ message: "Service not found" });
+      }
+
+      // TODO: Send notification to provider with rejection reason
+
+      res.json(updatedService);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin - List Complaints
+  app.get("/api/admin/complaints", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { status, limit = "50", offset = "0" } = req.query;
+
+      let queryBuilder = db.query.complaints.findMany({
+        with: {
+          reporter: true,
+          reportedUser: true,
+          reportedService: true,
+        },
+        orderBy: [desc(complaints.createdAt)],
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+      });
+
+      const allComplaints = await queryBuilder;
+
+      // Filter by status if provided
+      const filtered = status
+        ? allComplaints.filter(c => c.status === status)
+        : allComplaints;
+
+      res.json(filtered);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin - Get Single Complaint
+  app.get("/api/admin/complaints/:id", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const complaint = await db.query.complaints.findFirst({
+        where: eq(complaints.id, req.params.id),
+        with: {
+          reporter: true,
+          reportedUser: true,
+          reportedService: {
+            with: {
+              provider: {
+                with: {
+                  user: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!complaint) {
+        return res.status(404).json({ message: "Complaint not found" });
+      }
+
+      res.json(complaint);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin - Update Complaint Status
+  app.post("/api/admin/complaints/:id/update-status", isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const { status, adminNotes } = req.body;
+
+      const updateData: any = {
+        status,
+        updatedAt: new Date(),
+      };
+
+      if (adminNotes) {
+        updateData.adminNotes = adminNotes;
+      }
+
+      if (status === "resolved" || status === "rejected") {
+        updateData.resolvedById = userId;
+        updateData.resolvedAt = new Date();
+      }
+
+      const [updatedComplaint] = await db
+        .update(complaints)
+        .set(updateData)
+        .where(eq(complaints.id, req.params.id))
+        .returning();
+
+      if (!updatedComplaint) {
+        return res.status(404).json({ message: "Complaint not found" });
+      }
+
+      res.json(updatedComplaint);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin - List All Users
+  app.get("/api/admin/users", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { role, limit = "50", offset = "0" } = req.query;
+
+      let queryBuilder = db.query.users.findMany({
+        orderBy: [desc(users.createdAt)],
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+      });
+
+      const allUsers = await queryBuilder;
+
+      // Filter by role if provided
+      const filtered = role
+        ? allUsers.filter(u => u.role === role)
+        : allUsers;
+
+      // Remove password from response
+      const safeUsers = filtered.map(({ password, ...user }) => user);
+
+      res.json(safeUsers);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin - Update User Role
+  app.post("/api/admin/users/:id/update-role", isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const { role } = req.body;
+
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          role,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, req.params.id))
+        .returning();
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Remove password from response
+      const { password, ...safeUser } = updatedUser;
+      res.json(safeUser);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function Header() {
-  const { isAuthenticated, user, isProvider } = useAuth();
+  const { isAuthenticated, user, isProvider, isAdmin } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -58,7 +58,13 @@ export function Header() {
           <div className="flex items-center gap-2">
             {isAuthenticated ? (
               <>
-                {isProvider ? (
+                {isAdmin ? (
+                  <Link href="/admin/dashboard" asChild>
+                    <Button variant="ghost" className="rounded-lg" data-testid="link-admin">
+                      Admin Panel
+                    </Button>
+                  </Link>
+                ) : isProvider ? (
                   <Link href="/dashboard" asChild>
                     <Button variant="ghost" className="rounded-lg" data-testid="link-dashboard">
                       Dashboard
