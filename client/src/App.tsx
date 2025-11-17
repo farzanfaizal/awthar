@@ -18,6 +18,7 @@ import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import BecomeProvider from "@/pages/become-provider";
 import AdminDashboard from "@/pages/admin/dashboard";
+import AdminProviders from "@/pages/admin/providers";
 
 function Router() {
   const { isLoading } = useAuth();
@@ -46,6 +47,7 @@ function Router() {
       <Route path="/dashboard/analytics" component={DashboardAnalytics} />
       <Route path="/dashboard/settings" component={DashboardSettings} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/admin/providers" component={AdminProviders} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>
