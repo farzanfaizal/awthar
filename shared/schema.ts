@@ -28,14 +28,16 @@ export const sessions = pgTable(
 );
 
 // Enums
-export const userRoleEnum = pgEnum("user_role", ["customer", "provider", "both"]);
+export const userRoleEnum = pgEnum("user_role", ["customer", "provider", "both", "admin"]);
 export const providerTypeEnum = pgEnum("provider_type", ["casual_tasker", "licensed_professional"]);
 export const verificationStatusEnum = pgEnum("verification_status", ["unverified", "pending", "verified", "rejected"]);
 export const pricingTypeEnum = pgEnum("pricing_type", ["fixed", "hourly", "custom"]);
 export const subscriptionTierEnum = pgEnum("subscription_tier", ["free", "pro", "premium"]);
-export const serviceStatusEnum = pgEnum("service_status", ["draft", "active", "paused", "deleted"]);
+export const serviceStatusEnum = pgEnum("service_status", ["draft", "active", "paused", "deleted", "pending_review", "rejected"]);
 export const bookingStatusEnum = pgEnum("booking_status", ["pending", "accepted", "in_progress", "completed", "cancelled"]);
 export const messageStatusEnum = pgEnum("message_status", ["sent", "delivered", "read"]);
+export const complaintStatusEnum = pgEnum("complaint_status", ["pending", "investigating", "resolved", "rejected"]);
+export const complaintTypeEnum = pgEnum("complaint_type", ["service_quality", "fraud", "inappropriate_content", "other"]);
 
 // Users table - Referenced from javascript_log_in_with_replit blueprint
 export const users = pgTable("users", {
@@ -190,6 +192,25 @@ export const messages = pgTable("messages", {
 }, (table) => [
   index("messages_conversation_idx").on(table.conversationId),
   index("messages_created_idx").on(table.createdAt),
+]);
+
+// Complaints/Reports
+export const complaints = pgTable("complaints", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reporterId: varchar("reporter_id").notNull().references(() => users.id),
+  reportedUserId: varchar("reported_user_id").references(() => users.id),
+  reportedServiceId: varchar("reported_service_id").references(() => services.id),
+  type: complaintTypeEnum("type").notNull(),
+  description: text("description").notNull(),
+  status: complaintStatusEnum("status").default("pending").notNull(),
+  adminNotes: text("admin_notes"),
+  resolvedById: varchar("resolved_by_id").references(() => users.id),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("complaints_reporter_idx").on(table.reporterId),
+  index("complaints_status_idx").on(table.status),
 ]);
 
 // Relations
@@ -350,6 +371,12 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   createdAt: true,
 });
 
+export const insertComplaintSchema = createInsertSchema(complaints).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -375,3 +402,6 @@ export type InsertConversation = z.infer<typeof insertConversationSchema>;
 
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+
+export type Complaint = typeof complaints.$inferSelect;
+export type InsertComplaint = z.infer<typeof insertComplaintSchema>;
