@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Browse from "@/pages/browse";
 import Dashboard from "@/pages/dashboard";
+import DashboardListings from "@/pages/dashboard/listings";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import BecomeProvider from "@/pages/become-provider";
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/signup" component={Signup} />
       <Route path="/browse" component={Browse} />
       <Route path="/become-provider" component={BecomeProvider} />
+      <Route path="/dashboard/listings" component={DashboardListings} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route component={NotFound} />

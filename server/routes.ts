@@ -106,22 +106,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Services endpoints
-  app.get("/api/services", async (req, res) => {
+  app.get("/api/services", async (req: any, res) => {
     try {
-      const { 
-        category, 
-        search, 
-        minPrice, 
-        maxPrice, 
+      const {
+        category,
+        search,
+        minPrice,
+        maxPrice,
         minRating,
         verifiedOnly,
         professionalOnly,
+        myServices,
         limit = "20",
         offset = "0",
       } = req.query;
 
+      // If myServices is requested, filter by current provider
+      let whereCondition = eq(services.status, "active");
+      if (myServices === "true") {
+        const userId = getUserId(req);
+        if (!userId) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        // Get provider profile for current user
+        const providerProfile = await db.query.providerProfiles.findFirst({
+          where: eq(providerProfiles.userId, userId),
+        });
+
+        if (!providerProfile) {
+          return res.json([]); // Return empty array if no provider profile
+        }
+
+        // Fetch all services for this provider, regardless of status
+        const providerServices = await db.query.services.findMany({
+          where: eq(services.providerId, providerProfile.id),
+          with: {
+            category: true,
+          },
+          orderBy: [desc(services.createdAt)],
+        });
+
+        return res.json(providerServices);
+      }
+
       let query = db.query.services.findMany({
-        where: eq(services.status, "active"),
+        where: whereCondition,
         with: {
           provider: {
             with: {
