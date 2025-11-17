@@ -262,7 +262,80 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Provider CTA Section */}
+      <section className="py-16 md:py-24 bg-gradient-to-br from-secondary/10 via-primary/10 to-secondary/10">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Are You a Service Provider?</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Join thousands of professionals growing their business on Awthar
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+            <Card className="rounded-xl border-2">
+              <CardContent className="p-6 text-center">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">Reach More Customers</h3>
+                <p className="text-sm text-muted-foreground">
+                  Access thousands of potential clients looking for your services
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-xl border-2">
+              <CardContent className="p-6 text-center">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Shield className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">Build Trust</h3>
+                <p className="text-sm text-muted-foreground">
+                  Get verified, collect reviews, and establish credibility
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-xl border-2">
+              <CardContent className="p-6 text-center">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Clock className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">Flexible Schedule</h3>
+                <p className="text-sm text-muted-foreground">
+                  Work on your terms and manage your availability
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-xl border-2">
+              <CardContent className="p-6 text-center">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <TrendingUp className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">Grow Your Business</h3>
+                <p className="text-sm text-muted-foreground">
+                  Track analytics and scale your operations
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-center">
+            <Link href="/become-provider">
+              <Button size="lg" className="rounded-xl px-8 text-base font-semibold" data-testid="button-become-provider-cta">
+                Start Earning Today
+              </Button>
+            </Link>
+            <p className="text-sm text-muted-foreground mt-4">
+              No subscription fees • Quick approval • Dedicated support
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Customer CTA Section */}
       <section className="py-16 md:py-24 bg-primary text-primary-foreground">
         <div className="max-w-4xl mx-auto px-4 md:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
@@ -278,8 +351,8 @@ export default function Landing() {
               </Button>
             </Link>
             <Link href="/signup">
-              <Button size="lg" variant="outline" className="rounded-xl px-8 text-base font-semibold bg-white/10 hover:bg-white/20 border-white/40 text-white backdrop-blur-sm" data-testid="button-cta-provider">
-                Become a Provider
+              <Button size="lg" variant="outline" className="rounded-xl px-8 text-base font-semibold bg-white/10 hover:bg-white/20 border-white/40 text-white backdrop-blur-sm" data-testid="button-cta-signup">
+                Sign Up Free
               </Button>
             </Link>
           </div>

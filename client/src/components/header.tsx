@@ -58,10 +58,16 @@ export function Header() {
           <div className="flex items-center gap-2">
             {isAuthenticated ? (
               <>
-                {isProvider && (
+                {isProvider ? (
                   <Link href="/dashboard" asChild>
                     <Button variant="ghost" className="rounded-lg" data-testid="link-dashboard">
                       Dashboard
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/become-provider" asChild>
+                    <Button variant="outline" className="rounded-lg hidden sm:inline-flex" data-testid="button-become-provider">
+                      Become a Provider
                     </Button>
                   </Link>
                 )}
@@ -109,6 +115,11 @@ export function Header() {
               </>
             ) : (
               <>
+                <Link href="/become-provider" asChild>
+                  <Button variant="outline" className="rounded-lg hidden lg:inline-flex" data-testid="button-become-provider-guest">
+                    Become a Provider
+                  </Button>
+                </Link>
                 <Link href="/login" asChild>
                   <Button variant="ghost" className="rounded-lg" data-testid="button-login">
                     Log In
