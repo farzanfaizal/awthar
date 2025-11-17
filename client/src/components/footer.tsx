@@ -32,7 +32,7 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">For Providers</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/api/login" className="hover:text-foreground">List Your Services</Link></li>
+              <li><Link href="/become-provider" className="hover:text-foreground">List Your Services</Link></li>
               <li><Link href="/dashboard" className="hover:text-foreground">Provider Dashboard</Link></li>
               <li><Link href="/pricing" className="hover:text-foreground">Pricing</Link></li>
             </ul>

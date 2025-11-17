@@ -306,6 +306,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all services for a specific provider
+  app.get("/api/providers/:id/services", async (req, res) => {
+    try {
+      const providerServices = await db.query.services.findMany({
+        where: eq(services.providerId, req.params.id),
+        with: {
+          category: true,
+        },
+        orderBy: [desc(services.createdAt)],
+      });
+
+      res.json(providerServices);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.post("/api/providers", isAuthenticated, async (req: any, res) => {
     try {
       const userId = getUserId(req);
