@@ -55,14 +55,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // @ts-ignore - express-session types are tricky with raw http request
     sessionParser(request, {} as any, () => {
-      // Mock auth for local dev
-      if (process.env.NODE_ENV === "development" && process.env.REPL_ID === "local-dev") {
+      // Mock auth for local dev or non-Replit deployments
+      const isReplitAuth = !!process.env.REPL_ID && process.env.REPL_ID !== "local-dev";
+      if (process.env.NODE_ENV === "development" || !isReplitAuth) {
         if (!request.session) request.session = {} as any;
         if (!request.session.passport) request.session.passport = {} as any;
-        if (!request.session.passport.user) {
+        if (request.session.passport && !request.session.passport.user) {
           request.session.passport.user = {
             claims: {
-              sub: "local-dev-user-id",
+              sub: "dev-user-id",
             }
           } as any;
         }

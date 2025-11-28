@@ -11,7 +11,10 @@
       "Bash(taskkill //F //PID 17392)",
       "Bash(npm run db:push:*)",
       "Bash(cat:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run check:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
