@@ -100,12 +100,16 @@ export function Header() {
               </>
             ) : (
               <>
-                <Button variant="ghost" className="rounded-lg" onClick={() => window.location.href = "/api/login"} data-testid="button-login">
-                  Log In
-                </Button>
-                <Button variant="default" className="rounded-lg" onClick={() => window.location.href = "/api/login"} data-testid="button-signup">
-                  Sign Up
-                </Button>
+                <Link href="/login" asChild>
+                  <Button variant="ghost" className="rounded-lg" data-testid="button-login">
+                    Log In
+                  </Button>
+                </Link>
+                <Link href="/signup" asChild>
+                  <Button variant="default" className="rounded-lg" data-testid="button-signup">
+                    Sign Up
+                  </Button>
+                </Link>
               </>
             )}
             <ThemeToggle />

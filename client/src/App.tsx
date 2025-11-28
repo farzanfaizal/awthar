@@ -19,6 +19,8 @@ import MessagesPage from "@/pages/messages";
 import AnalyticsPage from "@/pages/dashboard/analytics";
 import SettingsPage from "@/pages/dashboard/settings";
 import ProfilePage from "@/pages/profile";
+import LoginPage from "@/pages/login";
+import SignupPage from "@/pages/signup";
 
 function Router() {
   const { isLoading } = useAuth();
@@ -26,12 +28,14 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
+      <Route path="/login" component={LoginPage} />
+      <Route path="/signup" component={SignupPage} />
       <Route path="/browse" component={Browse} />
       <Route path="/bookings" component={MyBookingsPage} />
       <Route path="/messages" component={MessagesPage} />
       <Route path="/profile" component={ProfilePage} />
       <Route path="/dashboard/messages" component={MessagesPage} />
-      
+
       {/* Dashboard Routes */}
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/dashboard/listings" component={ListingsPage} />
