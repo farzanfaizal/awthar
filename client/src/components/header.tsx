@@ -1,12 +1,27 @@
-import { Link } from "wouter";
-import { Search, MapPin, Menu } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { Search, MapPin, Menu, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
 
 export function Header() {
   const { isAuthenticated, user, isProvider } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [, setLocation] = useLocation();
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      setLocation(`/browse?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -14,9 +29,7 @@ export function Header() {
         <div className="flex h-16 md:h-20 items-center justify-between gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 hover-elevate active-elevate-2 rounded-lg px-3 py-2 -ml-3" data-testid="link-home">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground font-bold text-lg">
-              A
-            </div>
+            <img src="/awthar.png" alt="Awthar Logo" className="w-8 h-8 object-contain" />
             <span className="font-bold text-xl hidden sm:inline">Awthar</span>
           </Link>
 
@@ -29,9 +42,18 @@ export function Header() {
                 placeholder="Search for services..."
                 className="pl-12 pr-4 h-12 rounded-xl border-2 focus-visible:ring-2 focus-visible:ring-primary/20"
                 data-testid="input-search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
               />
             </div>
-            <Button variant="default" size="lg" className="h-12 px-6 rounded-xl" data-testid="button-search">
+            <Button 
+              variant="default" 
+              size="lg" 
+              className="h-12 px-6 rounded-xl" 
+              data-testid="button-search"
+              onClick={handleSearch}
+            >
               <Search className="h-5 w-5 mr-2" />
               Search
             </Button>
@@ -43,13 +65,18 @@ export function Header() {
               <>
                 {isProvider && (
                   <Link href="/dashboard" asChild>
-                    <Button variant="ghost" className="rounded-lg" data-testid="link-dashboard">
+                    <Button variant="ghost" className="rounded-lg hidden md:flex" data-testid="link-dashboard">
                       Dashboard
                     </Button>
                   </Link>
                 )}
+                <Link href="/bookings" asChild>
+                  <Button variant="ghost" size="icon" className="rounded-lg" title="My Bookings">
+                    <Calendar className="h-5 w-5" />
+                  </Button>
+                </Link>
                 <Link href="/messages" asChild>
-                  <Button variant="ghost" size="icon" className="rounded-lg" data-testid="link-messages">
+                  <Button variant="ghost" size="icon" className="rounded-lg" data-testid="link-messages" title="Messages">
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                     </svg>
@@ -94,6 +121,9 @@ export function Header() {
               placeholder="Search for services..."
               className="pl-12 pr-4 h-12 rounded-xl border-2"
               data-testid="input-search-mobile"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
             />
           </div>
         </div>

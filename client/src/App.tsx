@@ -9,26 +9,39 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Browse from "@/pages/browse";
 import Dashboard from "@/pages/dashboard";
+import ListingsPage from "@/pages/dashboard/listings";
+import BookingsPage from "@/pages/dashboard/bookings";
+import CreateListingPage from "@/pages/dashboard/create-listing";
+import ServiceDetail from "@/pages/service-detail";
+import ProviderProfile from "@/pages/provider-profile";
+import MyBookingsPage from "@/pages/my-bookings";
+import MessagesPage from "@/pages/messages";
+import AnalyticsPage from "@/pages/dashboard/analytics";
+import SettingsPage from "@/pages/dashboard/settings";
+import ProfilePage from "@/pages/profile";
 
 function Router() {
   const { isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
+//...
   return (
     <Switch>
       <Route path="/" component={Landing} />
       <Route path="/browse" component={Browse} />
+      <Route path="/bookings" component={MyBookingsPage} />
+      <Route path="/messages" component={MessagesPage} />
+      <Route path="/profile" component={ProfilePage} />
+      <Route path="/dashboard/messages" component={MessagesPage} />
+      
+      {/* Dashboard Routes */}
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/dashboard/listings" component={ListingsPage} />
+      <Route path="/dashboard/listings/new" component={CreateListingPage} />
+      <Route path="/dashboard/bookings" component={BookingsPage} />
+      <Route path="/dashboard/analytics" component={AnalyticsPage} />
+      <Route path="/dashboard/settings" component={SettingsPage} />
+
+      <Route path="/service/:id" component={ServiceDetail} />
+      <Route path="/provider/:id" component={ProviderProfile} />
       <Route component={NotFound} />
     </Switch>
   );

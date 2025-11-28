@@ -140,6 +140,20 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // Bypass authentication in local development
+  if (process.env.NODE_ENV === "development" && process.env.REPL_ID === "local-dev") {
+    // Create a mock user for local development
+    (req as any).user = {
+      claims: {
+        sub: "local-dev-user-id",
+        email: "dev@localhost",
+        first_name: "Dev",
+        last_name: "User",
+      }
+    };
+    return next();
+  }
+
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user.expires_at) {

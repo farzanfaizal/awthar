@@ -1,5 +1,14 @@
 import { db } from "./db";
-import { categories } from "@shared/schema";
+import { 
+  categories, 
+  users, 
+  providerProfiles, 
+  services, 
+  bookings, 
+  reviews,
+  conversations,
+  messages
+} from "@shared/schema";
 
 const seedCategories = [
   {
@@ -76,29 +85,307 @@ const seedCategories = [
   },
 ];
 
-export async function seedDatabase() {
+async function seedDatabase() {
   try {
-    console.log("Seeding database...");
+    console.log("🌱 Starting database seed...");
 
-    // Check if categories already exist
-    const existingCategories = await db.query.categories.findMany();
-    
-    if (existingCategories.length === 0) {
-      console.log("Inserting categories...");
-      await db.insert(categories).values(seedCategories);
-      console.log(`✓ Inserted ${seedCategories.length} categories`);
-    } else {
-      console.log("✓ Categories already exist, skipping seed");
+    // Clear existing data (in reverse order of dependencies)
+    console.log("🗑️  Cleaning up old data...");
+    await db.delete(messages);
+    await db.delete(conversations);
+    await db.delete(reviews);
+    await db.delete(bookings);
+    await db.delete(services);
+    await db.delete(providerProfiles);
+    await db.delete(users);
+    await db.delete(categories);
+    console.log("📂 Seeding categories...");
+    const categoryMap = new Map();
+    for (const cat of seedCategories) {
+      // We can just insert since we clear tables, but if re-running without clear, unique constraint on slug handles it?
+      // For simplicity with delete-all strategy:
+      const [inserted] = await db.insert(categories).values(cat).returning();
+      categoryMap.set(cat.slug, inserted.id);
     }
 
-    console.log("Database seeding completed!");
+    // 2. Users & Profiles
+    console.log("👥 Seeding users and providers...");
+
+    // Helper to create user/provider pair
+    const createProvider = async (email: string, firstName: string, lastName: string, profileData: any) => {
+      const [user] = await db.insert(users).values({
+        email,
+        firstName,
+        lastName,
+        role: "provider",
+        profileImageUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${firstName}${lastName}`,
+      }).returning();
+
+      const [profile] = await db.insert(providerProfiles).values({
+        userId: user.id,
+        ...profileData,
+      }).returning();
+      
+      return { user, profile };
+    };
+
+    // Provider 1: Ahmed (Plumber)
+    const ahmed = await createProvider("ahmed.m@example.com", "Ahmed", "Al-Mansouri", {
+      providerType: "licensed_professional",
+      companyName: "Al-Mansouri Technical Services",
+      bio: "Certified plumber and electrician with 15 years of experience in Dubai. Specialized in emergency repairs and home maintenance.",
+      phone: "+971500000001",
+      verificationStatus: "verified",
+      rating: "4.9",
+      ratingSum: 245,
+      totalReviews: 50,
+      completedJobs: 120,
+      responseTime: 60,
+      serviceAreas: { emirates: ["Dubai", "Sharjah"] },
+      isPremium: true,
+    });
+
+    // Provider 2: Sara (Cleaner)
+    const sara = await createProvider("sara.cleaning@example.com", "Sara", "Trading", {
+      providerType: "licensed_professional",
+      companyName: "Sara Cleaning Solutions LLC",
+      bio: "Professional cleaning services for homes and offices. We use eco-friendly products and have a team of trained staff.",
+      phone: "+971500000002",
+      verificationStatus: "verified",
+      rating: "4.8",
+      ratingSum: 432,
+      totalReviews: 90,
+      completedJobs: 200,
+      responseTime: 120,
+      serviceAreas: { emirates: ["Dubai", "Abu Dhabi"] },
+      isPremium: true,
+    });
+
+    // Provider 3: Mohammed (IT)
+    const mo = await createProvider("mo.tech@example.com", "Mohammed", "Ali", {
+      providerType: "casual_tasker",
+      companyName: "Mo Tech Support",
+      bio: "IT expert offering computer repair, network setup, and software troubleshooting. Fast and reliable service.",
+      phone: "+971500000003",
+      verificationStatus: "verified",
+      rating: "5.0",
+      ratingSum: 100,
+      totalReviews: 20,
+      completedJobs: 45,
+      responseTime: 30,
+      serviceAreas: { emirates: ["Abu Dhabi"] },
+      isPremium: false,
+    });
+
+    // Provider 4: John (Mover)
+    const john = await createProvider("john.movers@example.com", "John", "Doe", {
+      providerType: "licensed_professional",
+      companyName: "Quick Move LLC",
+      bio: "Reliable moving and packing services for residential and commercial relocations. We handle your belongings with care.",
+      phone: "+971500000004",
+      verificationStatus: "verified",
+      rating: "4.7",
+      ratingSum: 141,
+      totalReviews: 30,
+      completedJobs: 80,
+      responseTime: 45,
+      serviceAreas: { emirates: ["Dubai", "Sharjah", "Ajman"] },
+      isPremium: false,
+    });
+
+    // Provider 5: Fatima (Tutor)
+    const fatima = await createProvider("fatima.tutor@example.com", "Fatima", "Al-Zahra", {
+      providerType: "casual_tasker",
+      companyName: "Fatima Private Tutoring",
+      bio: "Experienced math and science tutor for high school students. Bilingual (Arabic/English).",
+      phone: "+971500000005",
+      verificationStatus: "verified",
+      rating: "4.9",
+      ratingSum: 98,
+      totalReviews: 20,
+      completedJobs: 60,
+      responseTime: 90,
+      serviceAreas: { emirates: ["Dubai"] },
+      isPremium: false,
+    });
+
+    // Customer 1
+    const [customer1] = await db.insert(users).values({
+      email: "customer1@example.com",
+      firstName: "Khalid",
+      lastName: "Hassan",
+      role: "customer",
+      profileImageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Khalid",
+    }).returning();
+
+    // 3. Services
+    console.log("🛠️  Seeding services...");
+    
+    // Ahmed's Services
+    const [plumbingService] = await db.insert(services).values({
+      providerId: ahmed.profile.id,
+      categoryId: categoryMap.get("home-repair"),
+      titleEn: "Emergency Plumbing Service",
+      titleAr: "خدمة سباكة طارئة",
+      descriptionEn: "24/7 emergency plumbing service for leaks, clogs, and pipe bursts. Fast response time guaranteed.",
+      descriptionAr: "خدمة سباكة طارئة على مدار 24 ساعة للتسريبات والانسدادات.",
+      pricingType: "fixed",
+      priceMin: "150.00",
+      currency: "AED",
+      status: "active",
+      location: { emirate: "Dubai", area: "Downtown" },
+      isFeatured: true,
+    }).returning();
+
+    await db.insert(services).values({
+      providerId: ahmed.profile.id,
+      categoryId: categoryMap.get("home-repair"),
+      titleEn: "Electrical Maintenance",
+      titleAr: "صيانة كهربائية",
+      descriptionEn: "Full home electrical checkup and maintenance. Fixture installation and wiring repair.",
+      descriptionAr: "فحص وصيانة كهربائية كاملة للمنزل.",
+      pricingType: "hourly",
+      priceMin: "200.00",
+      currency: "AED",
+      status: "active",
+      location: { emirate: "Dubai", area: "Marina" },
+    });
+
+    // Sara's Services
+    const [cleaningService] = await db.insert(services).values({
+      providerId: sara.profile.id,
+      categoryId: categoryMap.get("cleaning"),
+      titleEn: "Deep Home Cleaning",
+      titleAr: "تنظيف منزلي عميق",
+      descriptionEn: "Comprehensive deep cleaning for apartments and villas. Includes kitchen and bathroom sanitization.",
+      descriptionAr: "تنظيف عميق شامل للشقق والفلل.",
+      pricingType: "hourly",
+      priceMin: "35.00",
+      currency: "AED",
+      status: "active",
+      location: { emirate: "Dubai", area: "Jumeirah" },
+      isFeatured: true,
+    }).returning();
+
+    // Mo's Services
+    await db.insert(services).values({
+      providerId: mo.profile.id,
+      categoryId: categoryMap.get("technology"),
+      titleEn: "Home Network Setup",
+      titleAr: "إعداد الشبكة المنزلية",
+      descriptionEn: "Professional WiFi and network installation for seamless connectivity.",
+      descriptionAr: "تركيب واي فاي وشبكة احترافية.",
+      pricingType: "fixed",
+      priceMin: "250.00",
+      currency: "AED",
+      status: "active",
+      location: { emirate: "Abu Dhabi", area: "Reem Island" },
+      isFeatured: true,
+    });
+
+    // John's Services
+    await db.insert(services).values({
+      providerId: john.profile.id,
+      categoryId: categoryMap.get("moving"),
+      titleEn: "Apartment Moving Service",
+      titleAr: "خدمة نقل الشقق",
+      descriptionEn: "Full service moving for studios and 1-bedroom apartments. Includes packing materials.",
+      descriptionAr: "خدمة نقل شاملة للاستوديوهات والشقق بغرفة واحدة.",
+      pricingType: "fixed",
+      priceMin: "1200.00",
+      currency: "AED",
+      status: "active",
+      location: { emirate: "Dubai", area: "Deira" },
+      isFeatured: false,
+    });
+
+    // Fatima's Services
+    await db.insert(services).values({
+      providerId: fatima.profile.id,
+      categoryId: categoryMap.get("education"),
+      titleEn: "Math Tutoring (High School)",
+      titleAr: "دروس خصوصية في الرياضيات",
+      descriptionEn: "Private math tutoring for grades 9-12. Exam preparation and homework help.",
+      descriptionAr: "دروس خصوصية في الرياضيات للصفوف 9-12.",
+      pricingType: "hourly",
+      priceMin: "150.00",
+      currency: "AED",
+      status: "active",
+      location: { emirate: "Dubai", area: "Al Barsha" },
+      isFeatured: true,
+    });
+
+    // 4. Bookings & Reviews
+    console.log("📅 Seeding bookings and reviews...");
+
+    // Completed booking for Ahmed
+    const [booking1] = await db.insert(bookings).values({
+      serviceId: plumbingService.id,
+      customerId: customer1.id,
+      providerId: ahmed.profile.id,
+      status: "completed",
+      scheduledDate: new Date(Date.now() - 86400000 * 5), // 5 days ago
+      completedDate: new Date(Date.now() - 86400000 * 4),
+      agreedPrice: "150.00",
+    }).returning();
+
+    await db.insert(reviews).values({
+      bookingId: booking1.id,
+      providerId: ahmed.profile.id,
+      customerId: customer1.id,
+      rating: 5,
+      comment: "Excellent service! Ahmed arrived on time and fixed the leak very quickly. Highly recommended.",
+      isVerified: true,
+    });
+
+    // Completed booking for Sara
+    const [booking2] = await db.insert(bookings).values({
+      serviceId: cleaningService.id,
+      customerId: customer1.id,
+      providerId: sara.profile.id,
+      status: "completed",
+      scheduledDate: new Date(Date.now() - 86400000 * 10),
+      completedDate: new Date(Date.now() - 86400000 * 10),
+      agreedPrice: "140.00",
+    }).returning();
+
+    await db.insert(reviews).values({
+      bookingId: booking2.id,
+      providerId: sara.profile.id,
+      customerId: customer1.id,
+      rating: 4,
+      comment: "Great cleaning, very thorough. Just arrived a bit late.",
+      isVerified: true,
+    });
+
+    // Upcoming booking
+    await db.insert(bookings).values({
+      serviceId: cleaningService.id,
+      customerId: customer1.id,
+      providerId: sara.profile.id,
+      status: "accepted",
+      scheduledDate: new Date(Date.now() + 86400000 * 2), // 2 days from now
+      agreedPrice: "140.00",
+    });
+
+    // Pending booking
+    await db.insert(bookings).values({
+      serviceId: plumbingService.id,
+      customerId: customer1.id,
+      providerId: ahmed.profile.id,
+      status: "pending",
+      scheduledDate: new Date(Date.now() + 86400000 * 5),
+      agreedPrice: "200.00",
+    });
+
+    console.log("✅ Database seeding completed successfully!");
   } catch (error) {
-    console.error("Error seeding database:", error);
+    console.error("❌ Error seeding database:", error);
     throw error;
   }
 }
 
-// Auto-run seed
+// Run the seed
 seedDatabase()
   .then(() => process.exit(0))
   .catch((error) => {

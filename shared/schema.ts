@@ -61,6 +61,7 @@ export const providerProfiles = pgTable("provider_profiles", {
   verificationDocuments: text("verification_documents").array(),
   subscriptionTier: subscriptionTierEnum("subscription_tier").default("free").notNull(),
   rating: decimal("rating", { precision: 3, scale: 2 }).default("0"),
+  ratingSum: integer("rating_sum").default(0).notNull(),
   totalReviews: integer("total_reviews").default(0).notNull(),
   completedJobs: integer("completed_jobs").default(0).notNull(),
   responseTime: integer("response_time"),
@@ -311,6 +312,7 @@ export const insertProviderProfileSchema = createInsertSchema(providerProfiles).
   createdAt: true,
   updatedAt: true,
   rating: true,
+  ratingSum: true,
   totalReviews: true,
   completedJobs: true,
 });

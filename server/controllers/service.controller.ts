@@ -1,0 +1,128 @@
+import { Router } from "express";
+import { isAuthenticated } from "../auth";
+import { ServiceService } from "../services/service.service";
+import { ProviderService } from "../services/provider.service";
+
+const router = Router();
+
+// Categories
+router.get("/categories", async (_req, res) => {
+  try {
+    const categories = await ServiceService.getCategories();
+    res.json(categories);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.get("/categories/:slug", async (req, res) => {
+  try {
+    const category = await ServiceService.getCategoryBySlug(req.params.slug);
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+    res.json(category);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Services Search
+router.get("/services", async (req, res) => {
+  try {
+    // Filter by provider if requested and authenticated
+    let providerId: string | undefined;
+    
+    if (req.query.role === 'provider') {
+      if (req.isAuthenticated()) {
+        const userId = (req.user as any).claims.sub;
+        const provider = await ProviderService.getProviderByUserId(userId);
+        if (provider) {
+          providerId = provider.id;
+        }
+      }
+    }
+
+    const services = await ServiceService.searchServices({
+      category: req.query.category as string,
+      search: req.query.search as string,
+      minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
+      maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
+      providerId: providerId,
+      limit: req.query.limit ? parseInt(req.query.limit as string) : 20,
+      offset: req.query.offset ? parseInt(req.query.offset as string) : 0,
+    });
+    res.json(services);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get Service
+router.get("/services/:id", async (req, res) => {
+  try {
+    const service = await ServiceService.getServiceById(req.params.id);
+    if (!service) {
+      return res.status(404).json({ message: "Service not found" });
+    }
+    await ServiceService.incrementViewCount(req.params.id);
+    res.json(service);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Create Service (Provider only)
+router.post("/services", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const provider = await ProviderService.getProviderByUserId(userId);
+
+    if (!provider) {
+      return res.status(400).json({ message: "Provider profile required" });
+    }
+
+    const newService = await ServiceService.createService(provider.id, req.body);
+    res.status(201).json(newService);
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Update Service
+router.patch("/services/:id", isAuthenticated, async (req: any, res) => {
+  try {
+    const service = await ServiceService.getServiceById(req.params.id);
+    if (!service) return res.status(404).json({ message: "Service not found" });
+
+    const userId = req.user.claims.sub;
+    if (service.provider.userId !== userId) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    const updated = await ServiceService.updateService(req.params.id, req.body);
+    res.json(updated);
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Delete Service
+router.delete("/services/:id", isAuthenticated, async (req: any, res) => {
+  try {
+    const service = await ServiceService.getServiceById(req.params.id);
+    if (!service) return res.status(404).json({ message: "Service not found" });
+
+    const userId = req.user.claims.sub;
+    if (service.provider.userId !== userId) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    await ServiceService.deleteService(req.params.id);
+    res.json({ message: "Service deleted" });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+export const serviceController = router;

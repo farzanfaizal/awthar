@@ -1,58 +1,51 @@
 import { Link } from "wouter";
-import { Search, Star, Shield, MessageSquare, MapPin, Clock, Wrench, Home as HomeIcon, Briefcase, Car, Users, TrendingUp } from "lucide-react";
+import { Search, Star, Shield, MessageSquare, MapPin, Clock, Wrench, Home as HomeIcon, Briefcase, Car, Users, TrendingUp, Laptop, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const categories = [
-  { icon: Wrench, name: "Home Repair", count: "1,200+ services", slug: "home-repair" },
-  { icon: HomeIcon, name: "Cleaning", count: "850+ services", slug: "cleaning" },
-  { icon: Briefcase, name: "Professional Services", count: "2,100+ services", slug: "professional" },
-  { icon: Car, name: "Moving & Transport", count: "540+ services", slug: "moving" },
-  { icon: Users, name: "Personal Services", count: "980+ services", slug: "personal" },
-  { icon: TrendingUp, name: "Business Consulting", count: "1,500+ services", slug: "consulting" },
-];
+// Map icon names to Lucide components
+const iconMap: Record<string, any> = {
+  "Wrench": Wrench,
+  "Home": HomeIcon,
+  "Briefcase": Briefcase,
+  "Car": Car,
+  "Users": Users,
+  "TrendingUp": TrendingUp,
+  "Laptop": Laptop,
+  "GraduationCap": GraduationCap,
+};
 
-const featuredProviders = [
-  {
-    id: "1",
-    name: "Ahmed Al-Mansouri",
-    specialty: "Plumbing & Electrical",
-    rating: 4.9,
-    reviews: 127,
-    completedJobs: 250,
-    responseTime: "< 1 hour",
-    isVerified: true,
-    isProfessional: true,
-  },
-  {
-    id: "2",
-    name: "Sara Trading LLC",
-    specialty: "Home Cleaning",
-    rating: 4.8,
-    reviews: 89,
-    completedJobs: 180,
-    responseTime: "< 2 hours",
-    isVerified: true,
-    isProfessional: true,
-  },
-  {
-    id: "3",
-    name: "Mohammed Tech Solutions",
-    specialty: "IT Support",
-    rating: 5.0,
-    reviews: 56,
-    completedJobs: 95,
-    responseTime: "< 30 min",
-    isVerified: true,
-    isProfessional: false,
-  },
-];
+const IconComponent = ({ name, className }: { name: string; className?: string }) => {
+  const Icon = iconMap[name] || Wrench;
+  return <Icon className={className} />;
+};
 
 export default function Landing() {
+  const { data: categories, isLoading: isLoadingCategories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const res = await fetch("/api/categories");
+      if (!res.ok) throw new Error("Failed to fetch categories");
+      return res.json();
+    },
+  });
+
+  const { data: services, isLoading: isLoadingServices } = useQuery({
+    queryKey: ["featured-services"],
+    queryFn: async () => {
+      // Fetching services to display as "Featured" - filtering for featured could be a query param later
+      const res = await fetch("/api/services?limit=3"); 
+      if (!res.ok) throw new Error("Failed to fetch services");
+      return res.json();
+    },
+  });
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -126,21 +119,30 @@ export default function Landing() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
-            {categories.map((category) => (
-              <Link key={category.slug} href={`/category/${category.slug}`}>
-                <Card className="hover-elevate active-elevate-2 cursor-pointer transition-all border-2 rounded-xl h-full" data-testid={`card-category-${category.slug}`}>
-                  <CardContent className="p-6 flex flex-col items-center text-center gap-4">
-                    <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <category.icon className="w-8 h-8 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-1">{category.name}</h3>
-                      <p className="text-xs text-muted-foreground">{category.count}</p>
-                    </div>
-                  </CardContent>
+            {isLoadingCategories ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <Card key={i} className="h-40 border-2 rounded-xl p-6 flex flex-col items-center justify-center gap-4">
+                  <Skeleton className="h-12 w-12 rounded-xl" />
+                  <Skeleton className="h-4 w-24" />
                 </Card>
-              </Link>
-            ))}
+              ))
+            ) : (
+              categories?.map((category: any) => (
+                <Link key={category.slug} href={`/category/${category.slug}`}>
+                  <Card className="hover-elevate active-elevate-2 cursor-pointer transition-all border-2 rounded-xl h-full" data-testid={`card-category-${category.slug}`}>
+                    <CardContent className="p-6 flex flex-col items-center text-center gap-4">
+                      <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <IconComponent name={category.iconName} className="w-8 h-8 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-1">{category.nameEn}</h3>
+                        <p className="text-xs text-muted-foreground">{category.descriptionEn || "Explore services"}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))
+            )}
           </div>
 
           <div className="text-center mt-8">
@@ -158,7 +160,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-12">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-2">Featured Providers</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-2">Featured Professionals</h2>
               <p className="text-lg text-muted-foreground">Top-rated professionals in your area</p>
             </div>
             <Link href="/browse">
@@ -169,51 +171,83 @@ export default function Landing() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {featuredProviders.map((provider) => (
-              <Link key={provider.id} href={`/provider/${provider.id}`}>
-                <Card className="hover-elevate active-elevate-2 cursor-pointer transition-all border-2 rounded-xl h-full" data-testid={`card-provider-${provider.id}`}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center font-bold text-xl text-primary flex-shrink-0">
-                        {provider.name.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start gap-2 mb-1">
-                          <h3 className="font-semibold text-lg truncate">{provider.name}</h3>
-                          {provider.isProfessional && (
-                            <Shield className="w-5 h-5 text-success flex-shrink-0" data-testid={`badge-verified-${provider.id}`} />
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">{provider.specialty}</p>
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 fill-warning text-warning" />
-                            <span className="font-semibold text-sm">{provider.rating}</span>
-                          </div>
-                          <span className="text-xs text-muted-foreground">({provider.reviews} reviews)</span>
-                        </div>
-                      </div>
+            {isLoadingServices ? (
+               Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i} className="h-64 border-2 rounded-xl p-6">
+                  <div className="flex gap-4 mb-4">
+                    <Skeleton className="h-16 w-16 rounded-full" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <div className="text-muted-foreground mb-1">Completed Jobs</div>
-                        <div className="font-semibold">{provider.completedJobs}</div>
-                      </div>
-                      <div>
-                        <div className="text-muted-foreground mb-1">Response Time</div>
-                        <div className="font-semibold">{provider.responseTime}</div>
-                      </div>
-                    </div>
-
-                    <Button className="w-full mt-6 rounded-lg" data-testid={`button-contact-${provider.id}`}>
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      Contact Provider
-                    </Button>
-                  </CardContent>
+                  </div>
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-full mb-6" />
+                  <Skeleton className="h-10 w-full rounded-lg" />
                 </Card>
-              </Link>
-            ))}
+              ))
+            ) : (
+              services?.map((service: any) => {
+                const provider = service.provider;
+                const user = provider?.user;
+                
+                if (!provider || !user) return null;
+
+                return (
+                  <Link key={service.id} href={`/service/${service.id}`}>
+                    <Card className="hover-elevate active-elevate-2 cursor-pointer transition-all border-2 rounded-xl h-full" data-testid={`card-service-${service.id}`}>
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4 mb-4">
+                          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center font-bold text-xl text-primary flex-shrink-0 overflow-hidden">
+                             {user.profileImageUrl ? (
+                                <img src={user.profileImageUrl} alt={provider.companyName} className="w-full h-full object-cover" />
+                             ) : (
+                                <span>{provider.companyName ? provider.companyName.substring(0, 2).toUpperCase() : "PR"}</span>
+                             )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start gap-2 mb-1">
+                              <h3 className="font-semibold text-lg truncate">{provider.companyName || `${user.firstName} ${user.lastName}`}</h3>
+                              {provider.verificationStatus === 'verified' && (
+                                <Shield className="w-5 h-5 text-success flex-shrink-0" data-testid={`badge-verified-${provider.id}`} />
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2 truncate">{service.titleEn}</p>
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
+                                <Star className="w-4 h-4 fill-warning text-warning" />
+                                <span className="font-semibold text-sm">{provider.rating || "New"}</span>
+                              </div>
+                              <span className="text-xs text-muted-foreground">({provider.totalReviews} reviews)</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <div className="text-muted-foreground mb-1">Completed Jobs</div>
+                            <div className="font-semibold">{provider.completedJobs}</div>
+                          </div>
+                          <div>
+                            <div className="text-muted-foreground mb-1">Price</div>
+                            <div className="font-semibold">
+                              {service.pricingType === 'fixed' ? 
+                                `AED ${service.priceMin}` : 
+                                `AED ${service.priceMin}/hr`}
+                            </div>
+                          </div>
+                        </div>
+
+                        <Button className="w-full mt-6 rounded-lg" data-testid={`button-view-service-${service.id}`}>
+                          <MessageSquare className="w-4 h-4 mr-2" />
+                          View Service
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })
+            )}
           </div>
         </div>
       </section>

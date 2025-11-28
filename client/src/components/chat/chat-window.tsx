@@ -1,0 +1,137 @@
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Conversation, Message, User, ProviderProfile } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Send, Paperclip, Loader2 } from "lucide-react";
+import { MessageBubble } from "./message-bubble";
+import { useWebSocket } from "@/hooks/useWebSocket";
+import { ImageUpload } from "@/components/image-upload";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+interface ChatWindowProps {
+  conversationId: string;
+  currentUserId: string;
+  recipientName: string;
+}
+
+export function ChatWindow({ conversationId, currentUserId, recipientName }: ChatWindowProps) {
+  const [message, setMessage] = useState("");
+  const [attachments, setAttachments] = useState<string[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const { ws, sendMessage } = useWebSocket();
+  const queryClient = useQueryClient();
+
+  const { data: messages, isLoading } = useQuery<(Message & { sender: User })[]>({
+    queryKey: [`/api/conversations/${conversationId}/messages`],
+    queryFn: () => apiRequest("GET", `/api/conversations/${conversationId}/messages`).then(res => res.json()),
+    refetchInterval: 5000, // Poll as backup for WS
+  });
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  // Listen for real-time messages
+  useEffect(() => {
+    if (!ws) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "message" && data.message.conversationId === conversationId) {
+        // Optimistically update or invalidate query
+        queryClient.setQueryData(
+          [`/api/conversations/${conversationId}/messages`],
+          (old: any[]) => [...(old || []), data.message]
+        );
+      }
+    };
+
+    ws.addEventListener("message", handleMessage);
+    return () => ws.removeEventListener("message", handleMessage);
+  }, [ws, conversationId, queryClient]);
+
+  const handleSend = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if ((!message.trim() && attachments.length === 0)) return;
+
+    const payload = {
+      type: "message",
+      conversationId,
+      content: message,
+      attachments
+    };
+
+    // Send via WS
+    sendMessage(payload);
+
+    // Clear input immediately
+    setMessage("");
+    setAttachments([]);
+  };
+
+  if (isLoading) {
+    return <div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>;
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="p-4 border-b flex items-center justify-between bg-background/95 backdrop-blur">
+        <h3 className="font-semibold">{recipientName}</h3>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 bg-muted/30" ref={scrollRef}>
+        {messages?.map((msg) => (
+          <MessageBubble
+            key={msg.id}
+            message={msg}
+            isOwn={msg.senderId === currentUserId}
+            sender={msg.sender}
+          />
+        ))}
+      </div>
+
+      <div className="p-4 border-t bg-background">
+        {attachments.length > 0 && (
+          <div className="flex gap-2 mb-2 overflow-x-auto pb-2">
+            {attachments.map((url, i) => (
+              <div key={i} className="relative w-16 h-16 flex-shrink-0">
+                <img src={url} className="w-full h-full object-cover rounded-lg border" />
+              </div>
+            ))}
+          </div>
+        )}
+        
+        <form onSubmit={handleSend} className="flex gap-2 items-center">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" type="button">
+                <Paperclip className="w-5 h-5 text-muted-foreground" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="start">
+              <div className="p-4">
+                <h4 className="font-medium mb-2">Attach Images</h4>
+                <ImageUpload value={attachments} onChange={setAttachments} maxFiles={3} />
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <Input
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Type a message..."
+            className="flex-1"
+          />
+          <Button type="submit" size="icon" disabled={!message.trim() && attachments.length === 0}>
+            <Send className="w-4 h-4" />
+          </Button>
+        </form>
+      </div>
+    </div>
+  );
+}
