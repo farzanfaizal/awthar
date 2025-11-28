@@ -1,17 +1,28 @@
 // Referenced from javascript_log_in_with_replit blueprint
 import * as client from "openid-client";
 import { Strategy, type VerifyFunction } from "openid-client/passport";
+import { Strategy as LocalStrategy } from "passport-local";
 import passport from "passport";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
+import bcrypt from "bcryptjs";
 import { db } from "./db";
 import { users, type UpsertUser } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 // Check if we're using Replit authentication
 const isReplitAuth = !!process.env.REPL_ID && process.env.REPL_ID !== "local-dev";
+
+// Password utilities
+export async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, 10);
+}
+
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(password, hash);
+}
 
 const getOidcConfig = memoize(
   async () => {
@@ -143,72 +154,177 @@ export async function setupAuth(app: Express) {
       });
     });
   } else {
-    // For non-Replit deployments, provide basic session setup
-    passport.serializeUser((user: Express.User, cb) => cb(null, user));
-    passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+    // For non-Replit deployments, use Local Strategy (email/password)
+    passport.use(new LocalStrategy(
+      {
+        usernameField: 'email',
+        passwordField: 'password'
+      },
+      async (email, password, done) => {
+        try {
+          const user = await db.query.users.findFirst({
+            where: eq(users.email, email)
+          });
 
-    // Placeholder endpoints for non-Replit auth
-    app.get("/api/login", (req, res) => {
-      res.status(501).json({
-        message: "Authentication not configured for this environment. Please set up auth provider."
-      });
+          if (!user) {
+            return done(null, false, { message: 'Invalid email or password' });
+          }
+
+          if (!user.password) {
+            return done(null, false, { message: 'Please use social login for this account' });
+          }
+
+          const isValid = await verifyPassword(password, user.password);
+          if (!isValid) {
+            return done(null, false, { message: 'Invalid email or password' });
+          }
+
+          // Don't include password in session
+          const { password: _, ...userWithoutPassword } = user;
+          return done(null, userWithoutPassword);
+        } catch (error) {
+          return done(error);
+        }
+      }
+    ));
+
+    passport.serializeUser((user: any, cb) => cb(null, user.id));
+    passport.deserializeUser(async (id: string, cb) => {
+      try {
+        const user = await db.query.users.findFirst({
+          where: eq(users.id, id)
+        });
+        if (!user) {
+          return cb(new Error('User not found'));
+        }
+        const { password: _, ...userWithoutPassword } = user;
+        cb(null, userWithoutPassword);
+      } catch (error) {
+        cb(error);
+      }
+    });
+
+    // Signup endpoint
+    app.post("/api/signup", async (req, res) => {
+      try {
+        const { email, password, firstName, lastName } = req.body;
+
+        if (!email || !password) {
+          return res.status(400).json({ message: "Email and password are required" });
+        }
+
+        // Check if user already exists
+        const existingUser = await db.query.users.findFirst({
+          where: eq(users.email, email)
+        });
+
+        if (existingUser) {
+          return res.status(400).json({ message: "Email already registered" });
+        }
+
+        // Hash password
+        const hashedPassword = await hashPassword(password);
+
+        // Create user
+        const [newUser] = await db.insert(users).values({
+          email,
+          password: hashedPassword,
+          firstName: firstName || null,
+          lastName: lastName || null,
+        }).returning();
+
+        // Log them in
+        const { password: _, ...userWithoutPassword } = newUser;
+        req.login(userWithoutPassword, (err) => {
+          if (err) {
+            return res.status(500).json({ message: "Error logging in after signup" });
+          }
+          res.status(201).json(userWithoutPassword);
+        });
+      } catch (error: any) {
+        res.status(500).json({ message: error.message });
+      }
+    });
+
+    // Login endpoint
+    app.post("/api/login", (req, res, next) => {
+      passport.authenticate('local', (err: any, user: any, info: any) => {
+        if (err) {
+          return res.status(500).json({ message: err.message });
+        }
+        if (!user) {
+          return res.status(401).json({ message: info?.message || 'Authentication failed' });
+        }
+        req.login(user, (err) => {
+          if (err) {
+            return res.status(500).json({ message: err.message });
+          }
+          res.json(user);
+        });
+      })(req, res, next);
     });
 
     app.get("/api/callback", (req, res) => {
       res.status(501).json({
-        message: "Authentication not configured for this environment."
+        message: "OAuth callback not configured. Use /api/login for email/password authentication."
       });
     });
 
-    app.get("/api/logout", (req, res) => {
-      req.logout(() => {
-        res.redirect("/");
+    app.post("/api/logout", (req, res) => {
+      req.logout((err) => {
+        if (err) {
+          return res.status(500).json({ message: "Error logging out" });
+        }
+        res.json({ message: "Logged out successfully" });
       });
     });
   }
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  // Bypass authentication in local development or when Replit auth is not configured
-  if (process.env.NODE_ENV === "development" || !isReplitAuth) {
-    // Create a mock user for development or non-Replit deployments
-    if (!(req as any).user) {
-      (req as any).user = {
-        claims: {
-          sub: "dev-user-id",
-          email: "dev@localhost",
-          first_name: "Dev",
-          last_name: "User",
-        }
-      };
-    }
-    return next();
+  // Check if user is authenticated via passport
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user.expires_at) {
-    return res.status(401).json({ message: "Unauthorized" });
+  // For Replit auth, check token expiration and refresh if needed
+  if (isReplitAuth && user.expires_at) {
+    const now = Math.floor(Date.now() / 1000);
+    if (now > user.expires_at) {
+      const refreshToken = user.refresh_token;
+      if (!refreshToken) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      try {
+        const config = await getOidcConfig();
+        const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
+        updateUserSession(user, tokenResponse);
+      } catch (error) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+    }
   }
 
-  const now = Math.floor(Date.now() / 1000);
-  if (now <= user.expires_at) {
-    return next();
-  }
-
-  const refreshToken = user.refresh_token;
-  if (!refreshToken) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-
-  try {
-    const config = await getOidcConfig();
-    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
-    return next();
-  } catch (error) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
+  // For local auth, user is already authenticated via session
+  return next();
 };
+
+// Helper function to get user ID from request (works for both Replit and Local auth)
+export function getUserId(req: any): string {
+  const user = req.user;
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+  // Replit auth stores user in claims.sub
+  if (user.claims?.sub) {
+    return user.claims.sub;
+  }
+  // Local auth stores user directly
+  if (user.id) {
+    return user.id;
+  }
+  throw new Error("Unable to determine user ID");
+}

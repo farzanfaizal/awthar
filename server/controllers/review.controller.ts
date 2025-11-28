@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { isAuthenticated } from "../auth";
+import { isAuthenticated, getUserId } from "../auth";
 import { ReviewService } from "../services/review.service";
 
 const router = Router();
@@ -15,7 +15,7 @@ router.get("/reviews/provider/:providerId", async (req, res) => {
 
 router.post("/reviews", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.user.claims.sub;
+    const userId = getUserId(req);
     const newReview = await ReviewService.createReview(userId, req.body);
     res.status(201).json(newReview);
   } catch (error: any) {

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { isAuthenticated } from "../auth";
+import { isAuthenticated, getUserId } from "../auth";
 import { UserService } from "../services/user.service";
 import { ProviderService } from "../services/provider.service";
 
@@ -8,18 +8,11 @@ const router = Router();
 // Get current user
 router.get("/user", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.user.claims.sub;
-    let user = await UserService.getUserById(userId);
+    const userId = getUserId(req);
+    const user = await UserService.getUserById(userId);
 
-    // Create dev user if it doesn't exist (for local development)
-    if (!user && process.env.NODE_ENV === "development" && userId === "local-dev-user-id") {
-      user = await UserService.createUser({
-        id: userId,
-        email: "dev@localhost",
-        firstName: "Dev",
-        lastName: "User",
-        role: "customer",
-      });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
     res.json(user);
@@ -44,8 +37,8 @@ router.get("/providers/:id", async (req, res) => {
 // Create provider profile
 router.post("/providers", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.user.claims.sub;
-    
+    const userId = getUserId(req);
+
     // Check if exists
     const existing = await ProviderService.getProviderByUserId(userId);
     if (existing) {
@@ -64,7 +57,7 @@ router.post("/providers", isAuthenticated, async (req: any, res) => {
 // Get my provider profile
 router.get("/providers/me/profile", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.user.claims.sub;
+    const userId = getUserId(req);
     const provider = await ProviderService.getProviderByUserId(userId);
 
     if (!provider) {

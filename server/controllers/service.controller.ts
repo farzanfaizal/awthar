@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { isAuthenticated } from "../auth";
+import { isAuthenticated, getUserId } from "../auth";
 import { ServiceService } from "../services/service.service";
 import { ProviderService } from "../services/provider.service";
 
@@ -35,7 +35,7 @@ router.get("/services", async (req, res) => {
     
     if (req.query.role === 'provider') {
       if (req.isAuthenticated()) {
-        const userId = (req.user as any).claims.sub;
+        const userId = getUserId(req);
         const provider = await ProviderService.getProviderByUserId(userId);
         if (provider) {
           providerId = provider.id;
@@ -75,7 +75,7 @@ router.get("/services/:id", async (req, res) => {
 // Create Service (Provider only)
 router.post("/services", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.user.claims.sub;
+    const userId = getUserId(req);
     const provider = await ProviderService.getProviderByUserId(userId);
 
     if (!provider) {
@@ -95,7 +95,7 @@ router.patch("/services/:id", isAuthenticated, async (req: any, res) => {
     const service = await ServiceService.getServiceById(req.params.id);
     if (!service) return res.status(404).json({ message: "Service not found" });
 
-    const userId = req.user.claims.sub;
+    const userId = getUserId(req);
     if (service.provider.userId !== userId) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -113,7 +113,7 @@ router.delete("/services/:id", isAuthenticated, async (req: any, res) => {
     const service = await ServiceService.getServiceById(req.params.id);
     if (!service) return res.status(404).json({ message: "Service not found" });
 
-    const userId = req.user.claims.sub;
+    const userId = getUserId(req);
     if (service.provider.userId !== userId) {
       return res.status(403).json({ message: "Unauthorized" });
     }

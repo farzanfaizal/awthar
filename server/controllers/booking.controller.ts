@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { BookingService } from "../services/booking.service";
-import { isAuthenticated } from "../auth";
+import { isAuthenticated, getUserId } from "../auth";
 import { z } from "zod";
 
 const router = Router();
@@ -17,7 +17,7 @@ router.post("/", isAuthenticated, async (req, res) => {
     });
 
     const validatedData = createBookingSchema.parse(req.body);
-    const userId = (req.user as any).claims.sub;
+    const userId = getUserId(req);
 
     const booking = await BookingService.createBooking({
       serviceId: validatedData.serviceId,
@@ -39,7 +39,7 @@ router.post("/", isAuthenticated, async (req, res) => {
 // Get bookings (for logged-in user)
 router.get("/", isAuthenticated, async (req, res) => {
   try {
-    const userId = (req.user as any).claims.sub;
+    const userId = getUserId(req);
     const { role, status, limit, offset } = req.query;
 
     if (role !== 'customer' && role !== 'provider') {
@@ -63,7 +63,7 @@ router.get("/", isAuthenticated, async (req, res) => {
 // Get booking details
 router.get("/:id", isAuthenticated, async (req, res) => {
   try {
-    const userId = (req.user as any).claims.sub;
+    const userId = getUserId(req);
     const bookingId = req.params.id;
 
     const booking = await BookingService.getBookingById(bookingId);
@@ -91,7 +91,7 @@ router.get("/:id", isAuthenticated, async (req, res) => {
 // Update booking status
 router.patch("/:id/status", isAuthenticated, async (req, res) => {
   try {
-    const userId = (req.user as any).claims.sub;
+    const userId = getUserId(req);
     const bookingId = req.params.id;
     const { status } = req.body;
 

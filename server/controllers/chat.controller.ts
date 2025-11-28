@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { isAuthenticated } from "../auth";
+import { isAuthenticated, getUserId } from "../auth";
 import { ChatService } from "../services/chat.service";
 
 const router = Router();
 
 router.get("/conversations", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.user.claims.sub;
+    const userId = getUserId(req);
     const conversations = await ChatService.getUserConversations(userId);
     res.json(conversations);
   } catch (error: any) {
@@ -16,7 +16,7 @@ router.get("/conversations", isAuthenticated, async (req: any, res) => {
 
 router.post("/conversations", isAuthenticated, async (req: any, res) => {
   try {
-    const userId = req.user.claims.sub;
+    const userId = getUserId(req);
     const conversation = await ChatService.createConversation(userId, req.body);
     res.status(201).json(conversation);
   } catch (error: any) {
@@ -31,7 +31,7 @@ router.get("/messages/:conversationId", isAuthenticated, async (req: any, res) =
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    const userId = req.user.claims.sub;
+    const userId = getUserId(req);
     if (conversation.customerId !== userId && conversation.providerId !== userId) {
       return res.status(403).json({ message: "Unauthorized" });
     }
