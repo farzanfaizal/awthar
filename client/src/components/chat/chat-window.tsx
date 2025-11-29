@@ -55,23 +55,55 @@ export function ChatWindow({ conversationId, currentUserId, recipientName }: Cha
     return () => ws.removeEventListener("message", handleMessage);
   }, [ws, conversationId, queryClient]);
 
+  const sendMessageMutation = useMutation({
+    mutationFn: async (data: { conversationId: string; content: string; attachments: string[] }) => {
+      const res = await apiRequest("POST", "/api/messages", data);
+      if (!res.ok) {
+        throw new Error("Failed to send message");
+      }
+      return res.json();
+    },
+    onSuccess: (newMsg) => {
+      // Add message to local state
+      queryClient.setQueryData(
+        [`/api/conversations/${conversationId}/messages`],
+        (old: any[]) => [...(old || []), newMsg]
+      );
+    },
+  });
+
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if ((!message.trim() && attachments.length === 0)) return;
 
-    const payload = {
-      type: "message",
+    const messageData = {
       conversationId,
       content: message,
       attachments
     };
 
-    // Send via WS
-    sendMessage(payload);
-
-    // Clear input immediately
+    // Clear input immediately for better UX
+    const currentMessage = message;
+    const currentAttachments = [...attachments];
     setMessage("");
     setAttachments([]);
+
+    // Try WebSocket first, fall back to REST API
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      sendMessage({
+        type: "message",
+        ...messageData
+      });
+    } else {
+      // Fallback to REST API
+      try {
+        await sendMessageMutation.mutateAsync(messageData);
+      } catch (error) {
+        // Restore message on error
+        setMessage(currentMessage);
+        setAttachments(currentAttachments);
+      }
+    }
   };
 
   if (isLoading) {

@@ -82,7 +82,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   wss.on("connection", (ws: WebSocket, req: any) => {
-    const userId = req.session.passport.user.claims.sub;
+    // Get user ID (works for both Replit and local auth)
+    const user = req.session?.passport?.user;
+    let userId: string;
+
+    if (user?.claims?.sub) {
+      // Replit auth
+      userId = user.claims.sub;
+    } else if (user?.id) {
+      // Local auth
+      userId = user.id;
+    } else {
+      ws.send(JSON.stringify({ type: "error", message: "Authentication required" }));
+      ws.close();
+      return;
+    }
 
     // Register client
     if (!clients.has(userId)) {
