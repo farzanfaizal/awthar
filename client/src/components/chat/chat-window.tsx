@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Conversation, Message, User, ProviderProfile } from "@shared/schema";
+import { Message, User } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,9 @@ export function ChatWindow({ conversationId, currentUserId, recipientName }: Cha
   const { data: messages, isLoading } = useQuery<(Message & { sender: User })[]>({
     queryKey: [`/api/conversations/${conversationId}/messages`],
     queryFn: () => apiRequest("GET", `/api/conversations/${conversationId}/messages`).then(res => res.json()),
-    refetchInterval: 5000, // Poll as backup for WS
+    // No polling - rely on WebSocket for real-time updates
+    refetchOnWindowFocus: false,
+    staleTime: Infinity, // Don't refetch unless explicitly invalidated
   });
 
   // Scroll to bottom on new messages

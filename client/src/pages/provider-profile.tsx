@@ -21,20 +21,13 @@ export default function ProviderProfilePage() {
   const { toast } = useToast();
 
   const { data: provider, isLoading: isLoadingProvider } = useQuery<ProviderWithUser>({
-    queryKey: [`/api/providers/${id}`],
+    queryKey: [`/api/auth/providers/${id}`],
     enabled: !!id,
-    // Note: We don't have a direct GET /api/providers/:id yet that returns enriched data
-    // We might need to add it or use existing endpoints. 
-    // For now, let's assume we might need to create it or fetch via query.
-    // Let's try to fetch via a new endpoint we'll create or mock.
-    // Actually, let's rely on the service.controller or similar if it exists?
-    // The roadmap said "Backend API endpoint" exists for Provider Profile but I should verify.
-    // Checking server/routes.ts ... we don't have a dedicated public provider endpoint enriched with user data exposed directly.
-    // However, we can add it quickly or use what we have.
-    // Let's add a quick endpoint in provider.service logic if needed.
     queryFn: async () => {
-      // Temporary: We will fetch from a new endpoint we will create next.
-      const res = await apiRequest("GET", `/api/providers/${id}`);
+      const res = await apiRequest("GET", `/api/auth/providers/${id}`);
+      if (!res.ok) {
+        throw new Error("Provider not found");
+      }
       return res.json();
     }
   });
@@ -42,8 +35,10 @@ export default function ProviderProfilePage() {
   const { data: services, isLoading: isLoadingServices } = useQuery<Service[]>({
     queryKey: [`/api/services`, { providerId: id }],
     enabled: !!id,
-    queryFn: () => apiRequest("GET", `/api/services?providerId=${id}&role=provider`).then(res => res.json()) 
-    // Reusing the search endpoint which supports providerId filtering now
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/services?providerId=${id}`);
+      return res.json();
+    }
   });
 
   if (isLoadingProvider || !provider) {

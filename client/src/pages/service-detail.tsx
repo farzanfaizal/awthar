@@ -1,5 +1,5 @@
-import { useRoute, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useRoute, Link, useLocation } from "wouter";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { ImageGallery } from "@/components/image-gallery";
 import { ProviderCard } from "@/components/provider-card";
 import { BookingForm } from "@/components/booking-form";
@@ -18,6 +18,9 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Star, Eye, MessageCircle, MapPin, Share2, Flag, Heart } from "lucide-react";
 import { Service, ProviderProfile, User, Category } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 type ServiceWithRelations = Service & {
   provider: ProviderProfile & { user: User };
@@ -27,11 +30,54 @@ type ServiceWithRelations = Service & {
 export default function ServiceDetailPage() {
   const [, params] = useRoute("/service/:id");
   const id = params?.id;
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
 
   const { data: service, isLoading } = useQuery<ServiceWithRelations>({
     queryKey: [`/api/services/${id}`],
     enabled: !!id,
   });
+
+  const createConversationMutation = useMutation({
+    mutationFn: async (data: { providerId: string; serviceId: string }) => {
+      const res = await apiRequest("POST", "/api/conversations", data);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+      return res.json();
+    },
+    onSuccess: (conversation) => {
+      setLocation(`/messages?conversationId=${conversation.id}`);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to start conversation",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleMessageProvider = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to message the provider.",
+        variant: "destructive",
+      });
+      setLocation("/login");
+      return;
+    }
+
+    if (!service) return;
+
+    createConversationMutation.mutate({
+      providerId: service.provider.userId,
+      serviceId: service.id,
+    });
+  };
 
   if (isLoading) {
     return (
@@ -209,8 +255,19 @@ export default function ServiceDetailPage() {
           <div className="sticky top-24 space-y-4">
             <ProviderCard provider={service.provider} />
 
+            {/* Message Provider Button */}
+            <Button
+              onClick={handleMessageProvider}
+              disabled={createConversationMutation.isPending}
+              className="w-full"
+              variant="outline"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              {createConversationMutation.isPending ? "Starting conversation..." : "Message Provider"}
+            </Button>
+
             {/* Booking Form */}
-            <Card>
+            <Card className="mt-4">
               <CardHeader>
                 <CardTitle>Book This Service</CardTitle>
               </CardHeader>
