@@ -4,7 +4,7 @@ import { Message, User } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Paperclip, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, Loader2 } from "lucide-react";
 import { MessageBubble } from "./message-bubble";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { ImageUpload } from "@/components/image-upload";
@@ -14,16 +14,17 @@ interface ChatWindowProps {
   conversationId: string;
   currentUserId: string;
   recipientName: string;
+  onBack?: () => void;
 }
 
-export function ChatWindow({ conversationId, currentUserId, recipientName }: ChatWindowProps) {
+export function ChatWindow({ conversationId, currentUserId, recipientName, onBack }: ChatWindowProps) {
   const [message, setMessage] = useState("");
   const [attachments, setAttachments] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { ws, sendMessage } = useWebSocket();
   const queryClient = useQueryClient();
 
-  const { data: messages, isLoading } = useQuery<(Message & { sender: User })[]>({
+  const { data: messages, isLoading } = useQuery<(Message & { sender: User })[]> ({
     queryKey: [`/api/messages/${conversationId}`],
     queryFn: () => apiRequest("GET", `/api/messages/${conversationId}`).then(res => res.json()),
     // No polling - rely on WebSocket for real-time updates
@@ -114,11 +115,17 @@ export function ChatWindow({ conversationId, currentUserId, recipientName }: Cha
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b flex items-center justify-between bg-background/95 backdrop-blur">
-        <h3 className="font-semibold">{recipientName}</h3>
+      <div className="p-4 border-b flex items-center gap-3 bg-background/95 backdrop-blur">
+        {onBack && (
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={onBack}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        )}
+        <h3 className="font-semibold flex-1">{recipientName}</h3>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 bg-muted/30" ref={scrollRef}>
+
         {messages?.map((msg) => (
           <MessageBubble
             key={msg.id}

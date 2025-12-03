@@ -8,6 +8,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Loader2, MessageSquare } from "lucide-react";
 import { Conversation, User, ProviderProfile } from "@shared/schema";
+import { cn } from "@/lib/utils";
 
 type ConversationWithRelations = Conversation & {
   customer: User;
@@ -49,9 +50,12 @@ export default function MessagesPage() {
     <div className="h-screen flex flex-col">
       <Header />
       
-      <div className="flex-1 flex overflow-hidden container mx-auto max-w-6xl my-4 border rounded-xl shadow-sm bg-background">
+      <div className="flex-1 flex overflow-hidden container mx-auto max-w-6xl my-0 md:my-4 border-0 md:border md:rounded-xl shadow-sm bg-background">
         {/* Sidebar - Conversation List */}
-        <div className="w-80 border-r flex flex-col bg-muted/10">
+        <div className={cn(
+          "w-full md:w-80 border-r flex-col bg-muted/10",
+          activeConversationId ? "hidden md:flex" : "flex"
+        )}>
           <div className="p-4 border-b">
             <h2 className="font-semibold flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
@@ -69,12 +73,16 @@ export default function MessagesPage() {
         </div>
 
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col">
+        <div className={cn(
+          "flex-1 flex-col",
+          !activeConversationId ? "hidden md:flex" : "flex"
+        )}>
           {activeConversationId && activeConversation ? (
             <ChatWindow
               conversationId={activeConversationId}
               currentUserId={user.id}
               recipientName={getRecipientName(activeConversation)}
+              onBack={() => setActiveConversationId(undefined)}
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground bg-muted/5">

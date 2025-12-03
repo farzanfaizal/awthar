@@ -21,6 +21,7 @@ import SettingsPage from "@/pages/dashboard/settings";
 import ProfilePage from "@/pages/profile";
 import LoginPage from "@/pages/login";
 import SignupPage from "@/pages/signup";
+import BecomeProviderPage from "@/pages/become-provider";
 import { AppModeProvider, useAppMode } from "@/context/app-mode-context";
 import { useEffect } from "react";
 
@@ -55,6 +56,7 @@ function AppRouter() {
       <Route path="/" component={Landing} />
       <Route path="/login" component={LoginPage} />
       <Route path="/signup" component={SignupPage} />
+      <Route path="/become-provider" component={BecomeProviderPage} />
       <Route path="/browse" component={Browse} />
       <Route path="/bookings" component={MyBookingsPage} />
       <Route path="/messages" component={MessagesPage} />

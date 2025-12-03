@@ -20,6 +20,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarTrigger, // Imported SidebarTrigger
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -94,8 +95,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </Sidebar>
 
         <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="flex items-center justify-between h-16 px-6 border-b bg-background">
-            <h1 className="text-xl font-semibold">Provider Dashboard</h1>
+          <header className="flex items-center justify-between h-16 px-4 md:px-6 border-b bg-background">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger /> {/* Added SidebarTrigger */}
+              <h1 className="text-xl font-semibold hidden md:block">Provider Dashboard</h1>
+            </div>
             <div className="flex items-center gap-4">
               <Link href="/">
                 <Button variant="ghost" className="rounded-lg">
@@ -106,7 +110,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-4 md:p-6">
             <div className="max-w-7xl mx-auto">
               {children}
             </div>

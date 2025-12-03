@@ -67,55 +67,57 @@ export function Header() {
         "bg-background/60 supports-[backdrop-filter]:bg-background/60" // Glassmorphism
       )}
     >
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Logo and Mobile Nav Title */}
-        <div className="flex items-center md:hidden">
-          <MobileNavTitle />
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 h-16 flex items-center justify-between">
+        {/* LEFT: Logo and Mobile Nav Title */}
+        <div className="flex items-center gap-4">
+          <div className="md:hidden">
+            <MobileNavTitle />
+          </div>
+
+          {/* Logo - Desktop */}
+          <Link href="/" className="hidden md:flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0" data-testid="link-home">
+            <img src="/awthar.png" alt="Awthar Logo" className="w-8 h-8 object-contain" />
+            <span className="font-bold text-xl">Awthar</span>
+          </Link>
         </div>
 
-        {/* Logo - Desktop */}
-        <Link href="/" className="hidden md:flex items-center gap-2 hover:opacity-80 transition-opacity" data-testid="link-home">
-          <img src="/awthar.png" alt="Awthar Logo" className="w-8 h-8 object-contain" />
-          <span className="font-bold text-xl">Awthar</span>
-        </Link>
-
-        {/* Desktop Navigation / Search Bar */}
-        <div className="flex-1 hidden md:flex items-center justify-center">
+        {/* CENTER: Desktop Navigation / Search Bar */}
+        <div className="hidden md:flex flex-1 items-center justify-center px-8">
           {isCustomerMode && (
-            <div className="relative flex-1 max-w-xl">
+            <div className="relative w-full max-w-xl">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search for services..."
-                className="pl-12 pr-4 h-10 rounded-full border-2 focus-visible:ring-2 focus-visible:ring-primary/20 bg-background/80"
+                className="pl-12 pr-10 h-10 rounded-full border-2 focus-visible:ring-2 focus-visible:ring-primary/20 bg-background/80 w-full transition-all focus:w-full"
                 data-testid="input-search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
               />
-              <Button size="icon" variant="ghost" className="absolute right-2 top-1/2 -translate-y-1/2" onClick={handleSearch}>
-                 <Search className="h-5 w-5" />
+              <Button size="icon" variant="ghost" className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-transparent" onClick={handleSearch}>
+                 <Search className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
               </Button>
             </div>
           )}
           {isProviderMode && (
-            <nav className="flex items-center gap-4">
-              <Button variant="ghost" asChild>
+            <nav className="flex items-center gap-1">
+              <Button variant="ghost" asChild className="hover:bg-primary/10 hover:text-primary">
                 <Link href="/dashboard">
                   <LayoutDashboard className="h-4 w-4 mr-2" /> Dashboard
                 </Link>
               </Button>
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" asChild className="hover:bg-primary/10 hover:text-primary">
                 <Link href="/dashboard/listings">
                   <Briefcase className="h-4 w-4 mr-2" /> My Listings
                 </Link>
               </Button>
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" asChild className="hover:bg-primary/10 hover:text-primary">
                 <Link href="/dashboard/bookings">
                   <Calendar className="h-4 w-4 mr-2" /> Client Jobs
                 </Link>
               </Button>
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" asChild className="hover:bg-primary/10 hover:text-primary">
                 <Link href="/messages">
                   <MessageCircle className="h-4 w-4 mr-2" /> Messages
                 </Link>
@@ -124,18 +126,18 @@ export function Header() {
           )}
         </div>
 
-        {/* Actions - Mobile Search Icon */}
-        <div className="md:hidden flex items-center gap-2">
-            <Button size="icon" variant="ghost" asChild>
-                <Link href="/browse">
-                    <Search className="h-5 w-5" />
-                </Link>
-            </Button>
-        </div>
-
-
-        {/* Actions - Profile Dropdown */}
+        {/* RIGHT: Actions (Search + Profile) */}
         <div className="flex items-center gap-2">
+          {/* Mobile Search Icon */}
+          <div className="md:hidden">
+              <Button size="icon" variant="ghost" asChild className="rounded-full">
+                  <Link href="/browse">
+                      <Search className="h-5 w-5" />
+                  </Link>
+              </Button>
+          </div>
+
+          {/* Profile Dropdown */}
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
