@@ -12,6 +12,7 @@ import Dashboard from "@/pages/dashboard";
 import ListingsPage from "@/pages/dashboard/listings";
 import BookingsPage from "@/pages/dashboard/bookings";
 import CreateListingPage from "@/pages/dashboard/create-listing";
+import EditListingPage from "@/pages/dashboard/edit-listing";
 import ServiceDetail from "@/pages/service-detail";
 import ProviderProfile from "@/pages/provider-profile";
 import MyBookingsPage from "@/pages/my-bookings";
@@ -22,6 +23,14 @@ import ProfilePage from "@/pages/profile";
 import LoginPage from "@/pages/login";
 import SignupPage from "@/pages/signup";
 import BecomeProviderPage from "@/pages/become-provider";
+import CategoriesPage from "@/pages/categories";
+import CategoryPage from "@/pages/category";
+import HowItWorksPage from "@/pages/how-it-works";
+import PricingPage from "@/pages/pricing";
+import AboutPage from "@/pages/about";
+import ContactPage from "@/pages/contact";
+import TermsPage from "@/pages/terms";
+import PrivacyPage from "@/pages/privacy";
 import { AppModeProvider, useAppMode } from "@/context/app-mode-context";
 import { useEffect } from "react";
 
@@ -67,9 +76,20 @@ function AppRouter() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/dashboard/listings" component={ListingsPage} />
       <Route path="/dashboard/listings/new" component={CreateListingPage} />
+      <Route path="/dashboard/listings/:id/edit" component={EditListingPage} />
       <Route path="/dashboard/bookings" component={BookingsPage} />
       <Route path="/dashboard/analytics" component={AnalyticsPage} />
       <Route path="/dashboard/settings" component={SettingsPage} />
+
+      {/* Static Pages */}
+      <Route path="/categories" component={CategoriesPage} />
+      <Route path="/category/:slug" component={CategoryPage} />
+      <Route path="/how-it-works" component={HowItWorksPage} />
+      <Route path="/pricing" component={PricingPage} />
+      <Route path="/about" component={AboutPage} />
+      <Route path="/contact" component={ContactPage} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/privacy" component={PrivacyPage} />
 
       <Route path="/service/:id" component={ServiceDetail} />
       <Route path="/provider/:id" component={ProviderProfile} />

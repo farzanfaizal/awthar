@@ -193,6 +193,39 @@ export const messages = pgTable("messages", {
   index("messages_created_idx").on(table.createdAt),
 ]);
 
+// Favorites
+export const favorites = pgTable("favorites", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  serviceId: varchar("service_id").notNull().references(() => services.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("favorites_user_idx").on(table.userId),
+  index("favorites_service_idx").on(table.serviceId),
+]);
+
+// Reports
+export const reportStatusEnum = pgEnum("report_status", ["pending", "reviewed", "resolved", "dismissed"]);
+export const reportTypeEnum = pgEnum("report_type", ["spam", "inappropriate", "fraud", "other"]);
+
+export const reports = pgTable("reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reporterId: varchar("reporter_id").notNull().references(() => users.id),
+  serviceId: varchar("service_id").references(() => services.id),
+  providerId: varchar("provider_id").references(() => providerProfiles.id),
+  type: reportTypeEnum("type").notNull(),
+  reason: text("reason").notNull(),
+  status: reportStatusEnum("status").default("pending").notNull(),
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  reviewNotes: text("review_notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("reports_reporter_idx").on(table.reporterId),
+  index("reports_service_idx").on(table.serviceId),
+  index("reports_status_idx").on(table.status),
+]);
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   providerProfile: one(providerProfiles, {
@@ -363,6 +396,17 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   createdAt: true,
 });
 
+export const insertFavoriteSchema = createInsertSchema(favorites).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertReportSchema = createInsertSchema(reports).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -388,3 +432,9 @@ export type InsertConversation = z.infer<typeof insertConversationSchema>;
 
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+
+export type Favorite = typeof favorites.$inferSelect;
+export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;
+
+export type Report = typeof reports.$inferSelect;
+export type InsertReport = z.infer<typeof insertReportSchema>;

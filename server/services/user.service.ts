@@ -23,4 +23,20 @@ export class UserService {
       .where(eq(users.id, userId))
       .returning();
   }
+
+  static async updateUser(userId: string, updates: Partial<User>): Promise<User> {
+    const [updatedUser] = await db.update(users)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+
+    if (!updatedUser) {
+      throw new Error("User not found");
+    }
+
+    return updatedUser;
+  }
 }

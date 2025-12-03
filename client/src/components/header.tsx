@@ -30,17 +30,53 @@ import {
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ThemeToggle } from "@/components/theme-toggle"; // We'll move this to the dropdown
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { AppModeProvider, useAppMode } from "@/context/app-mode-context"; // Import useAppMode
-import { MobileNavTitle } from "@/components/layout/mobile-nav-title"; // Import MobileNavTitle
+import { AppModeProvider, useAppMode } from "@/context/app-mode-context";
+import { MobileNavTitle } from "@/components/layout/mobile-nav-title";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export function Header() {
   const { isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
   const { mode, setMode, isCustomerMode, isProviderMode, userCanBeProvider, isAppModeLoading } = useAppMode();
   const [searchQuery, setSearchQuery] = useState("");
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/logout", {});
+      return res.json();
+    },
+    onSuccess: () => {
+      // Clear all cached queries
+      queryClient.clear();
+      // Show success message
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+      // Redirect to home page
+      setLocation("/");
+      // Force page reload to clear all state
+      window.location.href = "/";
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Logout failed",
+        description: error.message || "Failed to log out. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -217,9 +253,9 @@ export function Header() {
                 </DropdownMenuSub>
 
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setLocation('/api/logout')}> {/* Assuming /api/logout handles actual logout */}
+                <DropdownMenuItem onClick={handleLogout} disabled={logoutMutation.isPending}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
+                  <span>{logoutMutation.isPending ? "Logging out..." : "Log out"}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -21,13 +21,42 @@ router.get("/user", isAuthenticated, async (req: any, res) => {
   }
 });
 
-// Get provider profile by ID
-router.get("/providers/:id", async (req, res) => {
+// Update current user
+router.patch("/user", isAuthenticated, async (req: any, res) => {
   try {
-    const provider = await ProviderService.getProviderById(req.params.id);
-    if (!provider) {
-      return res.status(404).json({ message: "Provider not found" });
+    const userId = getUserId(req);
+
+    // Sanitize updates - only allow specific fields
+    const allowedFields = ['firstName', 'lastName', 'email', 'profileImageUrl'];
+    const updates: any = {};
+
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
     }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: "No valid fields to update" });
+    }
+
+    const updatedUser = await UserService.updateUser(userId, updates);
+    res.json(updatedUser);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get my provider profile (must come before /providers/:id to avoid matching "me" as an id)
+router.get("/providers/me/profile", isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = getUserId(req);
+    const provider = await ProviderService.getProviderByUserId(userId);
+
+    if (!provider) {
+      return res.status(404).json({ message: "Provider profile not found" });
+    }
+
     res.json(provider);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -54,16 +83,13 @@ router.post("/providers", isAuthenticated, async (req: any, res) => {
   }
 });
 
-// Get my provider profile
-router.get("/providers/me/profile", isAuthenticated, async (req: any, res) => {
+// Get provider profile by ID (must come after specific routes like /providers/me/profile)
+router.get("/providers/:id", async (req, res) => {
   try {
-    const userId = getUserId(req);
-    const provider = await ProviderService.getProviderByUserId(userId);
-
+    const provider = await ProviderService.getProviderById(req.params.id);
     if (!provider) {
-      return res.status(404).json({ message: "Provider profile not found" });
+      return res.status(404).json({ message: "Provider not found" });
     }
-
     res.json(provider);
   } catch (error: any) {
     res.status(500).json({ message: error.message });

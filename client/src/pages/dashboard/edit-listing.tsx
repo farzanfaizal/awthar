@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLocation } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
@@ -26,12 +26,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, ImagePlus, X } from "lucide-react";
+import { Loader2, ImagePlus, X, ArrowLeft } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { ImageUpload } from "@/components/image-upload";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const createListingSchema = z.object({
+const editListingSchema = z.object({
   titleEn: z.string().min(10, "Title must be at least 10 characters"),
   descriptionEn: z.string().min(50, "Description must be at least 50 characters"),
   categoryId: z.string().min(1, "Please select a category"),
@@ -45,7 +45,7 @@ const createListingSchema = z.object({
   tags: z.string().optional(),
 });
 
-type CreateListingFormValues = z.infer<typeof createListingSchema>;
+type EditListingFormValues = z.infer<typeof editListingSchema>;
 
 const UAE_EMIRATES = [
   "Abu Dhabi",
@@ -57,15 +57,30 @@ const UAE_EMIRATES = [
   "Fujairah",
 ];
 
-export default function CreateListingPage() {
-  const { user, isProvider } = useAuth();
+export default function EditListingPage() {
+  const [match, params] = useRoute("/dashboard/listings/:id/edit");
+  const serviceId = params?.id;
+  const { isProvider } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
-  const form = useForm<CreateListingFormValues>({
-    resolver: zodResolver(createListingSchema),
+  // Fetch existing service
+  const { data: service, isLoading: isLoadingService } = useQuery({
+    queryKey: ["/api/services", serviceId],
+    queryFn: async () => {
+      const res = await fetch(`/api/services/${serviceId}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Service not found");
+      return res.json();
+    },
+    enabled: !!serviceId,
+  });
+
+  const form = useForm<EditListingFormValues>({
+    resolver: zodResolver(editListingSchema),
     defaultValues: {
       titleEn: "",
       descriptionEn: "",
@@ -80,14 +95,33 @@ export default function CreateListingPage() {
     },
   });
 
+  // Populate form with existing data
+  useEffect(() => {
+    if (service) {
+      form.reset({
+        titleEn: service.titleEn || "",
+        descriptionEn: service.descriptionEn || "",
+        categoryId: service.categoryId || "",
+        pricingType: service.pricingType || "fixed",
+        priceMin: parseFloat(service.priceMin) || 0,
+        priceMax: service.priceMax ? parseFloat(service.priceMax) : undefined,
+        currency: service.currency || "AED",
+        emirate: service.location?.emirate || "",
+        city: service.location?.city || "",
+        area: service.location?.area || "",
+        tags: service.tags?.join(", ") || "",
+      });
+      setUploadedImages(service.images || []);
+    }
+  }, [service, form]);
+
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ["/api/categories"],
   });
 
-  const createServiceMutation = useMutation({
-    mutationFn: async (data: CreateListingFormValues) => {
-      // Transform form data to API format
+  const updateServiceMutation = useMutation({
+    mutationFn: async (data: EditListingFormValues) => {
       const serviceData = {
         titleEn: data.titleEn,
         descriptionEn: data.descriptionEn,
@@ -105,34 +139,34 @@ export default function CreateListingPage() {
         tags: data.tags
           ? data.tags.split(",").map((tag) => tag.trim()).filter((tag) => tag.length > 0)
           : [],
-        status: "active",
       };
 
-      const res = await apiRequest("POST", "/api/services", serviceData);
+      const res = await apiRequest("PATCH", `/api/services/${serviceId}`, serviceData);
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.message || "Failed to create service");
+        throw new Error(error.message || "Failed to update service");
       }
       return res.json();
     },
     onSuccess: () => {
       toast({
-        title: "Service Created!",
-        description: "Your service listing has been published successfully.",
+        title: "Service Updated!",
+        description: "Your service listing has been updated successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/services"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/services", serviceId] });
       setLocation("/dashboard/listings");
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to Create Service",
+        title: "Failed to Update Service",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  function onSubmit(data: CreateListingFormValues) {
+  function onSubmit(data: EditListingFormValues) {
     if (uploadedImages.length === 0) {
       toast({
         title: "Images Required",
@@ -141,7 +175,7 @@ export default function CreateListingPage() {
       });
       return;
     }
-    createServiceMutation.mutate(data);
+    updateServiceMutation.mutate(data);
   }
 
   const handleImageUpload = (urls: string[]) => {
@@ -157,22 +191,48 @@ export default function CreateListingPage() {
     return null;
   }
 
+  if (isLoadingService) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!service) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold mb-4">Service Not Found</h2>
+          <Button onClick={() => setLocation("/dashboard/listings")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Listings
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Create New Service</h1>
-          <p className="text-muted-foreground mt-2">
-            List your service on the marketplace to reach more customers
-          </p>
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" onClick={() => setLocation("/dashboard/listings")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Edit Service</h1>
+            <p className="text-muted-foreground mt-2">Update your service listing</p>
+          </div>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle>Service Details</CardTitle>
-            <CardDescription>
-              Provide detailed information about your service
-            </CardDescription>
+            <CardDescription>Update your service information</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -188,14 +248,8 @@ export default function CreateListingPage() {
                       <FormItem>
                         <FormLabel>Service Title</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="e.g. Professional Plumbing Services"
-                            {...field}
-                          />
+                          <Input placeholder="e.g. Professional Plumbing Services" {...field} />
                         </FormControl>
-                        <FormDescription>
-                          A clear, descriptive title for your service
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -209,7 +263,7 @@ export default function CreateListingPage() {
                         <FormLabel>Description</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Describe your service in detail, including what's included, your experience, and what makes your service unique..."
+                            placeholder="Describe your service..."
                             className="min-h-[150px]"
                             {...field}
                           />
@@ -227,7 +281,7 @@ export default function CreateListingPage() {
                         <FormLabel>Category</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                           disabled={categoriesLoading}
                         >
                           <FormControl>
@@ -259,7 +313,7 @@ export default function CreateListingPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Pricing Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue />
@@ -283,19 +337,11 @@ export default function CreateListingPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            {form.watch("pricingType") === "fixed"
-                              ? "Price"
-                              : "Starting Price"}
+                            {form.watch("pricingType") === "fixed" ? "Price" : "Starting Price"}
                           </FormLabel>
                           <FormControl>
                             <div className="flex items-center gap-2">
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                placeholder="0.00"
-                                {...field}
-                              />
+                              <Input type="number" min="0" step="0.01" {...field} />
                               <span className="text-sm text-muted-foreground">AED</span>
                             </div>
                           </FormControl>
@@ -313,13 +359,7 @@ export default function CreateListingPage() {
                             <FormLabel>Maximum Price (Optional)</FormLabel>
                             <FormControl>
                               <div className="flex items-center gap-2">
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  placeholder="0.00"
-                                  {...field}
-                                />
+                                <Input type="number" min="0" step="0.01" {...field} />
                                 <span className="text-sm text-muted-foreground">AED</span>
                               </div>
                             </FormControl>
@@ -342,7 +382,7 @@ export default function CreateListingPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Emirate</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select emirate" />
@@ -394,9 +434,6 @@ export default function CreateListingPage() {
                 {/* Images */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Service Images</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Upload high-quality images of your work. First image will be the cover.
-                  </p>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {uploadedImages.map((url, index) => (
@@ -447,14 +484,9 @@ export default function CreateListingPage() {
                       <FormItem>
                         <FormLabel>Service Tags</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="e.g. emergency, licensed, 24/7 (comma-separated)"
-                            {...field}
-                          />
+                          <Input placeholder="e.g. emergency, licensed, 24/7" {...field} />
                         </FormControl>
-                        <FormDescription>
-                          Add relevant keywords to help customers find your service
-                        </FormDescription>
+                        <FormDescription>Comma-separated keywords</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -467,15 +499,15 @@ export default function CreateListingPage() {
                     type="button"
                     variant="outline"
                     onClick={() => setLocation("/dashboard/listings")}
-                    disabled={createServiceMutation.isPending}
+                    disabled={updateServiceMutation.isPending}
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={createServiceMutation.isPending}>
-                    {createServiceMutation.isPending && (
+                  <Button type="submit" disabled={updateServiceMutation.isPending}>
+                    {updateServiceMutation.isPending && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    Publish Service
+                    Update Service
                   </Button>
                 </div>
               </form>
