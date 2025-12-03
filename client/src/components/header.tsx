@@ -186,11 +186,9 @@ export function Header() {
                   </>
                 ) : (
                   // If not a provider, offer to become one
-                  <DropdownMenuItem asChild>
-                    <Link href="/become-provider"> {/* Assuming this route exists for onboarding */}
-                      <Briefcase className="mr-2 h-4 w-4" />
-                      <span>Become a Provider</span>
-                    </Link>
+                  <DropdownMenuItem onClick={() => setLocation('/become-provider')}>
+                    <Briefcase className="mr-2 h-4 w-4" />
+                    <span>Become a Provider</span>
                   </DropdownMenuItem>
                 )}
                 
