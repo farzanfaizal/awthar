@@ -202,7 +202,7 @@ export function Header() {
                 </DropdownMenuItem>
                 
                 <DropdownMenuItem asChild>
-                  <Link href="/settings"> {/* Assuming /settings or /profile is the settings page */}
+                  <Link href={isCustomerMode ? "/profile" : "/dashboard/settings"}>
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </Link>
