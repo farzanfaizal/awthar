@@ -79,10 +79,7 @@ export default function ProviderProfilePage() {
     if (!provider) return;
 
     createConversationMutation.mutate({
-      providerId: provider.userId, // Note: conversation uses userId, not providerId profile ID. 
-                                   // ServiceDetailPage used service.provider.userId.
-                                   // provider variable here is ProviderWithUser (provider profile).
-                                   // provider.userId is the correct field.
+      providerId: provider.id,
     });
   };
 

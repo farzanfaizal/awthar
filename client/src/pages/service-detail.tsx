@@ -74,7 +74,7 @@ export default function ServiceDetailPage() {
     if (!service) return;
 
     createConversationMutation.mutate({
-      providerId: service.provider.userId,
+      providerId: service.provider.id,
       serviceId: service.id,
     });
   };
