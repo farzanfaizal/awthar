@@ -9,6 +9,7 @@ import {
   conversations,
   messages
 } from "@shared/schema";
+import { hashPassword } from "./auth";
 
 const seedCategories = [
   {
@@ -111,10 +112,13 @@ async function seedDatabase() {
     // 2. Users & Profiles
     console.log("👥 Seeding users and providers...");
 
+    const defaultPassword = await hashPassword("password123");
+
     // Helper to create user/provider pair
     const createProvider = async (email: string, firstName: string, lastName: string, profileData: any) => {
       const [user] = await db.insert(users).values({
         email,
+        password: defaultPassword,
         firstName,
         lastName,
         role: "provider",
@@ -212,6 +216,7 @@ async function seedDatabase() {
     // Customer 1
     const [customer1] = await db.insert(users).values({
       email: "customer1@example.com",
+      password: defaultPassword,
       firstName: "Khalid",
       lastName: "Hassan",
       role: "customer",
@@ -379,6 +384,7 @@ async function seedDatabase() {
     });
 
     console.log("✅ Database seeding completed successfully!");
+    console.log("🔑 Default password for all users: password123");
   } catch (error) {
     console.error("❌ Error seeding database:", error);
     throw error;
