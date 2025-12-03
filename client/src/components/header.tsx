@@ -89,7 +89,7 @@ export function Header() {
               <Input
                 type="search"
                 placeholder="Search for services..."
-                className="pl-12 pr-10 h-10 rounded-full border-2 focus-visible:ring-2 focus-visible:ring-primary/20 bg-background/80 w-full transition-all focus:w-full"
+                className="pl-12 pr-12 h-10 rounded-full border-2 focus-visible:ring-2 focus-visible:ring-primary/20 bg-background/80 w-full transition-all focus:w-full"
                 data-testid="input-search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
