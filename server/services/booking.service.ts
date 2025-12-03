@@ -142,7 +142,8 @@ export class BookingService {
     if (status === 'completed') {
       await db.update(providerProfiles)
         .set({ 
-          completedJobs: sql`${providerProfiles.completedJobs} + 1` 
+          completedJobs: sql`${providerProfiles.completedJobs} + 1`,
+          updatedAt: new Date()
         })
         .where(eq(providerProfiles.id, booking.providerId));
     }

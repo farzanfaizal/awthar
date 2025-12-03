@@ -20,7 +20,7 @@ export default function ListingsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: services, isLoading } = useQuery<Service[]>({
+  const { data: services, isLoading, isError } = useQuery<Service[]>({
     queryKey: ["/api/services", { role: "provider" }],
     queryFn: () => apiRequest("GET", "/api/services?role=provider").then(res => res.json())
   });
@@ -57,6 +57,19 @@ export default function ListingsPage() {
     return (
       <DashboardLayout>
         <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin" /></div>
+      </DashboardLayout>
+    );
+  }
+
+  if (isError) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center p-8 text-center">
+          <p className="text-destructive mb-4">Failed to load listings. Please try again.</p>
+          <Button onClick={() => window.location.reload()} variant="outline">
+            Retry
+          </Button>
+        </div>
       </DashboardLayout>
     );
   }

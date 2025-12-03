@@ -2,9 +2,11 @@ import { Router } from "express";
 import { isAuthenticated, getUserId } from "../auth";
 import { ChatService } from "../services/chat.service";
 
-const router = Router();
+const conversationRouter = Router();
+const messageRouter = Router();
 
-router.get("/conversations", isAuthenticated, async (req: any, res) => {
+// Conversation Routes
+conversationRouter.get("/", isAuthenticated, async (req: any, res) => {
   try {
     const userId = getUserId(req);
     const conversations = await ChatService.getUserConversations(userId);
@@ -14,7 +16,7 @@ router.get("/conversations", isAuthenticated, async (req: any, res) => {
   }
 });
 
-router.post("/conversations", isAuthenticated, async (req: any, res) => {
+conversationRouter.post("/", isAuthenticated, async (req: any, res) => {
   try {
     const userId = getUserId(req);
     const conversation = await ChatService.createConversation(userId, req.body);
@@ -24,7 +26,8 @@ router.post("/conversations", isAuthenticated, async (req: any, res) => {
   }
 });
 
-router.get("/messages/:conversationId", isAuthenticated, async (req: any, res) => {
+// Message Routes
+messageRouter.get("/:conversationId", isAuthenticated, async (req: any, res) => {
   try {
     const conversation = await ChatService.getConversationById(req.params.conversationId);
     if (!conversation) {
@@ -44,7 +47,7 @@ router.get("/messages/:conversationId", isAuthenticated, async (req: any, res) =
 });
 
 // POST message (REST API fallback if WebSocket fails)
-router.post("/messages", isAuthenticated, async (req: any, res) => {
+messageRouter.post("/", isAuthenticated, async (req: any, res) => {
   try {
     const userId = getUserId(req);
     const { conversationId, content, attachments } = req.body;
@@ -75,4 +78,5 @@ router.post("/messages", isAuthenticated, async (req: any, res) => {
   }
 });
 
-export const chatController = router;
+export const conversationController = conversationRouter;
+export const messageController = messageRouter;

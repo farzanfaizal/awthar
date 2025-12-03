@@ -19,7 +19,7 @@ export class UserService {
 
   static async updateUserRole(userId: string, role: "customer" | "provider" | "both") {
     return db.update(users)
-      .set({ role })
+      .set({ role, updatedAt: new Date() })
       .where(eq(users.id, userId))
       .returning();
   }

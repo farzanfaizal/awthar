@@ -27,7 +27,7 @@ const IconComponent = ({ name, className }: { name: string; className?: string }
 };
 
 export default function Landing() {
-  const { data: categories, isLoading: isLoadingCategories } = useQuery({
+  const { data: categories, isLoading: isLoadingCategories, isError: isCategoriesError } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
       const res = await fetch("/api/categories");
@@ -36,7 +36,7 @@ export default function Landing() {
     },
   });
 
-  const { data: services, isLoading: isLoadingServices } = useQuery({
+  const { data: services, isLoading: isLoadingServices, isError: isServicesError } = useQuery({
     queryKey: ["featured-services"],
     queryFn: async () => {
       // Fetching services to display as "Featured" - filtering for featured could be a query param later
@@ -72,6 +72,7 @@ export default function Landing() {
                     placeholder="What service do you need?"
                     className="pl-12 h-14 text-base rounded-xl border-2 text-foreground"
                     data-testid="input-hero-search"
+                    aria-label="Search for services"
                   />
                 </div>
                 <div className="relative flex-1">
@@ -81,13 +82,14 @@ export default function Landing() {
                     placeholder="Location (Emirate, City, Area)"
                     className="pl-12 h-14 text-base rounded-xl border-2 text-foreground"
                     data-testid="input-hero-location"
+                    aria-label="Location"
                   />
                 </div>
-                <Link href="/browse">
-                  <Button size="lg" className="h-14 px-8 rounded-xl bg-secondary hover:bg-secondary/90 text-white font-semibold w-full md:w-auto" data-testid="button-hero-search">
+                <Button size="lg" className="h-14 px-8 rounded-xl bg-secondary hover:bg-secondary/90 text-white font-semibold w-full md:w-auto" data-testid="button-hero-search" asChild>
+                  <Link href="/browse">
                     Search Services
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </div>
 
@@ -119,7 +121,11 @@ export default function Landing() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
-            {isLoadingCategories ? (
+            {isCategoriesError ? (
+              <div className="col-span-full text-center py-8 text-muted-foreground">
+                Failed to load categories. Please try again later.
+              </div>
+            ) : isLoadingCategories ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <Card key={i} className="h-40 border-2 rounded-xl p-6 flex flex-col items-center justify-center gap-4">
                   <Skeleton className="h-12 w-12 rounded-xl" />
@@ -171,7 +177,11 @@ export default function Landing() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {isLoadingServices ? (
+            {isServicesError ? (
+              <div className="col-span-full text-center py-8 text-muted-foreground">
+                Failed to load featured services. Please refresh the page.
+              </div>
+            ) : isLoadingServices ? (
                Array.from({ length: 3 }).map((_, i) => (
                 <Card key={i} className="h-64 border-2 rounded-xl p-6">
                   <div className="flex gap-4 mb-4">
@@ -306,16 +316,16 @@ export default function Landing() {
             Join thousands of satisfied customers across the GCC
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/browse">
-              <Button size="lg" variant="secondary" className="rounded-xl px-8 text-base font-semibold" data-testid="button-cta-browse">
+            <Button size="lg" variant="secondary" className="rounded-xl px-8 text-base font-semibold" data-testid="button-cta-browse" asChild>
+              <Link href="/browse">
                 Browse Services
-              </Button>
-            </Link>
-            <Link href="/api/login">
-              <Button size="lg" variant="outline" className="rounded-xl px-8 text-base font-semibold bg-white/10 hover:bg-white/20 border-white/40 text-white backdrop-blur-sm" data-testid="button-cta-provider">
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" className="rounded-xl px-8 text-base font-semibold bg-white/10 hover:bg-white/20 border-white/40 text-white backdrop-blur-sm" data-testid="button-cta-provider" asChild>
+              <Link href="/api/login">
                 Become a Provider
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

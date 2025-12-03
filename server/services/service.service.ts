@@ -45,13 +45,21 @@ export class ServiceService {
     }
 
     if (filters.category) {
-      // Find category ID first (assuming filter is by slug or ID, handling both is safer)
-      // For now, assuming ID or joining. Let's try to find the category by slug if it looks like one
-      const categoryRecord = await db.query.categories.findFirst({
-        where: or(eq(categories.id, filters.category), eq(categories.slug, filters.category))
-      });
-      if (categoryRecord) {
-        conditions.push(eq(services.categoryId, categoryRecord.id));
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      
+      if (uuidRegex.test(filters.category)) {
+        conditions.push(eq(services.categoryId, filters.category));
+      } else {
+        const categoryRecord = await db.query.categories.findFirst({
+          where: eq(categories.slug, filters.category)
+        });
+        
+        if (categoryRecord) {
+          conditions.push(eq(services.categoryId, categoryRecord.id));
+        } else {
+          // Category filter provided but not found - return empty result
+          return [];
+        }
       }
     }
 
@@ -122,13 +130,14 @@ export class ServiceService {
       ...data,
       providerId,
     });
-    const [newService] = await db.insert(services).values(validatedData as any).returning();
+    const [newService] = await db.insert(services).values(validatedData).returning();
     return newService;
   }
 
   static async updateService(id: string, data: Partial<InsertService>) {
+    const validatedData = insertServiceSchema.partial().parse(data);
     const [updatedService] = await db.update(services)
-      .set({ ...data, updatedAt: new Date() } as any)
+      .set({ ...validatedData, updatedAt: new Date() })
       .where(eq(services.id, id))
       .returning();
     return updatedService;

@@ -323,7 +323,18 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   createdAt: true,
 });
 
-export const insertServiceSchema = createInsertSchema(services).omit({
+export const insertServiceSchema = createInsertSchema(services, {
+  location: z.object({
+    emirate: z.string().optional(),
+    city: z.string().optional(),
+    area: z.string().optional(),
+    building: z.string().optional(),
+    poBox: z.string().optional(),
+    landmarks: z.string().optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+  }).optional().nullable(),
+}).omit({
   id: true,
   createdAt: true,
   updatedAt: true,

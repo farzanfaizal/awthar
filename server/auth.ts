@@ -11,6 +11,7 @@ import bcrypt from "bcryptjs";
 import { db } from "./db";
 import { users, type UpsertUser } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import rateLimit from "express-rate-limit";
 
 // Check if we're using Replit authentication
 const isReplitAuth = !!process.env.REPL_ID && process.env.REPL_ID !== "local-dev";
@@ -204,8 +205,24 @@ export async function setupAuth(app: Express) {
       }
     });
 
+    const loginLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      limit: 5, // Limit each IP to 5 login requests per windowMs
+      message: "Too many login attempts from this IP, please try again after 15 minutes",
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+
+    const signupLimiter = rateLimit({
+      windowMs: 60 * 60 * 1000, // 1 hour
+      limit: 5, // Limit each IP to 5 accounts per hour
+      message: "Too many accounts created from this IP, please try again after an hour",
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+
     // Signup endpoint
-    app.post("/api/signup", async (req, res) => {
+    app.post("/api/signup", signupLimiter, async (req, res) => {
       try {
         const { email, password, firstName, lastName } = req.body;
 
@@ -247,7 +264,7 @@ export async function setupAuth(app: Express) {
     });
 
     // Login endpoint
-    app.post("/api/login", (req, res, next) => {
+    app.post("/api/login", loginLimiter, (req, res, next) => {
       passport.authenticate('local', (err: any, user: any, info: any) => {
         if (err) {
           return res.status(500).json({ message: err.message });

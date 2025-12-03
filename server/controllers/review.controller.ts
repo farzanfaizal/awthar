@@ -4,7 +4,7 @@ import { ReviewService } from "../services/review.service";
 
 const router = Router();
 
-router.get("/reviews/provider/:providerId", async (req, res) => {
+router.get("/provider/:providerId", async (req, res) => {
   try {
     const reviews = await ReviewService.getProviderReviews(req.params.providerId);
     res.json(reviews);
@@ -13,7 +13,7 @@ router.get("/reviews/provider/:providerId", async (req, res) => {
   }
 });
 
-router.post("/reviews", isAuthenticated, async (req: any, res) => {
+router.post("/", isAuthenticated, async (req: any, res) => {
   try {
     const userId = getUserId(req);
     const newReview = await ReviewService.createReview(userId, req.body);

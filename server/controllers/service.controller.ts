@@ -3,10 +3,11 @@ import { isAuthenticated, getUserId } from "../auth";
 import { ServiceService } from "../services/service.service";
 import { ProviderService } from "../services/provider.service";
 
-const router = Router();
+const serviceRouter = Router();
+const categoryRouter = Router();
 
-// Categories
-router.get("/categories", async (_req, res) => {
+// Categories Routes
+categoryRouter.get("/", async (_req, res) => {
   try {
     const categories = await ServiceService.getCategories();
     res.json(categories);
@@ -15,7 +16,7 @@ router.get("/categories", async (_req, res) => {
   }
 });
 
-router.get("/categories/:slug", async (req, res) => {
+categoryRouter.get("/:slug", async (req, res) => {
   try {
     const category = await ServiceService.getCategoryBySlug(req.params.slug);
     if (!category) {
@@ -27,8 +28,8 @@ router.get("/categories/:slug", async (req, res) => {
   }
 });
 
-// Services Search
-router.get("/services", async (req, res) => {
+// Services Routes
+serviceRouter.get("/", async (req, res) => {
   try {
     // Filter by provider if requested and authenticated
     let providerId: string | undefined;
@@ -59,7 +60,7 @@ router.get("/services", async (req, res) => {
 });
 
 // Get Service
-router.get("/services/:id", async (req, res) => {
+serviceRouter.get("/:id", async (req, res) => {
   try {
     const service = await ServiceService.getServiceById(req.params.id);
     if (!service) {
@@ -73,7 +74,7 @@ router.get("/services/:id", async (req, res) => {
 });
 
 // Create Service (Provider only)
-router.post("/services", isAuthenticated, async (req: any, res) => {
+serviceRouter.post("/", isAuthenticated, async (req: any, res) => {
   try {
     const userId = getUserId(req);
     const provider = await ProviderService.getProviderByUserId(userId);
@@ -90,7 +91,7 @@ router.post("/services", isAuthenticated, async (req: any, res) => {
 });
 
 // Update Service
-router.patch("/services/:id", isAuthenticated, async (req: any, res) => {
+serviceRouter.patch("/:id", isAuthenticated, async (req: any, res) => {
   try {
     const service = await ServiceService.getServiceById(req.params.id);
     if (!service) return res.status(404).json({ message: "Service not found" });
@@ -108,7 +109,7 @@ router.patch("/services/:id", isAuthenticated, async (req: any, res) => {
 });
 
 // Delete Service
-router.delete("/services/:id", isAuthenticated, async (req: any, res) => {
+serviceRouter.delete("/:id", isAuthenticated, async (req: any, res) => {
   try {
     const service = await ServiceService.getServiceById(req.params.id);
     if (!service) return res.status(404).json({ message: "Service not found" });
@@ -125,4 +126,5 @@ router.delete("/services/:id", isAuthenticated, async (req: any, res) => {
   }
 });
 
-export const serviceController = router;
+export const serviceController = serviceRouter;
+export const categoryController = categoryRouter;

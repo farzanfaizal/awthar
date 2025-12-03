@@ -3,9 +3,9 @@ import { createServer, type Server } from "http";
 import { setupAuth, getSession } from "./auth";
 import { WebSocketServer, WebSocket } from "ws";
 import { authController } from "./controllers/auth.controller";
-import { serviceController } from "./controllers/service.controller";
+import { serviceController, categoryController } from "./controllers/service.controller";
 import { reviewController } from "./controllers/review.controller";
-import { chatController } from "./controllers/chat.controller";
+import { conversationController, messageController } from "./controllers/chat.controller";
 import { bookingController } from "./controllers/booking.controller";
 import { uploadController } from "./controllers/upload.controller";
 import { ChatService } from "./services/chat.service";
@@ -30,12 +30,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
   // Register Controllers
-  app.use("/api/auth", authController); // Note: /api/auth/user matches old structure
-  app.use("/api", serviceController); // Categories and Services
-  app.use("/api", reviewController);
-  app.use("/api", chatController);
+  app.use("/api/auth", authController);
+  app.use("/api/services", serviceController);
+  app.use("/api/categories", categoryController);
+  app.use("/api/reviews", reviewController);
+  app.use("/api/conversations", conversationController);
+  app.use("/api/messages", messageController);
   app.use("/api/bookings", bookingController);
-  app.use("/api", uploadController);
+  app.use("/api/upload", uploadController);
 
   // HTTP Server and WebSocket setup
   const httpServer = createServer(app);

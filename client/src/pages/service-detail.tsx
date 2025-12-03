@@ -147,8 +147,8 @@ export default function ServiceDetailPage() {
 
             <div className="flex flex-wrap items-center gap-4 mt-3">
               {service.isFeatured && (
-                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
-                  <Star className="w-3 h-3 mr-1 fill-yellow-600 text-yellow-600" />
+                <Badge variant="secondary" className="bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-500/25 border-yellow-500/20">
+                  <Star className="w-3 h-3 mr-1 fill-yellow-500 text-yellow-500" />
                   Featured
                 </Badge>
               )}

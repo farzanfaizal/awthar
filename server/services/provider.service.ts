@@ -58,7 +58,8 @@ export class ProviderService {
       .set({ 
         ratingSum: sql`${providerProfiles.ratingSum} + ${newRating}`,
         totalReviews: sql`${providerProfiles.totalReviews} + 1`,
-        rating: sql`(${providerProfiles.ratingSum} + ${newRating})::numeric / (${providerProfiles.totalReviews} + 1)`
+        rating: sql`(${providerProfiles.ratingSum} + ${newRating})::numeric / (${providerProfiles.totalReviews} + 1)`,
+        updatedAt: new Date()
       })
       .where(eq(providerProfiles.id, providerId));
   }

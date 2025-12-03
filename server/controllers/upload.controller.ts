@@ -4,7 +4,7 @@ import { uploadMiddleware } from "../storage/local-upload";
 
 const router = Router();
 
-router.post("/upload/image", isAuthenticated, uploadMiddleware.single('image'), (req, res) => {
+router.post("/image", isAuthenticated, uploadMiddleware.single('image'), (req, res) => {
   try {
     if (!(req as any).file) {
       return res.status(400).json({ message: "No file uploaded" });
@@ -18,7 +18,7 @@ router.post("/upload/image", isAuthenticated, uploadMiddleware.single('image'), 
   }
 });
 
-router.post("/upload/images", isAuthenticated, uploadMiddleware.array('images', 10), (req, res) => {
+router.post("/images", isAuthenticated, uploadMiddleware.array('images', 10), (req, res) => {
   try {
     if (!(req as any).files || !Array.isArray((req as any).files)) {
       return res.status(400).json({ message: "No files uploaded" });
