@@ -63,14 +63,7 @@ export default function BecomeProviderPage() {
 
   const mutation = useMutation({
     mutationFn: async (data: BecomeProviderFormValues) => {
-      // Use the existing provider profile creation endpoint logic
-      // If we don't have a specific /api/providers endpoint, we might need to create one or use a user update one.
-      // Checking routes... usually it's POST /api/auth/provider or similar.
-      // Let's assume we need to create this endpoint or it exists.
-      // Based on previous analysis, we might need to add this endpoint to auth.controller or provider.controller.
-      // Let's try POST /api/provider-profile if we create it, or verify existing.
-      // Re-reading auth.controller might be needed, but for now let's assume we'll create/use POST /api/providers
-      const res = await apiRequest("POST", "/api/providers", data); 
+      const res = await apiRequest("POST", "/api/auth/providers", data);
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.message || "Failed to create provider profile");

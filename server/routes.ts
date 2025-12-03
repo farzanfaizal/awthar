@@ -17,18 +17,14 @@ declare module "http" {
   interface IncomingMessage {
     session: {
       passport?: {
-        user?: {
-          claims?: {
-            sub: string;
-          }
-        }
+        user?: string;
       }
     }
   }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup Replit Auth
+  // Setup authentication
   await setupAuth(app);
 
   // Register Controllers
@@ -61,21 +57,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // @ts-ignore - express-session types are tricky with raw http request
     sessionParser(request, {} as any, () => {
-      // Mock auth for local dev or non-Replit deployments
-      const isReplitAuth = !!process.env.REPL_ID && process.env.REPL_ID !== "local-dev";
-      if (process.env.NODE_ENV === "development" || !isReplitAuth) {
-        if (!request.session) request.session = {} as any;
-        if (!request.session.passport) request.session.passport = {} as any;
-        if (request.session.passport && !request.session.passport.user) {
-          request.session.passport.user = {
-            claims: {
-              sub: "dev-user-id",
-            }
-          } as any;
-        }
-      }
-
-      if (!request.session?.passport?.user?.claims?.sub) {
+      // Check if user is authenticated
+      const userId = request.session?.passport?.user;
+      if (!userId) {
         socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
         socket.destroy();
         return;
@@ -88,17 +72,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   wss.on("connection", (ws: WebSocket, req: any) => {
-    // Get user ID (works for both Replit and local auth)
-    const user = req.session?.passport?.user;
-    let userId: string;
+    // Get user ID from session (local passport auth)
+    const userId = req.session?.passport?.user;
 
-    if (user?.claims?.sub) {
-      // Replit auth
-      userId = user.claims.sub;
-    } else if (user?.id) {
-      // Local auth
-      userId = user.id;
-    } else {
+    if (!userId) {
       ws.send(JSON.stringify({ type: "error", message: "Authentication required" }));
       ws.close();
       return;
