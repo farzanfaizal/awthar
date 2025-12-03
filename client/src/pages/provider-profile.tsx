@@ -1,5 +1,5 @@
-import { useRoute, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useRoute, Link, useLocation } from "wouter";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { ProviderProfile, User, Service, Review } from "@shared/schema";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -12,13 +12,16 @@ import { cn } from "@/lib/utils";
 import { ReviewsList } from "@/components/reviews-list";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 type ProviderWithUser = ProviderProfile & { user: User };
 
 export default function ProviderProfilePage() {
   const [, params] = useRoute("/provider/:id");
   const id = params?.id;
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
 
   const { data: provider, isLoading: isLoadingProvider } = useQuery<ProviderWithUser>({
     queryKey: [`/api/auth/providers/${id}`],
@@ -40,6 +43,48 @@ export default function ProviderProfilePage() {
       return res.json();
     }
   });
+
+  const createConversationMutation = useMutation({
+    mutationFn: async (data: { providerId: string }) => {
+      const res = await apiRequest("POST", "/api/conversations", data);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+      return res.json();
+    },
+    onSuccess: (conversation) => {
+      setLocation(`/messages?conversationId=${conversation.id}`);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to start conversation",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleMessageProvider = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to message the provider.",
+        variant: "destructive",
+      });
+      setLocation("/login");
+      return;
+    }
+
+    if (!provider) return;
+
+    createConversationMutation.mutate({
+      providerId: provider.userId, // Note: conversation uses userId, not providerId profile ID. 
+                                   // ServiceDetailPage used service.provider.userId.
+                                   // provider variable here is ProviderWithUser (provider profile).
+                                   // provider.userId is the correct field.
+    });
+  };
 
   if (isLoadingProvider || !provider) {
      return (
@@ -139,9 +184,14 @@ export default function ProviderProfilePage() {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-3 mt-8">
-                <Button size="lg" className="shadow-md">
+                <Button 
+                  size="lg" 
+                  className="shadow-md" 
+                  onClick={handleMessageProvider} 
+                  disabled={createConversationMutation.isPending}
+                >
                   <MessageCircle className="w-4 h-4 mr-2" />
-                  Message Provider
+                  {createConversationMutation.isPending ? "Starting..." : "Message Provider"}
                 </Button>
                 <Button size="lg" variant="outline">
                   <Phone className="w-4 h-4 mr-2" />

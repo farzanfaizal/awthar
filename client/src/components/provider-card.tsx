@@ -10,9 +10,11 @@ import { cn } from "@/lib/utils";
 
 interface ProviderCardProps {
   provider: ProviderProfile & { user: User };
+  onMessage?: () => void;
+  isMessageLoading?: boolean;
 }
 
-export function ProviderCard({ provider }: ProviderCardProps) {
+export function ProviderCard({ provider, onMessage, isMessageLoading }: ProviderCardProps) {
   const rating = parseFloat(provider.rating || "0");
 
   return (
@@ -86,10 +88,12 @@ export function ProviderCard({ provider }: ProviderCardProps) {
               View Profile
             </Button>
           </Link>
-          <Button className="w-full">
-            <MessageCircle className="mr-2 h-4 w-4" />
-            Message
-          </Button>
+          {onMessage && (
+            <Button className="w-full" onClick={onMessage} disabled={isMessageLoading}>
+              <MessageCircle className="mr-2 h-4 w-4" />
+              {isMessageLoading ? "Starting..." : "Message"}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

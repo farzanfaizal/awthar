@@ -253,18 +253,11 @@ export default function ServiceDetailPage() {
         {/* Right Column - Provider Card & Booking */}
         <div className="lg:col-span-1">
           <div className="sticky top-24 space-y-4">
-            <ProviderCard provider={service.provider} />
-
-            {/* Message Provider Button */}
-            <Button
-              onClick={handleMessageProvider}
-              disabled={createConversationMutation.isPending}
-              className="w-full"
-              variant="outline"
-            >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              {createConversationMutation.isPending ? "Starting conversation..." : "Message Provider"}
-            </Button>
+            <ProviderCard 
+              provider={service.provider} 
+              onMessage={handleMessageProvider}
+              isMessageLoading={createConversationMutation.isPending}
+            />
 
             {/* Booking Form */}
             <Card className="mt-4">
