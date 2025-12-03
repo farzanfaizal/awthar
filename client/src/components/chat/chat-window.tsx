@@ -24,8 +24,8 @@ export function ChatWindow({ conversationId, currentUserId, recipientName }: Cha
   const queryClient = useQueryClient();
 
   const { data: messages, isLoading } = useQuery<(Message & { sender: User })[]>({
-    queryKey: [`/api/conversations/${conversationId}/messages`],
-    queryFn: () => apiRequest("GET", `/api/conversations/${conversationId}/messages`).then(res => res.json()),
+    queryKey: [`/api/messages/${conversationId}`],
+    queryFn: () => apiRequest("GET", `/api/messages/${conversationId}`).then(res => res.json()),
     // No polling - rely on WebSocket for real-time updates
     refetchOnWindowFocus: false,
     staleTime: Infinity, // Don't refetch unless explicitly invalidated
@@ -47,7 +47,7 @@ export function ChatWindow({ conversationId, currentUserId, recipientName }: Cha
       if (data.type === "message" && data.message.conversationId === conversationId) {
         // Optimistically update or invalidate query
         queryClient.setQueryData(
-          [`/api/conversations/${conversationId}/messages`],
+          [`/api/messages/${conversationId}`],
           (old: any[]) => [...(old || []), data.message]
         );
       }
@@ -68,7 +68,7 @@ export function ChatWindow({ conversationId, currentUserId, recipientName }: Cha
     onSuccess: (newMsg) => {
       // Add message to local state
       queryClient.setQueryData(
-        [`/api/conversations/${conversationId}/messages`],
+        [`/api/messages/${conversationId}`],
         (old: any[]) => [...(old || []), newMsg]
       );
     },
