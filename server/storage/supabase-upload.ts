@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
@@ -19,19 +19,18 @@ const BUCKET_NAME = process.env.SUPABASE_BUCKET || "awthar";
 export class SupabaseStorage {
   /**
    * Compresses and uploads a file to Supabase Storage (S3).
-   * Target size: ~200KB
+   * Returns a proxy URL to serve the file via the backend.
    */
   static async uploadFile(file: Express.Multer.File): Promise<string> {
     // 1. Optimize Image with Sharp
-    // We convert to WebP for better compression and resize if too massive
     const optimizedBuffer = await sharp(file.buffer)
       .resize(1920, 1920, { // Max dimensions
         fit: 'inside',
         withoutEnlargement: true
       })
       .webp({ 
-        quality: 80, // Good balance
-        effort: 4 // Compression effort (0-6)
+        quality: 80, 
+        effort: 4 
       })
       .toBuffer();
 
@@ -44,23 +43,33 @@ export class SupabaseStorage {
       Key: filename,
       Body: optimizedBuffer,
       ContentType: "image/webp",
-      ACL: 'public-read', // Ensure file is publicly readable
+      // We still set public-read for good measure, but we will proxy it now
+      ACL: 'public-read', 
     });
 
     await s3Client.send(command);
 
-    // 4. Construct Public URL
-    // Supabase Storage Public URL format:
-    // https://[project_ref].supabase.co/storage/v1/object/public/[bucket]/[key]
-    // Since we have the full endpoint in env, we can parse it or construct carefully.
-    
-    // If endpoint is: https://[ref].supabase.co/storage/v1/s3
-    // We need: https://[ref].supabase.co/storage/v1/object/public/[bucket]/[filename]
-    
-    const endpointUrl = new URL(process.env.SUPABASE_ENDPOINT || "");
-    const projectRef = endpointUrl.hostname.split('.')[0]; // Extract 'xkrsqpwzptneeebyxgls'
-    
-    // This is the standard public URL format for Supabase
-    return `https://${projectRef}.supabase.co/storage/v1/object/public/${BUCKET_NAME}/${filename}`;
+    // 4. Return Proxy URL
+    // Instead of returning the direct Supabase URL (which fails if bucket is private),
+    // we return a URL that routes through our backend.
+    return `/api/upload/file/${filename}`;
+  }
+
+  /**
+   * Retrieves a file stream from S3.
+   * Used by the proxy endpoint to serve images.
+   */
+  static async downloadFile(key: string) {
+    const command = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+    });
+
+    try {
+      const response = await s3Client.send(command);
+      return response;
+    } catch (error) {
+      return null;
+    }
   }
 }

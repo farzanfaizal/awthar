@@ -52,4 +52,27 @@ router.post("/images", isAuthenticated, upload.array('images', 10), async (req, 
   }
 });
 
+// Proxy endpoint for serving images securely
+router.get("/file/:key", async (req, res) => {
+  try {
+    const key = req.params.key;
+    const fileResponse = await SupabaseStorage.downloadFile(key);
+
+    if (!fileResponse || !fileResponse.Body) {
+      return res.status(404).send("File not found");
+    }
+
+    // Set headers
+    res.setHeader("Content-Type", fileResponse.ContentType || "image/webp");
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+
+    // Pipe stream
+    // @ts-ignore - AWS SDK stream type compatibility
+    fileResponse.Body.pipe(res);
+  } catch (error) {
+    console.error("Proxy error:", error);
+    res.status(404).send("File not found");
+  }
+});
+
 export const uploadController = router;

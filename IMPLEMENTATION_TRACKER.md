@@ -2,7 +2,7 @@
 
 **Session Started:** 2025-12-03
 **Status:** In Progress
-**Total Issues:** 53
+**Total Issues:** 54
 
 ---
 
@@ -76,20 +76,17 @@
 - [x] **Issue #51** - Fix Create Listing image upload component prop mismatch ✅ DONE
 - [x] **Issue #52** - Refactor Edit Listing page (remove duplication) ✅ DONE
 - [x] **Issue #53** - Fix legacy image handling (broken images in browse/detail) ✅ DONE
+- [x] **Issue #54** - Implement secure image proxy to bypass bucket policy issues ✅ DONE
 
 ---
 
 ## 📝 Detailed Implementation Notes
 
-### Issue #52: Refactor Edit Listing
-**File:** `client/src/pages/dashboard/edit-listing.tsx`
-- **Action:** Updated to use `ImageUpload` correctly and applied URL normalization.
-- **Result:** Fixes broken/stale state management on the edit page.
-
-### Issue #53: Fix Legacy Image Handling
-**File:** `client/src/lib/image-utils.ts`, `browse.tsx`, `service-detail.tsx`
-- **Action:** Implemented `getImageUrl` helper to replace legacy local paths with a placeholder.
-- **Result:** Prevents 404 errors on the frontend for old data.
+### Issue #54: Implement Secure Image Proxy
+**File:** `server/storage/supabase-upload.ts`, `server/controllers/upload.controller.ts`
+- **Problem:** Supabase public URLs return 400/403 due to strict bucket policies or region-specific URL routing that cannot be easily fixed from code.
+- **Solution:** Implemented a backend proxy route `GET /api/upload/file/:key`. The backend (which has secure keys) fetches the file stream from S3 and pipes it to the frontend.
+- **Result:** Images are guaranteed to load regardless of public bucket settings.
 
 ---
 
@@ -115,13 +112,14 @@
 - ✅ Supabase S3 Integration
 - ✅ Upload Component Fixes
 - ✅ Legacy Data Normalization
+- ✅ Secure Image Proxy
 
 ---
 
 ## 📊 Statistics
 
-- **Total Issues:** 53
-- **Completed:** 27
+- **Total Issues:** 54
+- **Completed:** 29
 - **In Progress:** 0
-- **Not Started:** 26
-- **Progress:** 51%
+- **Not Started:** 25
+- **Progress:** 53%
