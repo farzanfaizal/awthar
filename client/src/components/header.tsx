@@ -120,24 +120,25 @@ export function Header() {
         {/* CENTER: Desktop Navigation / Search Bar */}
         <div className="hidden md:flex flex-1 items-center justify-center px-8">
           {isCustomerMode && (
-            <div className="relative w-full max-w-xl">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                type="search"
-                placeholder="Search for services..."
-                className="pl-10 pr-10 h-10 rounded-full border-2 focus-visible:ring-2 focus-visible:ring-primary/20 bg-background/80 w-full transition-all"
-                data-testid="input-search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
+            <div className="flex w-full max-w-xl items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  type="search"
+                  placeholder="Search for services..."
+                  className="pl-10 h-10 rounded-full border-2 focus-visible:ring-2 focus-visible:ring-primary/20 bg-background/80 w-full transition-all"
+                  data-testid="input-search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                />
+              </div>
               <Button
-                size="sm"
-                variant="ghost"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-primary/10 rounded-full"
+                size="icon"
+                className="h-10 w-10 rounded-full shrink-0"
                 onClick={handleSearch}
               >
-                <Search className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                <Search className="h-4 w-4" />
               </Button>
             </div>
           )}
