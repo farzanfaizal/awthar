@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useAppMode } from "@/context/app-mode-context";
 import { apiRequest } from "@/lib/queryClient";
 import { ConversationList } from "@/components/chat/conversation-list";
 import { ChatWindow } from "@/components/chat/chat-window";
@@ -17,11 +18,12 @@ type ConversationWithRelations = Conversation & {
 
 export default function MessagesPage() {
   const { user } = useAuth();
+  const { mode } = useAppMode();
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
 
   const { data: conversations, isLoading } = useQuery<ConversationWithRelations[]>({
-    queryKey: ["/api/conversations"],
-    queryFn: () => apiRequest("GET", "/api/conversations").then(res => res.json())
+    queryKey: ["/api/conversations", mode],
+    queryFn: () => apiRequest("GET", `/api/conversations?role=${mode}`).then(res => res.json())
   });
 
   // Auto-select conversation from URL query param
@@ -59,7 +61,7 @@ export default function MessagesPage() {
           <div className="p-3 md:p-4 border-b">
             <h2 className="font-semibold text-sm md:text-base flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
-              Messages
+              Messages ({mode === 'customer' ? 'Buying' : 'Hosting'})
             </h2>
           </div>
           

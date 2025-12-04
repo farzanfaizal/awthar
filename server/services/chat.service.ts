@@ -1,16 +1,48 @@
 import { db } from "../db";
-import { conversations, messages } from "@shared/schema";
+import { conversations, messages, providerProfiles } from "@shared/schema";
 import { eq, or, desc, and } from "drizzle-orm";
 import { insertConversationSchema, insertMessageSchema } from "@shared/schema";
 import type { InsertConversation, InsertMessage } from "@shared/schema";
 
 export class ChatService {
-  static async getUserConversations(userId: string) {
+  static async getUserConversations(userId: string, role?: 'customer' | 'provider') {
+    let whereClause;
+
+    if (role === 'customer') {
+      whereClause = eq(conversations.customerId, userId);
+    } else if (role === 'provider') {
+      // Find provider profile first
+      const profile = await db.query.providerProfiles.findFirst({
+        where: eq(providerProfiles.userId, userId),
+      });
+
+      if (!profile) {
+        return []; // Not a provider, so no provider conversations
+      }
+      whereClause = eq(conversations.providerId, profile.id);
+    } else {
+      // Fallback: Get all (but risky for providerId vs userId mismatch if not joined)
+      // Actually, conversation.providerId references provider_profiles.id, NOT users.id.
+      // The original code: eq(conversations.providerId, userId) was LIKELY INCORRECT if userId is a UUID from users table
+      // and providerId is a UUID from provider_profiles table.
+      
+      // Let's fix the fallback to be robust too:
+      const profile = await db.query.providerProfiles.findFirst({
+        where: eq(providerProfiles.userId, userId),
+      });
+      
+      if (profile) {
+        whereClause = or(
+          eq(conversations.customerId, userId),
+          eq(conversations.providerId, profile.id)
+        );
+      } else {
+        whereClause = eq(conversations.customerId, userId);
+      }
+    }
+
     return db.query.conversations.findMany({
-      where: or(
-        eq(conversations.customerId, userId),
-        eq(conversations.providerId, userId)
-      ),
+      where: whereClause,
       with: {
         customer: true,
         provider: {

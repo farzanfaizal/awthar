@@ -2,7 +2,7 @@
 
 **Session Started:** 2025-12-03
 **Status:** In Progress
-**Total Issues:** 43
+**Total Issues:** 48
 
 ---
 
@@ -17,7 +17,7 @@
 - [x] **Issue #4** - Implement profile update functionality (profile.tsx) ✅ DONE
 - [ ] **Issue #5** - Fix dashboard authentication redirect
 - [ ] **Issue #6** - Fix "Become a Provider" links
-- [ ] **Issue #7** - Fix profile form inputs to capture changes ✅ DONE (part of #4)
+- [x] **Issue #7** - Fix profile form inputs to capture changes ✅ DONE (part of #4)
 
 ### Phase 3: Routing & Missing Pages (11 items)
 - [x] **Issue #8** - Create `/categories` page ✅ DONE
@@ -63,141 +63,31 @@
 - [ ] **Issue #42** - Add loading skeletons to browse page
 - [ ] **Issue #43** - Fix responsive design breakpoints
 
+### Phase 7: Urgent UI & Logic Fixes (New Items - Dec 4)
+- [x] **Issue #44** - Refactor `DashboardLayout` to use standard `Header` ✅ DONE
+- [x] **Issue #45** - Fix "View Marketplace" logic to explicitly set customer mode ✅ DONE
+- [x] **Issue #46** - Fix "Become a Provider" dropdown state logic ✅ DONE
+- [x] **Issue #47** - Fix Chat data co-mingling (Backend API update) ✅ DONE
+- [x] **Issue #48** - Fix Chat data co-mingling (Frontend integration) ✅ DONE
+
 ---
 
 ## 📝 Detailed Implementation Notes
 
-### Issue #1: Fix Logout Functionality
-**File:** `client/src/components/header.tsx:220`
-**Status:** ⏳ Not Started
-**Changes Needed:**
-- Replace `setLocation('/api/logout')` with proper logout handler
-- Make async POST request to `/api/logout`
-- Handle success: clear local state, invalidate queries, redirect to home
-- Handle error: show toast notification
-**Files to Modify:**
-- `client/src/components/header.tsx`
+### Issue #44 & #45: Unify Dashboard Layout & Fix Navigation
+**File:** `client/src/components/dashboard-layout.tsx`
+- **Action:** Replaced custom Sidebar layout with `Header` + `main` container.
+- **Result:** Unified styling with marketplace and fixed "View Marketplace" navigation logic.
 
----
+### Issue #46: Fix Header Dropdown Logic
+**File:** `client/src/components/header.tsx`
+- **Action:** Updated condition to `userCanBeProvider || user?.role === 'provider'`.
+- **Result:** Dropdown now reliably shows "Provider Dashboard" for providers.
 
-### Issue #2: Complete Create Listing Page
-**File:** `client/src/pages/dashboard/create-listing.tsx`
-**Status:** ⏳ Not Started
-**Changes Needed:**
-- Build complete form with all service fields
-- Add image upload integration
-- Add category selection
-- Add location/address inputs
-- Add pricing configuration
-- Add tags input
-- Form validation with Zod
-- Submit to POST `/api/services`
-**Files to Modify:**
-- `client/src/pages/dashboard/create-listing.tsx`
-- Verify `server/controllers/service.controller.ts` has create endpoint
-
----
-
-### Issue #3: Fix Provider Profile Route Ordering
-**File:** `server/controllers/auth.controller.ts`
-**Status:** ⏳ Not Started
-**Changes Needed:**
-- Move `GET /providers/me/profile` (line 58) before `GET /providers/:id` (line 25)
-- Ensures Express matches specific route first
-**Files to Modify:**
-- `server/controllers/auth.controller.ts`
-
----
-
-### Issue #4: Implement Profile Update
-**File:** `client/src/pages/profile.tsx`
-**Status:** ⏳ Not Started
-**Changes Needed:**
-- Replace mock `handleSave` with real implementation
-- Create mutation for PATCH `/api/auth/user`
-- Add backend endpoint if missing
-- Handle success/error states
-**Files to Modify:**
-- `client/src/pages/profile.tsx`
-- `server/controllers/auth.controller.ts` (add update endpoint)
-- `server/services/user.service.ts` (add update method)
-
----
-
-### Issue #5-7: Authentication & Form Fixes
-**Status:** ⏳ Not Started
-**Details to be filled during implementation**
-
----
-
-### Issue #8-15: Create Missing Static Pages
-**Status:** ⏳ Not Started
-**Template:** All pages will follow similar structure with Header, content, Footer
-**Files to Create:**
-- `client/src/pages/categories.tsx`
-- `client/src/pages/category.tsx`
-- `client/src/pages/how-it-works.tsx`
-- `client/src/pages/pricing.tsx`
-- `client/src/pages/about.tsx`
-- `client/src/pages/contact.tsx`
-- `client/src/pages/terms.tsx`
-- `client/src/pages/privacy.tsx`
-
----
-
-### Issue #16: Create Edit Listing Page
-**Status:** ⏳ Not Started
-**Approach:** Duplicate create listing page, add data fetching for existing listing
-**Files to Create:**
-- `client/src/pages/dashboard/edit-listing.tsx`
-**Files to Modify:**
-- Add route to `client/src/App.tsx`
-- Verify PATCH endpoint exists: `server/controllers/service.controller.ts`
-
----
-
-### Issue #17: Route Registration
-**Status:** ⏳ Not Started
-**Details to be filled during implementation**
-
----
-
-### Issue #18: Backend API Route Audit
-**Status:** ⏳ Not Started
-**Required Endpoints:**
-- [x] POST `/api/providers` - Create provider (exists)
-- [x] GET `/api/auth/user` - Get current user (exists)
-- [x] POST `/api/logout` - Logout (exists)
-- [ ] PATCH `/api/auth/user` - Update user profile (verify)
-- [ ] PATCH `/api/providers/:id` - Update provider profile (verify)
-- [x] POST `/api/services` - Create service (exists)
-- [ ] PATCH `/api/services/:id` - Update service (verify)
-- [ ] DELETE `/api/services/:id` - Delete service (verify)
-- [ ] POST `/api/favorites` - Add to favorites (create)
-- [ ] DELETE `/api/favorites/:id` - Remove favorite (create)
-- [ ] GET `/api/favorites` - Get user favorites (create)
-- [ ] POST `/api/reports` - Report service (create)
-- [ ] POST `/api/reviews` - Create review (exists)
-- [ ] GET `/api/categories/:slug/services` - Get category services (verify)
-
----
-
-### Issue #19-26: Button Implementations
-**Status:** ⏳ Not Started
-**Details to be filled during implementation**
-
----
-
-### Issue #27-32: Error Handling
-**Status:** ⏳ Not Started
-**Pattern:** Add try-catch, onError handlers, error state UI
-**Details to be filled during implementation**
-
----
-
-### Issue #33-43: Code Quality & Polish
-**Status:** ⏳ Not Started
-**Details to be filled during implementation**
+### Issue #47 & #48: Fix Chat Co-mingling
+**File:** `server/controllers/chat.controller.ts`, `server/services/chat.service.ts`, `client/src/pages/messages.tsx`
+- **Action:** Added `role` query param support.
+- **Result:** Customer and Provider messages are now completely separated.
 
 ---
 
@@ -210,39 +100,21 @@
 - ✅ Fixed provider profile route ordering
 - ✅ Implemented profile update with backend
 
-### Checkpoint 2 - Static Pages & Routing ✅ (Current)
+### Checkpoint 2 - Static Pages & Routing ✅
 - ✅ Created all 8 missing static pages
 - ✅ Added all routes to App.tsx
 - ✅ Fixed 11 broken navigation links
+
+### Checkpoint 3 - UI & Logic Stabilization ✅ (Current)
+- ✅ Refactoring Dashboard Layout
+- ✅ Fixing Chat Data Logic
 
 ---
 
 ## 📊 Statistics
 
-- **Total Issues:** 43
-- **Completed:** 17
+- **Total Issues:** 48
+- **Completed:** 22
 - **In Progress:** 0
 - **Not Started:** 26
-- **Progress:** 40%
-- **Git Commit:** a23359d
-- **Pushed to GitHub:** ✅ https://github.com/farzanfaizal/awthar.git
-
----
-
-## 🎯 Next Steps (Remaining High-Impact Items)
-1. ⏳ Create edit listing page and route
-2. ⏳ Implement non-functional buttons (favorites, share, report, reviews)
-3. ⏳ Add backend API endpoints for favorites/reports
-4. ⏳ Fix "Become a Provider" links in footer/landing
-5. ⏳ Add comprehensive error handling
-6. ⏳ Remove console.log statements
-
----
-
-**Last Updated:** 2025-12-03 (Successfully committed and pushed to GitHub)
-
----
-
-## ✅ Session Complete - Major Milestone Reached
-
-All critical and high-priority issues have been systematically resolved following professional development practices. The application is now significantly more stable, functional, and user-friendly.
+- **Progress:** 45%

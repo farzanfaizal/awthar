@@ -9,7 +9,8 @@ const messageRouter = Router();
 conversationRouter.get("/", isAuthenticated, async (req: any, res) => {
   try {
     const userId = getUserId(req);
-    const conversations = await ChatService.getUserConversations(userId);
+    const role = req.query.role as 'customer' | 'provider' | undefined;
+    const conversations = await ChatService.getUserConversations(userId, role);
     res.json(conversations);
   } catch (error: any) {
     res.status(500).json({ message: error.message });

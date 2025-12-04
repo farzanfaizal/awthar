@@ -206,7 +206,8 @@ export function Header() {
                 <DropdownMenuSeparator />
 
                 {/* Mode Switcher / Become a Provider */}
-                {userCanBeProvider ? (
+                {/* We check both context flag and direct user role to be safe against race conditions */}
+                {userCanBeProvider || user?.role === 'provider' ? (
                   <>
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger>
@@ -224,6 +225,15 @@ export function Header() {
                         </DropdownMenuItem>
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
+                    
+                    {/* Direct Link to Dashboard if in Customer Mode but is a Provider */}
+                    {isCustomerMode && (
+                      <DropdownMenuItem onClick={() => setMode('provider')}>
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        <span>Provider Dashboard</span>
+                      </DropdownMenuItem>
+                    )}
+                    
                     <DropdownMenuSeparator />
                   </>
                 ) : (
