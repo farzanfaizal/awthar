@@ -118,6 +118,8 @@ export const services = pgTable("services", {
     latitude?: number;
     longitude?: number;
   }>(),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
   tags: text("tags").array(),
   viewCount: integer("view_count").default(0).notNull(),
   contactCount: integer("contact_count").default(0).notNull(),
@@ -367,6 +369,8 @@ export const insertServiceSchema = createInsertSchema(services, {
     latitude: z.number().optional(),
     longitude: z.number().optional(),
   }).optional().nullable(),
+  latitude: z.number().optional().nullable(),
+  longitude: z.number().optional().nullable(),
 }).omit({
   id: true,
   createdAt: true,

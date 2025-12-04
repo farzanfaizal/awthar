@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useRoute, Link, useLocation } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageGallery } from "@/components/image-gallery";
 import { ProviderCard } from "@/components/provider-card";
 import { BookingForm } from "@/components/booking-form";
@@ -8,6 +9,24 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,7 +35,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Star, Eye, MessageCircle, MapPin, Share2, Flag, Heart } from "lucide-react";
+import { Star, Eye, MessageCircle, MapPin, Share2, Flag, Heart, Loader2 } from "lucide-react";
 import { Service, ProviderProfile, User, Category } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -34,10 +53,79 @@ export default function ServiceDetailPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
+  
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportType, setReportType] = useState("");
+  const [reportReason, setReportReason] = useState("");
 
   const { data: service, isLoading } = useQuery<ServiceWithRelations>({
     queryKey: [`/api/services/${id}`],
     enabled: !!id,
+  });
+
+  // Check favorite status
+  const { data: favoriteData } = useQuery({
+    queryKey: ["/api/favorites/check", id],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/favorites/check/${id}`);
+      return res.json();
+    },
+    enabled: !!id && isAuthenticated,
+  });
+
+  const isFavorited = favoriteData?.isFavorited || false;
+
+  // Toggle Favorite
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async () => {
+      if (isFavorited) {
+        await apiRequest("DELETE", `/api/favorites/${id}`);
+      } else {
+        await apiRequest("POST", "/api/favorites", { serviceId: id });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites/check", id] });
+      toast({
+        title: isFavorited ? "Removed from Favorites" : "Saved to Favorites",
+        description: isFavorited ? "Service removed from your list." : "Service saved to your favorites list.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Report Service
+  const reportMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/reports", {
+        serviceId: id,
+        type: reportType,
+        reason: reportReason,
+      });
+    },
+    onSuccess: () => {
+      setReportOpen(false);
+      setReportType("");
+      setReportReason("");
+      toast({
+        title: "Report Submitted",
+        description: "Thank you for your report. We will review it shortly.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const createConversationMutation = useMutation({
@@ -77,6 +165,26 @@ export default function ServiceDetailPage() {
     createConversationMutation.mutate({
       providerId: service.provider.id,
       serviceId: service.id,
+    });
+  };
+
+  const handleFavoriteClick = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to save favorites.",
+        variant: "destructive",
+      });
+      return;
+    }
+    toggleFavoriteMutation.mutate();
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast({
+      title: "Link Copied",
+      description: "Service link copied to clipboard.",
     });
   };
 
@@ -276,18 +384,71 @@ export default function ServiceDetailPage() {
 
             {/* Quick Actions */}
             <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start">
-                <Heart className="w-4 h-4 mr-2" />
-                Save to Favorites
+              <Button 
+                variant={isFavorited ? "default" : "outline"} 
+                className="w-full justify-start"
+                onClick={handleFavoriteClick}
+                disabled={toggleFavoriteMutation.isPending}
+              >
+                <Heart className={`w-4 h-4 mr-2 ${isFavorited ? "fill-current" : ""}`} />
+                {isFavorited ? "Saved to Favorites" : "Save to Favorites"}
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button variant="outline" className="w-full justify-start" onClick={handleShare}>
                 <Share2 className="w-4 h-4 mr-2" />
                 Share Service
               </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Flag className="w-4 h-4 mr-2" />
-                Report
-              </Button>
+              
+              <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start text-destructive hover:text-destructive">
+                    <Flag className="w-4 h-4 mr-2" />
+                    Report
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Report Service</DialogTitle>
+                    <DialogDescription>
+                      Please describe why you are reporting this service. We take all reports seriously.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label>Reason Type</Label>
+                      <Select onValueChange={setReportType}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a reason" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="spam">Spam or Misleading</SelectItem>
+                          <SelectItem value="inappropriate">Inappropriate Content</SelectItem>
+                          <SelectItem value="fraud">Fraud or Scam</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Textarea 
+                        placeholder="Please provide more details..." 
+                        value={reportReason}
+                        onChange={(e) => setReportReason(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setReportOpen(false)}>Cancel</Button>
+                    <Button 
+                      variant="destructive" 
+                      onClick={() => reportMutation.mutate()}
+                      disabled={!reportType || !reportReason || reportMutation.isPending}
+                    >
+                      {reportMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Submit Report
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>

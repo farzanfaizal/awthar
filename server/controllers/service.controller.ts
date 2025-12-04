@@ -45,13 +45,14 @@ serviceRouter.get("/", async (req, res) => {
     }
 
     const services = await ServiceService.searchServices({
-      category: req.query.category as string,
+      category: req.query.category as string | string[],
       search: req.query.search as string,
       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
       maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
       providerId: providerId,
       limit: req.query.limit ? parseInt(req.query.limit as string) : 20,
       offset: req.query.offset ? parseInt(req.query.offset as string) : 0,
+      sortBy: req.query.sortBy as 'price_asc' | 'price_desc' | 'rating' | 'newest',
     });
     res.json(services);
   } catch (error: any) {

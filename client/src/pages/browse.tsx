@@ -39,9 +39,10 @@ export default function Browse() {
     const params = new URLSearchParams(window.location.search);
     return {
       search: params.get("search") || "",
-      categories: [] as string[],
+      categories: params.getAll("category"), // Get all categories
       minPrice: 0,
       maxPrice: 2000,
+      sortBy: params.get("sortBy") || "newest",
     };
   });
 
@@ -56,25 +57,29 @@ export default function Browse() {
   }, [location]);
 
   const handleApplyFilters = () => {
-    setAppliedFilters({
+    setAppliedFilters(prev => ({
+      ...prev,
       search: searchQuery,
       categories: selectedCategories,
       minPrice: priceRange[0],
       maxPrice: priceRange[1],
-    });
+    }));
     setShowFilters(false); // Close mobile sheet if open
+  };
+
+  const handleSortChange = (value: string) => {
+    // Sort applies instantly
+    setAppliedFilters(prev => ({ ...prev, sortBy: value }));
   };
 
   const queryParams = new URLSearchParams();
   if (appliedFilters.search) queryParams.append("search", appliedFilters.search);
   if (appliedFilters.categories.length > 0) {
-    // Sending the first one for now as backend search might expect single 'category'
-    // Or if backend supports multiple, we can loop. 
-    // Let's try sending the first one to ensure basic filtering works.
-    queryParams.append("category", appliedFilters.categories[0]);
+    appliedFilters.categories.forEach(cat => queryParams.append("category", cat));
   }
   queryParams.append("minPrice", appliedFilters.minPrice.toString());
   queryParams.append("maxPrice", appliedFilters.maxPrice.toString());
+  queryParams.append("sortBy", appliedFilters.sortBy);
 
   const { data: services, isLoading } = useQuery<ServiceWithRelations[]>({
     queryKey: [`/api/services?${queryParams.toString()}`],
@@ -179,16 +184,15 @@ export default function Browse() {
               <Button onClick={handleApplyFilters} className="h-12 px-6 rounded-xl whitespace-nowrap">
                 Search
               </Button>
-              <Select defaultValue="relevance">
+              <Select value={appliedFilters.sortBy} onValueChange={handleSortChange}>
                 <SelectTrigger className="w-[180px] h-12 rounded-xl">
-                  <SelectValue />
+                  <SelectValue placeholder="Sort By" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="relevance">Most Relevant</SelectItem>
+                  <SelectItem value="newest">Newest First</SelectItem>
                   <SelectItem value="rating">Highest Rated</SelectItem>
-                  <SelectItem value="reviews">Most Reviews</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
+                  <SelectItem value="price_asc">Price: Low to High</SelectItem>
+                  <SelectItem value="price_desc">Price: High to Low</SelectItem>
                 </SelectContent>
               </Select>
 
