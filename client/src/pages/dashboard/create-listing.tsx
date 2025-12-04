@@ -395,46 +395,14 @@ export default function CreateListingPage() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Service Images</h3>
                   <p className="text-sm text-muted-foreground">
-                    Upload high-quality images of your work. First image will be the cover.
+                    Upload high-quality images of your work. The first uploaded image will be used as the cover.
                   </p>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {uploadedImages.map((url, index) => (
-                      <div key={index} className="relative group aspect-square overflow-hidden">
-                        <img
-                          src={url}
-                          alt={`Service ${index + 1}`}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-lg"
-                          onClick={() => removeImage(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                        {index === 0 && (
-                          <div className="absolute bottom-2 left-2 bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-semibold">
-                            Cover
-                          </div>
-                        )}
-                      </div>
-                    ))}
-
-                    <ImageUpload
-                      onUploadComplete={handleImageUpload}
-                      maxFiles={10 - uploadedImages.length}
-                      trigger={
-                        <div className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors gap-2">
-                          <ImagePlus className="h-8 w-8 text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground">Add Images</p>
-                        </div>
-                      }
-                    />
-                  </div>
+                  <ImageUpload 
+                    value={uploadedImages} 
+                    onChange={setUploadedImages} 
+                    maxFiles={10} 
+                  />
                 </div>
 
                 {/* Tags */}

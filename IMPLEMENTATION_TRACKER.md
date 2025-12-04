@@ -2,7 +2,7 @@
 
 **Session Started:** 2025-12-03
 **Status:** In Progress
-**Total Issues:** 50
+**Total Issues:** 51
 
 ---
 
@@ -73,15 +73,16 @@
 ### Phase 8: Infrastructure & Uploads (New)
 - [x] **Issue #49** - Migrate local uploads to Supabase S3 + Image Compression ✅ DONE
 - [x] **Issue #50** - Fix Supabase S3 NoSuchBucket error ✅ DONE
+- [x] **Issue #51** - Fix Create Listing image upload component prop mismatch ✅ DONE
 
 ---
 
 ## 📝 Detailed Implementation Notes
 
-### Issue #50: Fix Supabase S3 NoSuchBucket error
-**File:** `server/storage/supabase-upload.ts`
-- **Action:** Updated the default `BUCKET_NAME` to "awthar".
-- **Result:** Resolves the `NoSuchBucket` error encountered during image uploads.
+### Issue #51: Fix Create Listing Image Upload
+**File:** `client/src/pages/dashboard/create-listing.tsx`
+- **Action:** Corrected the usage of the `ImageUpload` component to match its definition. Removed invalid `onUploadComplete` and `trigger` props.
+- **Result:** Images now successfully update the form state after upload.
 
 ---
 
@@ -105,13 +106,14 @@
 
 ### Checkpoint 4 - Infrastructure ✅ (Current)
 - ✅ Supabase S3 Integration
+- ✅ Upload Component Fixes
 
 ---
 
 ## 📊 Statistics
 
-- **Total Issues:** 50
-- **Completed:** 24
+- **Total Issues:** 51
+- **Completed:** 25
 - **In Progress:** 0
 - **Not Started:** 26
-- **Progress:** 48%
+- **Progress:** 49%
