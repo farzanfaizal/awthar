@@ -141,30 +141,32 @@ export default function BookingsPage() {
                           <div className="text-sm font-medium">
                             AED {booking.agreedPrice}
                           </div>
-                          
+
                           <div className="flex-1" />
 
                           {/* Action Buttons */}
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
+                          <div className="flex flex-wrap gap-2">
+                            <Button variant="outline" size="sm" className="flex-1 sm:flex-initial">
                               <MessageSquare className="w-4 h-4 mr-2" />
                               Message
                             </Button>
 
                             {booking.status === "pending" && (
                               <>
-                                <Button 
-                                  size="sm" 
+                                <Button
+                                  size="sm"
                                   variant="default"
+                                  className="flex-1 sm:flex-initial"
                                   onClick={() => updateStatusMutation.mutate({ id: booking.id, status: "accepted" })}
                                   disabled={updateStatusMutation.isPending}
                                 >
                                   <CheckCircle className="w-4 h-4 mr-2" />
                                   Accept
                                 </Button>
-                                <Button 
-                                  size="sm" 
+                                <Button
+                                  size="sm"
                                   variant="destructive"
+                                  className="flex-1 sm:flex-initial"
                                   onClick={() => updateStatusMutation.mutate({ id: booking.id, status: "cancelled" })}
                                   disabled={updateStatusMutation.isPending}
                                 >
@@ -175,8 +177,9 @@ export default function BookingsPage() {
                             )}
 
                             {booking.status === "accepted" && (
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
+                                className="flex-1 sm:flex-initial"
                                 onClick={() => updateStatusMutation.mutate({ id: booking.id, status: "in_progress" })}
                                 disabled={updateStatusMutation.isPending}
                               >
@@ -186,9 +189,9 @@ export default function BookingsPage() {
                             )}
 
                             {booking.status === "in_progress" && (
-                              <Button 
-                                size="sm" 
-                                className="bg-green-600 hover:bg-green-700"
+                              <Button
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-initial"
                                 onClick={() => updateStatusMutation.mutate({ id: booking.id, status: "completed" })}
                                 disabled={updateStatusMutation.isPending}
                               >

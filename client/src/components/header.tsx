@@ -121,18 +121,23 @@ export function Header() {
         <div className="hidden md:flex flex-1 items-center justify-center px-8">
           {isCustomerMode && (
             <div className="relative w-full max-w-xl">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
                 type="search"
                 placeholder="Search for services..."
-                className="pl-12 pr-12 h-10 rounded-full border-2 focus-visible:ring-2 focus-visible:ring-primary/20 bg-background/80 w-full transition-all focus:w-full"
+                className="pl-10 pr-10 h-10 rounded-full border-2 focus-visible:ring-2 focus-visible:ring-primary/20 bg-background/80 w-full transition-all"
                 data-testid="input-search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
               />
-              <Button size="icon" variant="ghost" className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-transparent" onClick={handleSearch}>
-                 <Search className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
+              <Button
+                size="sm"
+                variant="ghost"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-primary/10 rounded-full"
+                onClick={handleSearch}
+              >
+                <Search className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
               </Button>
             </div>
           )}

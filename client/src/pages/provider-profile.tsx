@@ -100,9 +100,9 @@ export default function ProviderProfilePage() {
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-primary/5 to-secondary/5 border-b">
         <div className="container mx-auto px-4 py-12">
-          <div className="flex flex-col md:flex-row items-start gap-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-8">
             {/* Profile Photo */}
-            <Avatar className="w-32 h-32 border-4 border-background shadow-xl">
+            <Avatar className="w-24 sm:w-32 h-24 sm:h-32 border-4 border-background shadow-xl flex-shrink-0">
               <AvatarImage src={provider.user.profileImageUrl || undefined} />
               <AvatarFallback className="text-2xl">
                 {provider.user.firstName?.[0]}{provider.user.lastName?.[0]}
@@ -136,7 +136,7 @@ export default function ProviderProfilePage() {
               </p>
 
               {/* Rating & Stats */}
-              <div className="flex flex-wrap items-center gap-6 mt-6">
+              <div className="flex flex-wrap items-center gap-4 md:gap-6 mt-6">
                 <div className="flex items-center gap-2">
                   <div className="flex">
                     {[1, 2, 3, 4, 5].map((star) => (

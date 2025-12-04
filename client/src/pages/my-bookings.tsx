@@ -102,11 +102,11 @@ export default function MyBookingsPage() {
                 filteredBookings?.map((booking) => (
                   <Card key={booking.id} className="overflow-hidden hover:shadow-md transition-shadow border-muted-foreground/20">
                     <div className="p-6">
-                      <div className="flex flex-col md:flex-row gap-6">
+                      <div className="flex flex-col md:flex-row gap-4 md:gap-6">
                         {/* Image */}
-                        <div className="w-full md:w-48 h-32 bg-muted rounded-lg flex-shrink-0 overflow-hidden">
+                        <div className="w-full sm:w-40 md:w-48 h-32 bg-muted rounded-lg flex-shrink-0 overflow-hidden">
                           {booking.service.images?.[0] ? (
-                             <img src={booking.service.images[0]} className="w-full h-full object-cover" />
+                             <img src={booking.service.images[0]} alt={booking.service.titleEn} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10" />
                           )}
@@ -149,16 +149,16 @@ export default function MyBookingsPage() {
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
-                            <div className="flex items-center gap-2">
-                              <CalendarIcon className="w-4 h-4 text-muted-foreground" />
-                              <span className="font-medium">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-sm">
+                            <div className="flex items-start gap-2">
+                              <CalendarIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                              <span className="font-medium break-words">
                                 {booking.scheduledDate ? format(new Date(booking.scheduledDate), "PPP 'at' p") : "Date not set"}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <MapPin className="w-4 h-4 text-muted-foreground" />
-                              <span>
+                            <div className="flex items-start gap-2">
+                              <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                              <span className="break-words">
                                 {booking.service.location?.emirate || "Location not specified"}
                               </span>
                             </div>

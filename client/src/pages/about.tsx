@@ -65,10 +65,10 @@ export default function AboutPage() {
         <div className="bg-muted/30 py-16">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-12">Our Values</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8">
               {values.map((value, index) => (
                 <Card key={index}>
-                  <CardContent className="pt-8 text-center">
+                  <CardContent className="p-6 text-center">
                     <div className="flex justify-center mb-4">{value.icon}</div>
                     <h3 className="text-xl font-semibold mb-3">{value.title}</h3>
                     <p className="text-muted-foreground">{value.description}</p>

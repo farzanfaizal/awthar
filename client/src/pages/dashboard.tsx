@@ -17,11 +17,11 @@ export default function Dashboard() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="rounded-xl">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">Profile Views</CardTitle>
-              <Eye className="h-4 w-4 text-muted-foreground" />
+              <Eye className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">2,547</div>
@@ -35,7 +35,7 @@ export default function Dashboard() {
           <Card className="rounded-xl">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">Contact Requests</CardTitle>
-              <MessageCircle className="h-4 w-4 text-muted-foreground" />
+              <MessageCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">184</div>
@@ -49,7 +49,7 @@ export default function Dashboard() {
           <Card className="rounded-xl">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">Active Listings</CardTitle>
-              <ListPlus className="h-4 w-4 text-muted-foreground" />
+              <ListPlus className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">12</div>
@@ -62,7 +62,7 @@ export default function Dashboard() {
           <Card className="rounded-xl">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
-              <Award className="h-4 w-4 text-muted-foreground" />
+              <Award className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">4.8</div>
@@ -80,21 +80,21 @@ export default function Dashboard() {
             <CardDescription>Manage your provider account</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Link href="/dashboard/listings/new">
-                <Button className="w-full h-auto py-6 rounded-xl hover-elevate active-elevate-2 flex flex-col gap-2" data-testid="button-create-listing">
+                <Button className="w-full h-auto py-4 md:py-6 rounded-xl hover-elevate active-elevate-2 flex flex-col gap-2" data-testid="button-create-listing">
                   <ListPlus className="h-6 w-6" />
                   <span>Create New Listing</span>
                 </Button>
               </Link>
               <Link href="/dashboard/messages">
-                <Button variant="outline" className="w-full h-auto py-6 rounded-xl hover-elevate active-elevate-2 flex flex-col gap-2" data-testid="button-view-messages">
+                <Button variant="outline" className="w-full h-auto py-4 md:py-6 rounded-xl hover-elevate active-elevate-2 flex flex-col gap-2" data-testid="button-view-messages">
                   <MessageSquare className="h-6 w-6" />
                   <span>View Messages</span>
                 </Button>
               </Link>
               <Link href="/dashboard/analytics">
-                <Button variant="outline" className="w-full h-auto py-6 rounded-xl hover-elevate active-elevate-2 flex flex-col gap-2" data-testid="button-view-analytics">
+                <Button variant="outline" className="w-full h-auto py-4 md:py-6 rounded-xl hover-elevate active-elevate-2 flex flex-col gap-2" data-testid="button-view-analytics">
                   <BarChart3 className="h-6 w-6" />
                   <span>View Analytics</span>
                 </Button>
@@ -111,10 +111,10 @@ export default function Dashboard() {
               <CardDescription>Latest conversations with customers</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex items-start gap-4 p-4 rounded-lg hover-elevate cursor-pointer" data-testid={`message-item-${i + 1}`}>
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-semibold text-primary">
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover-elevate cursor-pointer" data-testid={`message-item-${i + 1}`}>
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-semibold text-primary flex-shrink-0">
                       {String.fromCharCode(65 + i)}
                     </div>
                     <div className="flex-1 min-w-0">

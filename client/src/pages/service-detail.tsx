@@ -121,23 +121,23 @@ export default function ServiceDetailPage() {
 
           {/* Title & Category */}
           <div className="mt-6">
-            <Breadcrumb className="mb-4">
-              <BreadcrumbList>
-                <BreadcrumbItem>
+            <Breadcrumb className="mb-4 overflow-hidden">
+              <BreadcrumbList className="flex-wrap">
+                <BreadcrumbItem className="truncate mx-1 hidden sm:inline">
                   <BreadcrumbLink href="/">Home</BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden sm:inline" />
+                <BreadcrumbItem className="truncate mx-1 hidden sm:inline">
                   <BreadcrumbLink href="/browse">Browse</BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden sm:inline" />
+                <BreadcrumbItem className="truncate mx-1">
                   <BreadcrumbLink href={`/browse?category=${service.category.slug}`}>
                     {service.category.nameEn}
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
-                <BreadcrumbItem>
+                <BreadcrumbItem className="truncate mx-1">
                   <BreadcrumbPage>{service.titleEn}</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
@@ -252,7 +252,7 @@ export default function ServiceDetailPage() {
 
         {/* Right Column - Provider Card & Booking */}
         <div className="lg:col-span-1">
-          <div className="sticky top-24 space-y-4">
+          <div className="sticky top-28 lg:top-32 space-y-4">
             <ProviderCard 
               provider={service.provider} 
               onMessage={handleMessageProvider}

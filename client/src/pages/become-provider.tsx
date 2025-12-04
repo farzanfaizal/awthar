@@ -138,14 +138,14 @@ export default function BecomeProviderPage() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="casual_tasker">
-                            <div className="flex items-center">
-                              <Users className="mr-2 h-4 w-4" />
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 flex-shrink-0" />
                               <span>Freelancer / Casual Tasker</span>
                             </div>
                           </SelectItem>
                           <SelectItem value="licensed_professional">
-                            <div className="flex items-center">
-                              <Building2 className="mr-2 h-4 w-4" />
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4 flex-shrink-0" />
                               <span>Licensed Professional / Company</span>
                             </div>
                           </SelectItem>
@@ -191,7 +191,7 @@ export default function BecomeProviderPage() {
                   )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="phone"

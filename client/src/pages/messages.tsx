@@ -50,14 +50,14 @@ export default function MessagesPage() {
     <div className="h-screen flex flex-col">
       <Header />
       
-      <div className="flex-1 flex overflow-hidden container mx-auto max-w-6xl my-0 md:my-4 border-0 md:border md:rounded-xl shadow-sm bg-background">
+      <div className="flex-1 flex overflow-hidden container mx-auto max-w-6xl px-0 md:px-4 my-0 md:my-4 border-0 md:border md:rounded-xl shadow-sm bg-background">
         {/* Sidebar - Conversation List */}
         <div className={cn(
-          "w-full md:w-80 border-r flex-col bg-muted/10",
+          "w-full md:w-80 border-r flex flex-col bg-muted/10",
           activeConversationId ? "hidden md:flex" : "flex"
         )}>
-          <div className="p-4 border-b">
-            <h2 className="font-semibold flex items-center gap-2">
+          <div className="p-3 md:p-4 border-b">
+            <h2 className="font-semibold text-sm md:text-base flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
               Messages
             </h2>

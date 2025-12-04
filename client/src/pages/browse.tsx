@@ -158,9 +158,9 @@ export default function Browse() {
           </div>
 
           {/* Search & Sort */}
-          <div className="mb-6 flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <div className="mb-6 flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
               <Input
                 type="search"
                 placeholder="Search services..."
@@ -174,10 +174,10 @@ export default function Browse() {
                 }}
               />
             </div>
-             <Button onClick={handleApplyFilters} className="h-12 px-6 rounded-xl">
-              Search
-            </Button>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-shrink-0">
+              <Button onClick={handleApplyFilters} className="h-12 px-6 rounded-xl whitespace-nowrap">
+                Search
+              </Button>
               <Select defaultValue="relevance">
                 <SelectTrigger className="w-[180px] h-12 rounded-xl">
                   <SelectValue />
@@ -194,7 +194,7 @@ export default function Browse() {
               {/* Mobile Filter Button */}
               <Sheet open={showFilters} onOpenChange={setShowFilters}>
                 <SheetTrigger asChild className="md:hidden">
-                  <Button variant="outline" size="icon" className="h-12 w-12 rounded-xl">
+                  <Button variant="outline" size="icon" className="h-12 w-12 rounded-xl flex-shrink-0">
                     <SlidersHorizontal className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
@@ -212,8 +212,8 @@ export default function Browse() {
 
           <div className="flex gap-8">
             {/* Desktop Filters Sidebar */}
-            <aside className="hidden md:block w-80 flex-shrink-0">
-              <Card className="sticky top-24 rounded-xl">
+            <aside className="hidden md:block w-64 xl:w-80 flex-shrink-0">
+              <Card className="sticky top-32 rounded-xl">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="font-semibold text-lg">Filters</h2>
@@ -263,13 +263,13 @@ export default function Browse() {
                   {services.map((service) => (
                     <Link key={service.id} href={`/service/${service.id}`}>
                       <Card className="hover-elevate active-elevate-2 cursor-pointer transition-all border-2 rounded-xl h-full group">
-                        <CardContent className="p-0">
+                        <CardContent className="p-0 flex flex-col h-full">
                           {/* Image */}
                           <div className="aspect-video bg-muted rounded-t-xl relative overflow-hidden">
                             {service.images?.[0] ? (
-                              <img 
-                                src={service.images[0]} 
-                                alt={service.titleEn} 
+                              <img
+                                src={service.images[0]}
+                                alt={service.titleEn}
                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                               />
                             ) : (
@@ -282,7 +282,7 @@ export default function Browse() {
                             )}
                           </div>
 
-                          <div className="p-6">
+                          <div className="p-6 flex flex-col flex-1">
                             <div className="flex items-start gap-3 mb-3">
                               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary flex-shrink-0 overflow-hidden">
                                 {service.provider.user.profileImageUrl ? (
@@ -318,12 +318,12 @@ export default function Browse() {
                               </div>
                             </div>
 
-                            <div className="flex items-center justify-between pt-4 border-t">
+                            <div className="flex items-center justify-between pt-4 border-t mt-auto">
                               <div>
                                 <div className="text-2xl font-bold text-primary">
-                                  {service.pricingType === 'fixed' ? 
-                                    `${service.priceMin} ${service.currency}` : 
-                                    service.pricingType === 'hourly' ? 
+                                  {service.pricingType === 'fixed' ?
+                                    `${service.priceMin} ${service.currency}` :
+                                    service.pricingType === 'hourly' ?
                                     `${service.priceMin}/hr` : 'Custom'}
                                 </div>
                                 <div className="text-xs text-muted-foreground">

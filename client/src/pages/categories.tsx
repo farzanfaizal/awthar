@@ -29,7 +29,7 @@ export default function CategoriesPage() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {categories?.map((category: any) => (
                 <Link key={category.id} href={`/category/${category.slug}`}>
                   <Card className="hover:shadow-lg transition-shadow cursor-pointer hover:border-primary">

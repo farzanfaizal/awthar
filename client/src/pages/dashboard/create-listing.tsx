@@ -400,17 +400,18 @@ export default function CreateListingPage() {
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {uploadedImages.map((url, index) => (
-                      <div key={index} className="relative group aspect-square">
+                      <div key={index} className="relative group aspect-square overflow-hidden">
                         <img
                           src={url}
                           alt={`Service ${index + 1}`}
                           className="w-full h-full object-cover rounded-lg"
                         />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
                         <Button
                           type="button"
                           variant="destructive"
                           size="icon"
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-lg"
                           onClick={() => removeImage(index)}
                         >
                           <X className="h-4 w-4" />
@@ -427,8 +428,8 @@ export default function CreateListingPage() {
                       onUploadComplete={handleImageUpload}
                       maxFiles={10 - uploadedImages.length}
                       trigger={
-                        <div className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
-                          <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
+                        <div className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors gap-2">
+                          <ImagePlus className="h-8 w-8 text-muted-foreground" />
                           <p className="text-sm text-muted-foreground">Add Images</p>
                         </div>
                       }

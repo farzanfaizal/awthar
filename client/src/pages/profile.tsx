@@ -84,7 +84,7 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSave} className="space-y-6">
-                <div className="flex flex-col items-center gap-4 mb-6">
+                <div className="flex flex-col items-center gap-4 pb-6 border-b">
                   <Avatar className="w-24 h-24">
                     <AvatarImage src={profileImageUrl || user.profileImageUrl || undefined} />
                     <AvatarFallback className="text-2xl">{firstName?.[0] || user.firstName?.[0]}</AvatarFallback>
@@ -102,7 +102,7 @@ export default function ProfilePage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">First Name</label>
                     <Input

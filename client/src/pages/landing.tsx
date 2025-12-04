@@ -65,8 +65,8 @@ export default function Landing() {
             {/* Hero Search */}
             <div className="bg-background/95 backdrop-blur-sm rounded-2xl p-4 shadow-2xl">
               <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <div className="relative flex-1 min-w-0">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                   <Input
                     type="search"
                     placeholder="What service do you need?"
@@ -75,8 +75,8 @@ export default function Landing() {
                     aria-label="Search for services"
                   />
                 </div>
-                <div className="relative flex-1">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <div className="relative flex-1 min-w-0">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                   <Input
                     type="text"
                     placeholder="Location (Emirate, City, Area)"
@@ -85,7 +85,7 @@ export default function Landing() {
                     aria-label="Location"
                   />
                 </div>
-                <Button size="lg" className="h-14 px-8 rounded-xl bg-secondary hover:bg-secondary/90 text-white font-semibold w-full md:w-auto" data-testid="button-hero-search" asChild>
+                <Button size="lg" className="h-14 px-8 rounded-xl bg-secondary hover:bg-secondary/90 text-white font-semibold whitespace-nowrap flex-shrink-0" data-testid="button-hero-search" asChild>
                   <Link href="/browse">
                     Search Services
                   </Link>
@@ -94,18 +94,18 @@ export default function Landing() {
             </div>
 
             {/* Quick Stats */}
-            <div className="mt-12 grid grid-cols-3 gap-8">
-              <div>
-                <div className="text-3xl md:text-4xl font-bold mb-1">7,000+</div>
-                <div className="text-sm text-primary-foreground/80">Service Providers</div>
+            <div className="mt-12 grid grid-cols-3 gap-4 md:gap-8">
+              <div className="text-center">
+                <div className="text-2xl md:text-3xl lg:text-4xl font-bold mb-1 truncate">7,000+</div>
+                <div className="text-xs md:text-sm text-primary-foreground/80">Service Providers</div>
               </div>
-              <div>
-                <div className="text-3xl md:text-4xl font-bold mb-1">50,000+</div>
-                <div className="text-sm text-primary-foreground/80">Jobs Completed</div>
+              <div className="text-center">
+                <div className="text-2xl md:text-3xl lg:text-4xl font-bold mb-1 truncate">50,000+</div>
+                <div className="text-xs md:text-sm text-primary-foreground/80">Jobs Completed</div>
               </div>
-              <div>
-                <div className="text-3xl md:text-4xl font-bold mb-1">4.8★</div>
-                <div className="text-sm text-primary-foreground/80">Average Rating</div>
+              <div className="text-center">
+                <div className="text-2xl md:text-3xl lg:text-4xl font-bold mb-1 truncate">4.8★</div>
+                <div className="text-xs md:text-sm text-primary-foreground/80">Average Rating</div>
               </div>
             </div>
           </div>
@@ -205,8 +205,8 @@ export default function Landing() {
 
                 return (
                   <Link key={service.id} href={`/service/${service.id}`}>
-                    <Card className="hover-elevate active-elevate-2 cursor-pointer transition-all border-2 rounded-xl h-full" data-testid={`card-service-${service.id}`}>
-                      <CardContent className="p-6">
+                    <Card className="hover-elevate active-elevate-2 cursor-pointer transition-all border-2 rounded-xl h-full flex flex-col" data-testid={`card-service-${service.id}`}>
+                      <CardContent className="p-6 flex flex-col h-full">
                         <div className="flex items-start gap-4 mb-4">
                           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center font-bold text-xl text-primary flex-shrink-0 overflow-hidden">
                              {user.profileImageUrl ? (
@@ -233,7 +233,7 @@ export default function Landing() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="grid grid-cols-2 gap-4 text-sm flex-1">
                           <div>
                             <div className="text-muted-foreground mb-1">Completed Jobs</div>
                             <div className="font-semibold">{provider.completedJobs}</div>
@@ -241,14 +241,14 @@ export default function Landing() {
                           <div>
                             <div className="text-muted-foreground mb-1">Price</div>
                             <div className="font-semibold">
-                              {service.pricingType === 'fixed' ? 
-                                `AED ${service.priceMin}` : 
+                              {service.pricingType === 'fixed' ?
+                                `AED ${service.priceMin}` :
                                 `AED ${service.priceMin}/hr`}
                             </div>
                           </div>
                         </div>
 
-                        <Button className="w-full mt-6 rounded-lg" data-testid={`button-view-service-${service.id}`}>
+                        <Button className="w-full mt-auto pt-6 border-t rounded-lg" data-testid={`button-view-service-${service.id}`}>
                           <MessageSquare className="w-4 h-4 mr-2" />
                           View Service
                         </Button>

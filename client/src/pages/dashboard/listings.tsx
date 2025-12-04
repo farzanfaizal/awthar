@@ -103,9 +103,9 @@ export default function ListingsPage() {
           ) : (
             services?.map((service) => (
               <Card key={service.id} className="overflow-hidden">
-                <div className="p-6 flex items-start gap-6">
+                <div className="p-4 md:p-6 flex flex-col sm:flex-row items-start gap-4 md:gap-6">
                   {/* Image */}
-                  <div className="w-32 h-24 rounded-lg bg-muted flex-shrink-0 overflow-hidden">
+                  <div className="w-full sm:w-32 h-24 rounded-lg bg-muted flex-shrink-0 overflow-hidden">
                     {service.images?.[0] ? (
                       <img src={service.images[0]} alt={service.titleEn} className="w-full h-full object-cover" />
                     ) : (
