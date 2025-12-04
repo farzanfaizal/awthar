@@ -44,7 +44,7 @@ export class SupabaseStorage {
       Key: filename,
       Body: optimizedBuffer,
       ContentType: "image/webp",
-      // ACL: 'public-read', // Supabase buckets are usually private or public by policy, ACL might not be needed or allowed depending on config
+      ACL: 'public-read', // Ensure file is publicly readable
     });
 
     await s3Client.send(command);
