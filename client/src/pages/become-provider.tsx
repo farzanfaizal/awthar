@@ -32,7 +32,8 @@ import { Loader2, Briefcase, Building2, Users } from "lucide-react";
 import { Header } from "@/components/header";
 
 // Extend the schema to make certain fields required for the form
-const becomeProviderSchema = insertProviderProfileSchema.extend({
+// We must omit userId as it's required in the DB schema but handled by the backend authentication
+const becomeProviderSchema = insertProviderProfileSchema.omit({ userId: true }).extend({
   companyName: z.string().min(3, "Company/Display name must be at least 3 characters"),
   bio: z.string().min(20, "Bio must be at least 20 characters"),
   phone: z.string().min(10, "Please enter a valid phone number"),

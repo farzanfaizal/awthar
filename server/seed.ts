@@ -213,6 +213,38 @@ async function seedDatabase() {
       isPremium: false,
     });
 
+    // Provider 6: Karim (AC Specialist)
+    const karim = await createProvider("karim.ac@example.com", "Karim", "Nasser", {
+      providerType: "licensed_professional",
+      companyName: "Cool Breeze AC Services",
+      bio: "Specialized AC technicians for all types of units (Split, Central, Chiller). Summer maintenance packages available.",
+      phone: "+971500000006",
+      verificationStatus: "verified",
+      rating: "4.6",
+      ratingSum: 230,
+      totalReviews: 50,
+      completedJobs: 150,
+      responseTime: 60,
+      serviceAreas: { emirates: ["Dubai", "Sharjah", "Ajman"] },
+      isPremium: true,
+    });
+
+    // Provider 7: Elena (Personal Trainer)
+    const elena = await createProvider("elena.fit@example.com", "Elena", "Popova", {
+      providerType: "casual_tasker",
+      companyName: "Elena Fitness Coach",
+      bio: "Certified personal trainer specializing in weight loss, strength training, and yoga. Home sessions available for ladies.",
+      phone: "+971500000007",
+      verificationStatus: "verified",
+      rating: "5.0",
+      ratingSum: 75,
+      totalReviews: 15,
+      completedJobs: 40,
+      responseTime: 120,
+      serviceAreas: { emirates: ["Dubai"] },
+      isPremium: false,
+    });
+
     // Customer 1
     const [customer1] = await db.insert(users).values({
       email: "customer1@example.com",
@@ -288,6 +320,21 @@ async function seedDatabase() {
       isFeatured: true,
     });
 
+    await db.insert(services).values({
+      providerId: mo.profile.id,
+      categoryId: categoryMap.get("technology"),
+      titleEn: "Data Recovery Service",
+      titleAr: "خدمة استعادة البيانات",
+      descriptionEn: "Recover lost data from hard drives, USBs, and memory cards. Confidentiality guaranteed.",
+      descriptionAr: "استعادة البيانات المفقودة من الأقراص الصلبة وبطاقات الذاكرة.",
+      pricingType: "fixed",
+      priceMin: "400.00",
+      currency: "AED",
+      status: "active",
+      location: { emirate: "Abu Dhabi", area: "Reem Island" },
+      isFeatured: false,
+    });
+
     // John's Services
     await db.insert(services).values({
       providerId: john.profile.id,
@@ -317,6 +364,38 @@ async function seedDatabase() {
       currency: "AED",
       status: "active",
       location: { emirate: "Dubai", area: "Al Barsha" },
+      isFeatured: true,
+    });
+
+    // Karim's Services
+    await db.insert(services).values({
+      providerId: karim.profile.id,
+      categoryId: categoryMap.get("home-repair"),
+      titleEn: "AC Cleaning & Servicing",
+      titleAr: "تنظيف وصيانة التكييف",
+      descriptionEn: "Complete AC duct cleaning, gas top-up, and filter cleaning. Improving air quality and efficiency.",
+      descriptionAr: "تنظيف شامل لمكيفات الهواء وتعبئة الغاز.",
+      pricingType: "fixed",
+      priceMin: "100.00",
+      currency: "AED",
+      status: "active",
+      location: { emirate: "Dubai", area: "Mirdif" },
+      isFeatured: true,
+    });
+
+    // Elena's Services
+    await db.insert(services).values({
+      providerId: elena.profile.id,
+      categoryId: categoryMap.get("personal"),
+      titleEn: "Personal Fitness Training",
+      titleAr: "تدريب لياقة بدنية شخصي",
+      descriptionEn: "Customized workout plans and 1-on-1 coaching sessions at your home or gym.",
+      descriptionAr: "برامج تدريب مخصصة وجلسات تدريب شخصي.",
+      pricingType: "hourly",
+      priceMin: "250.00",
+      currency: "AED",
+      status: "active",
+      location: { emirate: "Dubai", area: "Palm Jumeirah" },
       isFeatured: true,
     });
 
