@@ -2,7 +2,7 @@
 
 **Session Started:** 2025-12-03
 **Status:** In Progress
-**Total Issues:** 49
+**Total Issues:** 50
 
 ---
 
@@ -72,16 +72,16 @@
 
 ### Phase 8: Infrastructure & Uploads (New)
 - [x] **Issue #49** - Migrate local uploads to Supabase S3 + Image Compression ✅ DONE
+- [x] **Issue #50** - Fix Supabase S3 NoSuchBucket error ✅ DONE
 
 ---
 
 ## 📝 Detailed Implementation Notes
 
-### Issue #49: Migrate to Supabase S3
-**File:** `server/storage/supabase-upload.ts`, `server/controllers/upload.controller.ts`
-- **Action:** Replaced local file storage with Supabase Storage (S3).
-- **Tech:** Implemented `sharp` for automatic WebP conversion and compression.
-- **Result:** Images are now optimized and stored in the cloud, solving the local permission issues on Render.
+### Issue #50: Fix Supabase S3 NoSuchBucket error
+**File:** `server/storage/supabase-upload.ts`
+- **Action:** Updated the default `BUCKET_NAME` to "awthar".
+- **Result:** Resolves the `NoSuchBucket` error encountered during image uploads.
 
 ---
 
@@ -110,8 +110,8 @@
 
 ## 📊 Statistics
 
-- **Total Issues:** 49
-- **Completed:** 23
+- **Total Issues:** 50
+- **Completed:** 24
 - **In Progress:** 0
 - **Not Started:** 26
-- **Progress:** 47%
+- **Progress:** 48%

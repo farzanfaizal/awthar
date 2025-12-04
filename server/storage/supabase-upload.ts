@@ -14,7 +14,7 @@ const s3Client = new S3Client({
   },
 });
 
-const BUCKET_NAME = process.env.SUPABASE_BUCKET || "awthar-s3-key";
+const BUCKET_NAME = process.env.SUPABASE_BUCKET || "awthar";
 
 export class SupabaseStorage {
   /**
