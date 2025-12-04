@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Service, ProviderProfile, User, Category } from "@shared/schema";
+import { getImageUrl } from "@/lib/image-utils";
 
 type ServiceWithRelations = Service & {
   provider: ProviderProfile & { user: User };
@@ -268,7 +269,7 @@ export default function Browse() {
                           <div className="aspect-video bg-muted rounded-t-xl relative overflow-hidden">
                             {service.images?.[0] ? (
                               <img
-                                src={service.images[0]}
+                                src={getImageUrl(service.images[0])}
                                 alt={service.titleEn}
                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                               />
@@ -286,7 +287,7 @@ export default function Browse() {
                             <div className="flex items-start gap-3 mb-3">
                               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary flex-shrink-0 overflow-hidden">
                                 {service.provider.user.profileImageUrl ? (
-                                  <img src={service.provider.user.profileImageUrl} className="w-full h-full object-cover" />
+                                  <img src={getImageUrl(service.provider.user.profileImageUrl)} className="w-full h-full object-cover" />
                                 ) : (
                                   service.provider.user.firstName?.[0]
                                 )}

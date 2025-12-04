@@ -21,6 +21,7 @@ import { Service, ProviderProfile, User, Category } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { getImageUrl } from "@/lib/image-utils";
 
 type ServiceWithRelations = Service & {
   provider: ProviderProfile & { user: User };
@@ -117,7 +118,7 @@ export default function ServiceDetailPage() {
         {/* Left Column - Service Info */}
         <div className="lg:col-span-2">
           {/* Image Gallery */}
-          <ImageGallery images={service.images} />
+          <ImageGallery images={(service.images || []).map(getImageUrl)} />
 
           {/* Title & Category */}
           <div className="mt-6">

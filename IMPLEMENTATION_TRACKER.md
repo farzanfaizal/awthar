@@ -2,7 +2,7 @@
 
 **Session Started:** 2025-12-03
 **Status:** In Progress
-**Total Issues:** 51
+**Total Issues:** 53
 
 ---
 
@@ -74,15 +74,22 @@
 - [x] **Issue #49** - Migrate local uploads to Supabase S3 + Image Compression ✅ DONE
 - [x] **Issue #50** - Fix Supabase S3 NoSuchBucket error ✅ DONE
 - [x] **Issue #51** - Fix Create Listing image upload component prop mismatch ✅ DONE
+- [x] **Issue #52** - Refactor Edit Listing page (remove duplication) ✅ DONE
+- [x] **Issue #53** - Fix legacy image handling (broken images in browse/detail) ✅ DONE
 
 ---
 
 ## 📝 Detailed Implementation Notes
 
-### Issue #51: Fix Create Listing Image Upload
-**File:** `client/src/pages/dashboard/create-listing.tsx`
-- **Action:** Corrected the usage of the `ImageUpload` component to match its definition. Removed invalid `onUploadComplete` and `trigger` props.
-- **Result:** Images now successfully update the form state after upload.
+### Issue #52: Refactor Edit Listing
+**File:** `client/src/pages/dashboard/edit-listing.tsx`
+- **Action:** Updated to use `ImageUpload` correctly and applied URL normalization.
+- **Result:** Fixes broken/stale state management on the edit page.
+
+### Issue #53: Fix Legacy Image Handling
+**File:** `client/src/lib/image-utils.ts`, `browse.tsx`, `service-detail.tsx`
+- **Action:** Implemented `getImageUrl` helper to replace legacy local paths with a placeholder.
+- **Result:** Prevents 404 errors on the frontend for old data.
 
 ---
 
@@ -107,13 +114,14 @@
 ### Checkpoint 4 - Infrastructure ✅ (Current)
 - ✅ Supabase S3 Integration
 - ✅ Upload Component Fixes
+- ✅ Legacy Data Normalization
 
 ---
 
 ## 📊 Statistics
 
-- **Total Issues:** 51
-- **Completed:** 25
+- **Total Issues:** 53
+- **Completed:** 27
 - **In Progress:** 0
 - **Not Started:** 26
-- **Progress:** 49%
+- **Progress:** 51%
