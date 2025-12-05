@@ -15,6 +15,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Service, ProviderProfile, User, Category } from "@shared/schema";
 import { getImageUrl } from "@/lib/image-utils";
+import { useUserLocation } from "@/hooks/useUserLocation";
 
 type ServiceWithRelations = Service & {
   provider: ProviderProfile & { user: User };
@@ -23,6 +24,7 @@ type ServiceWithRelations = Service & {
 
 export default function Browse() {
   const [location] = useLocation();
+  const { latitude, longitude, error: locationError, loading: locationLoading, requestLocation } = useUserLocation();
   
   const [searchQuery, setSearchQuery] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -30,6 +32,7 @@ export default function Browse() {
   });
 
   const [priceRange, setPriceRange] = useState([0, 2000]);
+  const [radius, setRadius] = useState(25); // Default 25km
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -43,6 +46,9 @@ export default function Browse() {
       minPrice: 0,
       maxPrice: 2000,
       sortBy: params.get("sortBy") || "newest",
+      latitude: params.get("latitude") ? parseFloat(params.get("latitude")!) : undefined,
+      longitude: params.get("longitude") ? parseFloat(params.get("longitude")!) : undefined,
+      radius: params.get("radius") ? parseFloat(params.get("radius")!) : undefined,
     };
   });
 
@@ -56,6 +62,18 @@ export default function Browse() {
     }
   }, [location]);
 
+  // Update applied filters when location is retrieved successfully
+  useEffect(() => {
+    if (latitude && longitude) {
+      setAppliedFilters(prev => ({
+        ...prev,
+        latitude,
+        longitude,
+        radius // Apply current radius
+      }));
+    }
+  }, [latitude, longitude]);
+
   const handleApplyFilters = () => {
     setAppliedFilters(prev => ({
       ...prev,
@@ -63,6 +81,8 @@ export default function Browse() {
       categories: selectedCategories,
       minPrice: priceRange[0],
       maxPrice: priceRange[1],
+      radius: radius, // Update radius if changed
+      // We keep existing lat/lng unless cleared, or user can re-click "Use my location"
     }));
     setShowFilters(false); // Close mobile sheet if open
   };
@@ -70,6 +90,19 @@ export default function Browse() {
   const handleSortChange = (value: string) => {
     // Sort applies instantly
     setAppliedFilters(prev => ({ ...prev, sortBy: value }));
+  };
+
+  const handleUseLocation = () => {
+    requestLocation();
+  };
+
+  const handleClearLocation = () => {
+    setAppliedFilters(prev => ({
+      ...prev,
+      latitude: undefined,
+      longitude: undefined,
+      radius: undefined
+    }));
   };
 
   const queryParams = new URLSearchParams();
@@ -80,6 +113,12 @@ export default function Browse() {
   queryParams.append("minPrice", appliedFilters.minPrice.toString());
   queryParams.append("maxPrice", appliedFilters.maxPrice.toString());
   queryParams.append("sortBy", appliedFilters.sortBy);
+  
+  if (appliedFilters.latitude && appliedFilters.longitude && appliedFilters.radius) {
+    queryParams.append("latitude", appliedFilters.latitude.toString());
+    queryParams.append("longitude", appliedFilters.longitude.toString());
+    queryParams.append("radius", appliedFilters.radius.toString());
+  }
 
   const { data: services, isLoading } = useQuery<ServiceWithRelations[]>({
     queryKey: [`/api/services?${queryParams.toString()}`],
@@ -96,6 +135,59 @@ export default function Browse() {
 
   const filters = (
     <div className="space-y-6">
+      {/* Location Filter */}
+      <div>
+        <h3 className="font-semibold mb-4">Location</h3>
+        <div className="space-y-4">
+          {appliedFilters.latitude && appliedFilters.longitude ? (
+            <div className="bg-primary/10 p-3 rounded-lg border border-primary/20">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                  <MapPin className="w-4 h-4" />
+                  <span>Using your location</span>
+                </div>
+                <Button variant="ghost" size="sm" className="h-auto p-0 text-xs text-muted-foreground hover:text-destructive" onClick={handleClearLocation}>
+                  Clear
+                </Button>
+              </div>
+              <div className="mt-3 space-y-2">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Radius</span>
+                  <span>{radius} km</span>
+                </div>
+                <Slider
+                  min={1}
+                  max={100}
+                  step={1}
+                  value={[radius]}
+                  onValueChange={(vals) => setRadius(vals[0])}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={handleUseLocation}
+                disabled={locationLoading}
+              >
+                {locationLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <MapPin className="w-4 h-4 mr-2" />
+                )}
+                Use my location
+              </Button>
+              {locationError && (
+                <p className="text-xs text-destructive mt-2">{locationError}</p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div>
         <h3 className="font-semibold mb-4">Category</h3>
         <div className="space-y-3">

@@ -53,6 +53,9 @@ serviceRouter.get("/", async (req, res) => {
       limit: req.query.limit ? parseInt(req.query.limit as string) : 20,
       offset: req.query.offset ? parseInt(req.query.offset as string) : 0,
       sortBy: req.query.sortBy as 'price_asc' | 'price_desc' | 'rating' | 'newest',
+      latitude: req.query.latitude ? parseFloat(req.query.latitude as string) : undefined,
+      longitude: req.query.longitude ? parseFloat(req.query.longitude as string) : undefined,
+      radius: req.query.radius ? parseFloat(req.query.radius as string) : undefined,
     });
     res.json(services);
   } catch (error: any) {

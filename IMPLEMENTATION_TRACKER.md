@@ -2,51 +2,55 @@
 
 **Session Started:** 2025-12-03
 **Status:** In Progress
-**Total Issues:** 60
+**Total Issues:** 65
 
 ---
 
 ## 🎯 Implementation Progress
 
-### Phase 1-8: Completed
-- ✅ Auth, Listing, Uploads, Chat, UI Fixes, S3 Migration, Proxy
+### Phase 1-9: Completed
+- ✅ Auth, Listing, Uploads, Chat, UI Fixes, S3 Proxy
+- ✅ Sorting, Filtering, Favorites, Reports, Geo-Schema
 
-### Phase 9: Advanced Search & Location (New Plan - Dec 4)
-- [x] **Issue #55** - Fix Sorting Logic (Backend) ✅ DONE
-- [x] **Issue #56** - Fix Multi-Category Filtering (Backend) ✅ DONE
-- [x] **Issue #57** - Implement "Save to Favorites" (Full Stack) ✅ DONE
-- [x] **Issue #58** - Implement "Report Service" (Full Stack) ✅ DONE
-- [x] **Issue #59** - Database Migration: Add Lat/Lng to Services Table ✅ DONE
-- [ ] **Issue #60** - Implement Radius Search (Haversine) & Map UI (Leaflet/Mapbox)
+### Phase 10: Location & Maps (Phase B - Dec 4)
+- [x] **Issue #60** - Backend: Implement Radius Search (Haversine Formula) ✅ DONE
+- [x] **Issue #61** - Frontend: Create `useUserLocation` hook ✅ DONE
+- [x] **Issue #62** - Frontend: Add Radius Filter UI to Browse Page ✅ DONE
+- [ ] **Issue #63** - Frontend: Integrate `react-leaflet` Map View (Browse Page)
+- [ ] **Issue #64** - Frontend: Add Map to Service Detail Page
+- [ ] **Issue #65** - Backend: Add Geocoding (Optional/Future)
 
 ---
 
 ## 📝 Detailed Implementation Notes
 
-### Issue #55-56: Search Engine
-- **Result:** `browse.tsx` now supports live sorting and multiple category selection.
+### Phase 10: Location & Maps
 
-### Issue #57-58: Actions
-- **Result:** "Save to Favorites" toggle and "Report Service" dialog are fully functional.
-
-### Issue #59: Location Data
-- **Result:** Added `latitude` and `longitude` columns to `services`. Backend auto-populates them from the legacy `location` JSON object on create/update. This paves the way for Phase 10 (Maps).
+#### Issue #60-62: Radius Search Implementation
+- **Backend:** Updated `ServiceService` to use SQL Haversine formula for distance filtering.
+- **Frontend:** Added `useUserLocation` hook to access browser geolocation.
+- **UI:** Added "Use my location" button and Radius Slider to `browse.tsx` sidebar.
+- **Result:** Users can now filter services by distance from their current location (e.g., "Within 25km").
 
 ---
 
 ## 🔄 Session Checkpoints
 
-### Checkpoint 5 - Advanced Features ✅ (Current)
+### Checkpoint 5 - Advanced Features ✅
 - ✅ Sorting & Filtering
 - ✅ Favorites & Reports
 - ✅ Location Data Structure
+
+### Checkpoint 6 - Maps Logic ✅ (Current)
+- ✅ Radius Search Engine
+- ✅ Location UI Controls
 
 ---
 
 ## 📊 Statistics
 
-- **Total Issues:** 60
-- **Completed:** 34
+- **Total Issues:** 65
+- **Completed:** 37
 - **In Progress:** 0
-- **Not Started:** 26
-- **Progress:** 56%
+- **Not Started:** 28
+- **Progress:** 57%

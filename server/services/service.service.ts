@@ -33,6 +33,9 @@ export class ServiceService {
     limit?: number;
     offset?: number;
     sortBy?: 'price_asc' | 'price_desc' | 'rating' | 'newest';
+    latitude?: number;
+    longitude?: number;
+    radius?: number; // in kilometers
   }) {
     const conditions = [];
 
@@ -43,6 +46,27 @@ export class ServiceService {
       conditions.push(sql`${services.status} != 'deleted'`);
     } else {
       conditions.push(eq(services.status, "active"));
+    }
+
+    // Radius Search (Haversine Formula)
+    if (filters.latitude && filters.longitude && filters.radius) {
+      // Filter out services with no location data
+      conditions.push(sql`${services.latitude} IS NOT NULL`);
+      conditions.push(sql`${services.longitude} IS NOT NULL`);
+
+      // Calculate distance in km
+      // 6371 is Earth's radius in km
+      const haversine = sql`
+        (6371 * acos(
+          cos(radians(${filters.latitude})) * 
+          cos(radians(${services.latitude})) * 
+          cos(radians(${services.longitude}) - radians(${filters.longitude})) + 
+          sin(radians(${filters.latitude})) * 
+          sin(radians(${services.latitude}))
+        ))
+      `;
+      
+      conditions.push(lte(haversine, filters.radius));
     }
 
     if (filters.category) {
