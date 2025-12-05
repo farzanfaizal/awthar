@@ -16,8 +16,8 @@
 - [x] **Issue #60** - Backend: Implement Radius Search (Haversine Formula) ✅ DONE
 - [x] **Issue #61** - Frontend: Create `useUserLocation` hook ✅ DONE
 - [x] **Issue #62** - Frontend: Add Radius Filter UI to Browse Page ✅ DONE
-- [ ] **Issue #63** - Frontend: Integrate `react-leaflet` Map View (Browse Page)
-- [ ] **Issue #64** - Frontend: Add Map to Service Detail Page
+- [x] **Issue #63** - Frontend: Integrate `react-leaflet` Map View (Browse Page) ✅ DONE
+- [x] **Issue #64** - Frontend: Add Map to Service Detail Page ✅ DONE
 - [ ] **Issue #65** - Backend: Add Geocoding (Optional/Future)
 
 ---
@@ -26,11 +26,11 @@
 
 ### Phase 10: Location & Maps
 
-#### Issue #60-62: Radius Search Implementation
-- **Backend:** Updated `ServiceService` to use SQL Haversine formula for distance filtering.
-- **Frontend:** Added `useUserLocation` hook to access browser geolocation.
-- **UI:** Added "Use my location" button and Radius Slider to `browse.tsx` sidebar.
-- **Result:** Users can now filter services by distance from their current location (e.g., "Within 25km").
+#### Issue #63-64: Visual Map Integration
+- **Component:** Created reusable `MapView` using `react-leaflet`.
+- **Browse Page:** Added List/Map toggle. Map displays pins for services with coordinates.
+- **Detail Page:** Replaced placeholder with actual map centered on service location.
+- **Note:** Services currently need `lat`/`lng` populated in DB to appear. Next phase should focus on Geocoding or Map Picker during creation to populate this data.
 
 ---
 
@@ -41,16 +41,17 @@
 - ✅ Favorites & Reports
 - ✅ Location Data Structure
 
-### Checkpoint 6 - Maps Logic ✅ (Current)
+### Checkpoint 6 - Maps Logic & UI ✅ (Current)
 - ✅ Radius Search Engine
 - ✅ Location UI Controls
+- ✅ Visual Map Component
 
 ---
 
 ## 📊 Statistics
 
 - **Total Issues:** 65
-- **Completed:** 37
+- **Completed:** 39
 - **In Progress:** 0
-- **Not Started:** 28
-- **Progress:** 57%
+- **Not Started:** 26
+- **Progress:** 60%

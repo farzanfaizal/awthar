@@ -42,6 +42,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { getImageUrl } from "@/lib/image-utils";
 
+import { MapView } from "@/components/map-view";
+
 type ServiceWithRelations = Service & {
   provider: ProviderProfile & { user: User };
   category: Category;
@@ -328,12 +330,23 @@ export default function ServiceDetailPage() {
                   </p>
                 </div>
               </div>
-              {/* Map Placeholder */}
-              <div className="w-full h-[300px] rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
-                <div className="text-center">
-                  <MapPin className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>Map integration coming soon</p>
-                </div>
+              {/* Map */}
+              <div className="w-full h-[300px] rounded-lg overflow-hidden mt-4">
+                {service.latitude && service.longitude ? (
+                  <MapView 
+                    services={[service]} 
+                    center={[parseFloat(service.latitude.toString()), parseFloat(service.longitude.toString())]}
+                    zoom={13}
+                    className="w-full h-full"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <MapPin className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>Location not available on map</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

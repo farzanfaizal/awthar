@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, MapPin, Star, Shield, SlidersHorizontal, Loader2 } from "lucide-react";
+import { Search, Filter, MapPin, Star, Shield, SlidersHorizontal, Loader2, LayoutList, Map as MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Service, ProviderProfile, User, Category } from "@shared/schema";
 import { getImageUrl } from "@/lib/image-utils";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { MapView } from "@/components/map-view";
 
 type ServiceWithRelations = Service & {
   provider: ProviderProfile & { user: User };
@@ -26,6 +27,7 @@ export default function Browse() {
   const [location] = useLocation();
   const { latitude, longitude, error: locationError, loading: locationLoading, requestLocation } = useUserLocation();
   
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [searchQuery, setSearchQuery] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("search") || "";
@@ -288,6 +290,25 @@ export default function Browse() {
                 </SelectContent>
               </Select>
 
+              <div className="flex bg-muted rounded-xl p-1 h-12 items-center">
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="icon"
+                  className="h-10 w-10 rounded-lg"
+                  onClick={() => setViewMode('list')}
+                >
+                  <LayoutList className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant={viewMode === 'map' ? 'default' : 'ghost'}
+                  size="icon"
+                  className="h-10 w-10 rounded-lg"
+                  onClick={() => setViewMode('map')}
+                >
+                  <MapIcon className="h-5 w-5" />
+                </Button>
+              </div>
+
               {/* Mobile Filter Button */}
               <Sheet open={showFilters} onOpenChange={setShowFilters}>
                 <SheetTrigger asChild className="md:hidden">
@@ -354,6 +375,17 @@ export default function Browse() {
                 <div className="text-center py-12 border-2 border-dashed rounded-xl">
                   <h3 className="text-lg font-semibold mb-2">No services found</h3>
                   <p className="text-muted-foreground">Try adjusting your search or filters</p>
+                </div>
+              ) : viewMode === 'map' ? (
+                <div className="h-[600px] w-full rounded-xl border-2 overflow-hidden">
+                  <MapView 
+                    services={services} 
+                    center={
+                      appliedFilters.latitude && appliedFilters.longitude 
+                        ? [appliedFilters.latitude, appliedFilters.longitude]
+                        : [25.2048, 55.2708] // Default to Dubai
+                    }
+                  />
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
