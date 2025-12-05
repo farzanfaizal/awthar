@@ -2,7 +2,7 @@
 
 **Session Started:** 2025-12-03
 **Status:** In Progress
-**Total Issues:** 65
+**Total Issues:** 68
 
 ---
 
@@ -18,7 +18,9 @@
 - [x] **Issue #62** - Frontend: Add Radius Filter UI to Browse Page ✅ DONE
 - [x] **Issue #63** - Frontend: Integrate `react-leaflet` Map View (Browse Page) ✅ DONE
 - [x] **Issue #64** - Frontend: Add Map to Service Detail Page ✅ DONE
-- [ ] **Issue #65** - Backend: Add Geocoding (Optional/Future)
+- [x] **Issue #65** - Frontend: Location Picker for Providers (Create/Edit Listing) ✅ DONE
+- [x] **Issue #66** - Frontend: Reverse Geocoding Display (Browse Page) ✅ DONE
+- [x] **Issue #67** - Shared: Geocoding Utility (Nominatim API) ✅ DONE
 
 ---
 
@@ -26,11 +28,13 @@
 
 ### Phase 10: Location & Maps
 
-#### Issue #63-64: Visual Map Integration
-- **Component:** Created reusable `MapView` using `react-leaflet`.
-- **Browse Page:** Added List/Map toggle. Map displays pins for services with coordinates.
-- **Detail Page:** Replaced placeholder with actual map centered on service location.
-- **Note:** Services currently need `lat`/`lng` populated in DB to appear. Next phase should focus on Geocoding or Map Picker during creation to populate this data.
+#### Issue #65: Location Picker
+- **Component:** `LocationPicker` (Leaflet map + Click handler).
+- **Integration:** Added to `create-listing` and `edit-listing`.
+- **Feature:** Auto-fills Emirate/City/Area text fields when pin is dropped using `reverseGeocode`.
+
+#### Issue #66: Reverse Geocoding Display
+- **Feature:** Browse page now shows the friendly name (e.g., "Dubai Marina") of the user's current location instead of generic text.
 
 ---
 
@@ -41,17 +45,19 @@
 - ✅ Favorites & Reports
 - ✅ Location Data Structure
 
-### Checkpoint 6 - Maps Logic & UI ✅ (Current)
+### Checkpoint 6 - Maps & Location ✅ (Current)
 - ✅ Radius Search Engine
 - ✅ Location UI Controls
 - ✅ Visual Map Component
+- ✅ Provider Location Pinning
+- ✅ Smart Address Auto-fill
 
 ---
 
 ## 📊 Statistics
 
-- **Total Issues:** 65
-- **Completed:** 39
+- **Total Issues:** 68
+- **Completed:** 42
 - **In Progress:** 0
 - **Not Started:** 26
-- **Progress:** 60%
+- **Progress:** 61%

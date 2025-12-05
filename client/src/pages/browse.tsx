@@ -17,6 +17,7 @@ import { Service, ProviderProfile, User, Category } from "@shared/schema";
 import { getImageUrl } from "@/lib/image-utils";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { MapView } from "@/components/map-view";
+import { reverseGeocode } from "@/lib/geocoding";
 
 type ServiceWithRelations = Service & {
   provider: ProviderProfile & { user: User };
@@ -28,6 +29,7 @@ export default function Browse() {
   const { latitude, longitude, error: locationError, loading: locationLoading, requestLocation } = useUserLocation();
   
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [locationName, setLocationName] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("search") || "";
@@ -73,6 +75,16 @@ export default function Browse() {
         longitude,
         radius // Apply current radius
       }));
+
+      // Get friendly name
+      reverseGeocode(latitude, longitude).then(addr => {
+        if (addr) {
+          const name = [addr.area, addr.city].filter(Boolean).join(", ");
+          setLocationName(name || "Current Location");
+        } else {
+          setLocationName("Current Location");
+        }
+      });
     }
   }, [latitude, longitude]);
 
@@ -145,10 +157,10 @@ export default function Browse() {
             <div className="bg-primary/10 p-3 rounded-lg border border-primary/20">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                  <MapPin className="w-4 h-4" />
-                  <span>Using your location</span>
+                  <MapPin className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">{locationName || "Using your location"}</span>
                 </div>
-                <Button variant="ghost" size="sm" className="h-auto p-0 text-xs text-muted-foreground hover:text-destructive" onClick={handleClearLocation}>
+                <Button variant="ghost" size="sm" className="h-auto p-0 text-xs text-muted-foreground hover:text-destructive ml-2" onClick={handleClearLocation}>
                   Clear
                 </Button>
               </div>

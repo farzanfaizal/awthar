@@ -29,6 +29,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, ImagePlus, X } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { ImageUpload } from "@/components/image-upload";
+import { LocationPicker } from "@/components/location-picker";
+import { reverseGeocode } from "@/lib/geocoding";
 import { useState } from "react";
 
 const createListingSchema = z.object({
@@ -63,6 +65,7 @@ export default function CreateListingPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const form = useForm<CreateListingFormValues>({
     resolver: zodResolver(createListingSchema),
@@ -79,6 +82,24 @@ export default function CreateListingPage() {
       tags: "",
     },
   });
+
+  // Handle map location selection
+  const handleLocationChange = async (loc: { lat: number; lng: number }) => {
+    setLocationCoords(loc);
+    
+    // Auto-fill address from coordinates
+    const address = await reverseGeocode(loc.lat, loc.lng);
+    if (address) {
+      if (address.emirate && UAE_EMIRATES.includes(address.emirate)) {
+        form.setValue("emirate", address.emirate);
+      } else {
+        // Fallback or try to map state to Emirate if possible
+        // Nominatim state names usually match
+      }
+      if (address.city) form.setValue("city", address.city);
+      if (address.area) form.setValue("area", address.area);
+    }
+  };
 
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -101,6 +122,8 @@ export default function CreateListingPage() {
           emirate: data.emirate,
           city: data.city || undefined,
           area: data.area || undefined,
+          latitude: locationCoords?.lat,
+          longitude: locationCoords?.lng,
         },
         tags: data.tags
           ? data.tags.split(",").map((tag) => tag.trim()).filter((tag) => tag.length > 0)
@@ -334,6 +357,14 @@ export default function CreateListingPage() {
                 {/* Location */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Service Location</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Pin point the exact location of your service. This helps customers find you on the map.
+                  </p>
+                  
+                  <LocationPicker 
+                    value={locationCoords} 
+                    onChange={handleLocationChange} 
+                  />
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField

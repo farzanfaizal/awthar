@@ -29,6 +29,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, ImagePlus, X, ArrowLeft } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { ImageUpload } from "@/components/image-upload";
+import { LocationPicker } from "@/components/location-picker";
+import { reverseGeocode } from "@/lib/geocoding";
 import { useState, useEffect } from "react";
 import { getImageUrl } from "@/lib/image-utils";
 
@@ -66,6 +68,7 @@ export default function EditListingPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   // Fetch existing service
   const { data: service, isLoading: isLoadingService } = useQuery({
@@ -112,6 +115,14 @@ export default function EditListingPage() {
         area: service.location?.area || "",
         tags: service.tags?.join(", ") || "",
       });
+      
+      if (service.latitude && service.longitude) {
+        setLocationCoords({ 
+          lat: parseFloat(service.latitude.toString()), 
+          lng: parseFloat(service.longitude.toString()) 
+        });
+      }
+
       // Sanitize images to handle legacy relative paths
       setUploadedImages((service.images || []).map(getImageUrl));
     }
@@ -121,6 +132,21 @@ export default function EditListingPage() {
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ["/api/categories"],
   });
+
+  // Handle map location selection
+  const handleLocationChange = async (loc: { lat: number; lng: number }) => {
+    setLocationCoords(loc);
+    
+    // Auto-fill address from coordinates
+    const address = await reverseGeocode(loc.lat, loc.lng);
+    if (address) {
+      if (address.emirate && UAE_EMIRATES.includes(address.emirate)) {
+        form.setValue("emirate", address.emirate);
+      }
+      if (address.city) form.setValue("city", address.city);
+      if (address.area) form.setValue("area", address.area);
+    }
+  };
 
   const updateServiceMutation = useMutation({
     mutationFn: async (data: EditListingFormValues) => {
@@ -137,6 +163,8 @@ export default function EditListingPage() {
           emirate: data.emirate,
           city: data.city || undefined,
           area: data.area || undefined,
+          latitude: locationCoords?.lat,
+          longitude: locationCoords?.lng,
         },
         tags: data.tags
           ? data.tags.split(",").map((tag) => tag.trim()).filter((tag) => tag.length > 0)
@@ -376,6 +404,14 @@ export default function EditListingPage() {
                 {/* Location */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Service Location</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Pin point the exact location of your service.
+                  </p>
+                  
+                  <LocationPicker 
+                    value={locationCoords} 
+                    onChange={handleLocationChange} 
+                  />
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField
