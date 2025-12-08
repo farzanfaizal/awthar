@@ -137,14 +137,18 @@ export default function EditListingPage() {
   const handleLocationChange = async (loc: { lat: number; lng: number }) => {
     setLocationCoords(loc);
     
-    // Auto-fill address from coordinates
-    const address = await reverseGeocode(loc.lat, loc.lng);
-    if (address) {
-      if (address.emirate && UAE_EMIRATES.includes(address.emirate)) {
-        form.setValue("emirate", address.emirate);
+    try {
+      // Auto-fill address from coordinates
+      const address = await reverseGeocode(loc.lat, loc.lng);
+      if (address) {
+        if (address.emirate && UAE_EMIRATES.includes(address.emirate)) {
+          form.setValue("emirate", address.emirate);
+        }
+        if (address.city) form.setValue("city", address.city);
+        if (address.area) form.setValue("area", address.area);
       }
-      if (address.city) form.setValue("city", address.city);
-      if (address.area) form.setValue("area", address.area);
+    } catch (error) {
+      console.error("Failed to auto-fill address:", error);
     }
   };
 

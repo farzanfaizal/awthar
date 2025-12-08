@@ -38,6 +38,11 @@ export function useUserLocation() {
           loading: false,
           error: error.message || "Unable to retrieve your location",
         }));
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 10000,
       }
     );
   };
