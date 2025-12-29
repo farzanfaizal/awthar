@@ -110,7 +110,24 @@ export function ChatWindow({ conversationId, currentUserId, recipientName, onBac
   };
 
   if (isLoading) {
-    return <div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>;
+    return (
+      <div className="flex-1 flex flex-col h-full bg-muted/10">
+        <div className="p-4 border-b bg-background">
+           <div className="h-6 w-32 bg-muted animate-pulse rounded-md" />
+        </div>
+        <div className="flex-1 p-4 space-y-4">
+           <div className="flex justify-end"><div className="h-10 w-48 bg-primary/10 animate-pulse rounded-2xl rounded-tr-none" /></div>
+           <div className="flex justify-start"><div className="h-10 w-64 bg-muted animate-pulse rounded-2xl rounded-tl-none" /></div>
+           <div className="flex justify-end"><div className="h-10 w-32 bg-primary/10 animate-pulse rounded-2xl rounded-tr-none" /></div>
+           <div className="flex justify-start"><div className="h-10 w-40 bg-muted animate-pulse rounded-2xl rounded-tl-none" /></div>
+        </div>
+        <div className="p-4 border-t bg-background flex gap-2">
+           <div className="h-10 w-10 bg-muted animate-pulse rounded-md" />
+           <div className="h-10 flex-1 bg-muted animate-pulse rounded-md" />
+           <div className="h-10 w-10 bg-muted animate-pulse rounded-md" />
+        </div>
+      </div>
+    );
   }
 
   return (

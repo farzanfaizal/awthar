@@ -1,58 +1,50 @@
-2025-12-29T09:29:03.208871276Z ==> Downloading cache...
-2025-12-29T09:29:03.253047058Z ==> Cloning from https://github.com/farzanfaizal/awthar
-2025-12-29T09:29:03.867655613Z ==> Checking out commit a8a5b65e096eec25461a6ee1e820ba5770e3d269 in branch main
-2025-12-29T09:29:10.480130265Z ==> Downloaded 241MB in 2s. Extraction took 5s.
-2025-12-29T09:29:24.11161858Z ==> Using Node.js version 22.16.0 (default)
-2025-12-29T09:29:24.135224076Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
-2025-12-29T09:29:24.246187115Z ==> Running build command 'npm install --include=dev && npm run build && npm run db:push'...
-2025-12-29T09:29:25.518126804Z 
-2025-12-29T09:29:25.518153084Z up to date, audited 635 packages in 1s
-2025-12-29T09:29:25.518157624Z 
-2025-12-29T09:29:25.518169014Z 78 packages are looking for funding
-2025-12-29T09:29:25.518172965Z   run `npm fund` for details
-2025-12-29T09:29:25.543202899Z 
-2025-12-29T09:29:25.543238689Z 9 vulnerabilities (3 low, 5 moderate, 1 high)
-2025-12-29T09:29:25.543241479Z 
-2025-12-29T09:29:25.543244279Z To address issues that do not require attention, run:
-2025-12-29T09:29:25.543246509Z   npm audit fix
-2025-12-29T09:29:25.543248719Z 
-2025-12-29T09:29:25.543250889Z To address all issues (including breaking changes), run:
-2025-12-29T09:29:25.543254029Z   npm audit fix --force
-2025-12-29T09:29:25.54325604Z 
-2025-12-29T09:29:25.54325914Z Run `npm audit` for details.
-2025-12-29T09:29:25.738432091Z 
-2025-12-29T09:29:25.738455351Z > rest-express@1.0.0 build
-2025-12-29T09:29:25.738459411Z > npx vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
-2025-12-29T09:29:25.738463331Z 
-2025-12-29T09:29:26.287117447Z vite v5.4.20 building for production...
-2025-12-29T09:29:26.336341378Z transforming...
-2025-12-29T09:29:26.636113313Z Browserslist: browsers data (caniuse-lite) is 14 months old. Please run:
-2025-12-29T09:29:26.636129724Z   npx update-browserslist-db@latest
-2025-12-29T09:29:26.636133314Z   Why you should do it regularly: https://github.com/browserslist/update-db#readme
-2025-12-29T09:29:27.03227614Z ✓ 7 modules transformed.
-2025-12-29T09:29:27.03229099Z x Build failed in 723ms
-2025-12-29T09:29:27.032302731Z error during build:
-2025-12-29T09:29:27.032306231Z [vite:esbuild] Transform failed with 1 error:
-2025-12-29T09:29:27.032309071Z /opt/render/project/src/client/src/pages/browse.tsx:151:7: ERROR: Unexpected "{"
-2025-12-29T09:29:27.032312651Z file: /opt/render/project/src/client/src/pages/browse.tsx:151:7
-2025-12-29T09:29:27.032314821Z 
-2025-12-29T09:29:27.032317171Z Unexpected "{"
-2025-12-29T09:29:27.032319681Z 149|    });
-2025-12-29T09:29:27.032321911Z 150|  
-2025-12-29T09:29:27.032324201Z 151|  import { Separator } from "@/components/ui/separator";
-2025-12-29T09:29:27.032326561Z    |         ^
-2025-12-29T09:29:27.032328871Z 152|  import { ScrollArea } from "@/components/ui/scroll-area";
-2025-12-29T09:29:27.032331061Z 153|  
-2025-12-29T09:29:27.032333041Z 
-2025-12-29T09:29:27.032335902Z     at failureErrorWithLog (/opt/render/project/src/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
-2025-12-29T09:29:27.032338751Z     at /opt/render/project/src/node_modules/vite/node_modules/esbuild/lib/main.js:755:50
-2025-12-29T09:29:27.032341771Z     at responseCallbacks.<computed> (/opt/render/project/src/node_modules/vite/node_modules/esbuild/lib/main.js:622:9)
-2025-12-29T09:29:27.032357822Z     at handleIncomingPacket (/opt/render/project/src/node_modules/vite/node_modules/esbuild/lib/main.js:677:12)
-2025-12-29T09:29:27.032360382Z     at Socket.readFromStdout (/opt/render/project/src/node_modules/vite/node_modules/esbuild/lib/main.js:600:7)
-2025-12-29T09:29:27.032363232Z     at Socket.emit (node:events:518:28)
-2025-12-29T09:29:27.032365632Z     at addChunk (node:internal/streams/readable:561:12)
-2025-12-29T09:29:27.032368182Z     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
-2025-12-29T09:29:27.032370442Z     at Readable.push (node:internal/streams/readable:392:5)
-2025-12-29T09:29:27.032372812Z     at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
-2025-12-29T09:29:27.134769152Z ==> Build failed 😞
-2025-12-29T09:29:27.134802213Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+2025-12-29T10:58:30.507799073Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2025-12-29T10:58:30.621744373Z ==> Running build command 'npm install --include=dev && npm run build && npm run db:push'...
+2025-12-29T10:58:32.149433038Z 
+2025-12-29T10:58:32.149458058Z up to date, audited 635 packages in 1s
+2025-12-29T10:58:32.149474589Z 
+2025-12-29T10:58:32.149482599Z 78 packages are looking for funding
+2025-12-29T10:58:32.149491279Z   run `npm fund` for details
+2025-12-29T10:58:32.171745011Z 
+2025-12-29T10:58:32.171771671Z 9 vulnerabilities (3 low, 5 moderate, 1 high)
+2025-12-29T10:58:32.171775361Z 
+2025-12-29T10:58:32.171779011Z To address issues that do not require attention, run:
+2025-12-29T10:58:32.171782361Z   npm audit fix
+2025-12-29T10:58:32.171784941Z 
+2025-12-29T10:58:32.171790341Z To address all issues (including breaking changes), run:
+2025-12-29T10:58:32.171794981Z   npm audit fix --force
+2025-12-29T10:58:32.171797472Z 
+2025-12-29T10:58:32.171802012Z Run `npm audit` for details.
+2025-12-29T10:58:32.320956234Z 
+2025-12-29T10:58:32.320981065Z > rest-express@1.0.0 build
+2025-12-29T10:58:32.320986405Z > npx vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+2025-12-29T10:58:32.320991545Z 
+2025-12-29T10:58:32.769259447Z vite v5.4.20 building for production...
+2025-12-29T10:58:32.816097986Z transforming...
+2025-12-29T10:58:33.051238435Z ✓ 3 modules transformed.
+2025-12-29T10:58:33.05199476Z x Build failed in 262ms
+2025-12-29T10:58:33.052020471Z error during build:
+2025-12-29T10:58:33.052026381Z [vite:esbuild] Transform failed with 1 error:
+2025-12-29T10:58:33.052030521Z /opt/render/project/src/client/src/App.tsx:100:16: ERROR: Unexpected ">"
+2025-12-29T10:58:33.052034161Z file: /opt/render/project/src/client/src/App.tsx:100:16
+2025-12-29T10:58:33.052036351Z 
+2025-12-29T10:58:33.052038661Z Unexpected ">"
+2025-12-29T10:58:33.052041051Z 98 |        <Route component={NotFound} />
+2025-12-29T10:58:33.052043291Z 99 |      </Switch>
+2025-12-29T10:58:33.052045431Z 100|      <BottomNav />
+2025-12-29T10:58:33.052047721Z    |                  ^
+2025-12-29T10:58:33.052049891Z 101|    );
+2025-12-29T10:58:33.052052211Z 102|  }
+2025-12-29T10:58:33.052054221Z 
+2025-12-29T10:58:33.052058381Z     at failureErrorWithLog (/opt/render/project/src/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
+2025-12-29T10:58:33.052061951Z     at /opt/render/project/src/node_modules/vite/node_modules/esbuild/lib/main.js:755:50
+2025-12-29T10:58:33.052065382Z     at responseCallbacks.<computed> (/opt/render/project/src/node_modules/vite/node_modules/esbuild/lib/main.js:622:9)
+2025-12-29T10:58:33.052068371Z     at handleIncomingPacket (/opt/render/project/src/node_modules/vite/node_modules/esbuild/lib/main.js:677:12)
+2025-12-29T10:58:33.052070902Z     at Socket.readFromStdout (/opt/render/project/src/node_modules/vite/node_modules/esbuild/lib/main.js:600:7)
+2025-12-29T10:58:33.052073122Z     at Socket.emit (node:events:518:28)
+2025-12-29T10:58:33.052108502Z     at addChunk (node:internal/streams/readable:561:12)
+2025-12-29T10:58:33.052117692Z     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+2025-12-29T10:58:33.052120223Z     at Readable.push (node:internal/streams/readable:392:5)
+2025-12-29T10:58:33.052122433Z     at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+2025-12-29T10:58:33.117656623Z ==> Build failed 😞
+2025-12-29T10:58:33.117672504Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys

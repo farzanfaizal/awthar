@@ -228,8 +228,25 @@ export default function EditListingPage() {
   if (isLoadingService) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-10 bg-muted animate-pulse rounded-full" />
+            <div className="space-y-2">
+              <div className="h-8 w-48 bg-muted animate-pulse rounded-md" />
+              <div className="h-4 w-64 bg-muted animate-pulse rounded-md" />
+            </div>
+          </div>
+          <Card className="border-none shadow-lg">
+            <CardHeader>
+              <div className="h-6 w-32 bg-muted animate-pulse rounded-md mb-2" />
+              <div className="h-4 w-64 bg-muted animate-pulse rounded-md" />
+            </CardHeader>
+            <CardContent className="space-y-8">
+               <div className="h-12 w-full bg-muted animate-pulse rounded-lg" />
+               <div className="h-32 w-full bg-muted animate-pulse rounded-lg" />
+               <div className="h-12 w-full bg-muted animate-pulse rounded-lg" />
+            </CardContent>
+          </Card>
         </div>
       </DashboardLayout>
     );

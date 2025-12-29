@@ -2,9 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, MapPin, Star } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { ServiceCard } from "@/components/service-card";
+import { ServiceCardSkeleton } from "@/components/skeletons";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function CategoryPage() {
   const [, params] = useRoute("/category/:slug");
@@ -35,13 +37,16 @@ export default function CategoryPage() {
         <div className="bg-gradient-to-b from-primary/10 to-background py-16">
           <div className="container mx-auto px-4">
             <Link href="/categories">
-              <Button variant="ghost" className="mb-4">← Back to Categories</Button>
+              <Button variant="ghost" className="mb-4 pl-0 hover:pl-2 transition-all gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                Back to Categories
+              </Button>
             </Link>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
               {category?.nameEn || slug}
             </h1>
             {category?.descriptionEn && (
-              <p className="text-xl text-muted-foreground">
+              <p className="text-xl text-muted-foreground max-w-2xl">
                 {category.descriptionEn}
               </p>
             )}
@@ -50,54 +55,27 @@ export default function CategoryPage() {
 
         <div className="container mx-auto px-4 py-12">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <ServiceCardSkeleton key={i} />
+              ))}
             </div>
           ) : services && services.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {services.map((service: any) => (
-                <Link key={service.id} href={`/service/${service.id}`}>
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-                    <CardContent className="p-0">
-                      {service.images?.[0] && (
-                        <img
-                          src={service.images[0]}
-                          alt={service.titleEn}
-                          className="w-full h-48 object-cover rounded-t-lg"
-                        />
-                      )}
-                      <div className="p-4">
-                        <h3 className="font-semibold text-lg mb-2 line-clamp-2">
-                          {service.titleEn}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                          {service.descriptionEn}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1">
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span className="text-sm font-medium">
-                              {service.provider?.avgRating || "New"}
-                            </span>
-                          </div>
-                          <div className="text-lg font-bold text-primary">
-                            {service.priceMin} {service.currency}
-                            {service.pricingType === "hourly" && "/hr"}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                <ServiceCard key={service.id} service={service} />
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No services found in this category yet.</p>
-              <Link href="/browse">
-                <Button className="mt-4">Browse All Services</Button>
-              </Link>
-            </div>
+            <EmptyState
+              title="No services yet"
+              description={`We couldn't find any services in the ${category?.nameEn || slug} category right now.`}
+              action={
+                <Link href="/browse">
+                  <Button size="lg" className="rounded-xl px-8">Browse All Services</Button>
+                </Link>
+              }
+            />
           )}
         </div>
       </main>

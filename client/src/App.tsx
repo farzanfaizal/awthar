@@ -63,8 +63,9 @@ function AppRouter() {
   }
 
   return (
-    <Switch>
-      <Route path="/" component={Landing} />
+    <>
+      <Switch>
+        <Route path="/" component={Landing} />
       <Route path="/login" component={LoginPage} />
       <Route path="/signup" component={SignupPage} />
       <Route path="/become-provider" component={BecomeProviderPage} />
@@ -96,8 +97,9 @@ function AppRouter() {
       <Route path="/service/:id" component={ServiceDetail} />
       <Route path="/provider/:id" component={ProviderProfile} />
       <Route component={NotFound} />
-    </Switch>
-    <BottomNav />
+      </Switch>
+      <BottomNav />
+    </>
   );
 }
 

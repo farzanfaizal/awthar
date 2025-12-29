@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, MoreVertical, Plus, Edit, Trash2, Eye, LayoutList } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ServiceCardSkeleton } from "@/components/skeletons";
 
 export default function ListingsPage() {
   const { toast } = useToast();
@@ -57,7 +58,20 @@ export default function ListingsPage() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin" /></div>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <div className="h-8 w-48 bg-muted animate-pulse rounded-md" />
+              <div className="h-4 w-64 bg-muted animate-pulse rounded-md" />
+            </div>
+            <div className="h-10 w-40 bg-muted animate-pulse rounded-md" />
+          </div>
+          <div className="grid gap-6">
+            <ServiceCardSkeleton />
+            <ServiceCardSkeleton />
+            <ServiceCardSkeleton />
+          </div>
+        </div>
       </DashboardLayout>
     );
   }
