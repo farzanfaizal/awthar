@@ -29,10 +29,10 @@
 - [x] **Issue #71** - Components: Standardize Button Hierarchy (Primary, Secondary, Ghost, Destructive) ✅ DONE
 
 **Category B: Customer Experience (Browse & Book)**
-- [ ] **Issue #72** - Browse: Enhance Service Card Design (Aspect Ratios, Badges, Price Visibility)
-- [ ] **Issue #73** - Browse: Polish Search/Filter Sidebar (Sticky on Desktop, Collapsible on Mobile)
-- [ ] **Issue #74** - Service Detail: Layout Refinement (Clear CTAs, Organized Tabs, Sticky Booking Card)
-- [ ] **Issue #75** - Global: Design "Empty States" for Lists (Search, Bookings, Messages)
+- [x] **Issue #72** - Browse: Enhance Service Card Design (Aspect Ratios, Badges, Price Visibility) ✅ DONE
+- [x] **Issue #73** - Browse: Polish Search/Filter Sidebar (Sticky on Desktop, Collapsible on Mobile) ✅ DONE
+- [x] **Issue #74** - Service Detail: Layout Refinement (Clear CTAs, Organized Tabs, Sticky Booking Card) ✅ DONE
+- [x] **Issue #75** - Global: Design "Empty States" for Lists (Search, Bookings, Messages) ✅ DONE
 
 **Category C: Provider Experience (Dashboard)**
 - [ ] **Issue #76** - Listings: Convert "Create Listing" to Multi-Step Wizard
@@ -103,7 +103,7 @@
 ## 📊 Statistics
 
 - **Total Issues:** 83
-- **Completed:** 45
+- **Completed:** 47
 - **In Progress:** 0
-- **Not Started:** 38
-- **Progress:** 54%
+- **Not Started:** 36
+- **Progress:** 56%

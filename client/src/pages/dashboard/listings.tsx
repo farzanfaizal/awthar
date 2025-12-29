@@ -13,8 +13,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, MoreVertical, Plus, Edit, Trash2, Eye } from "lucide-react";
+import { Loader2, MoreVertical, Plus, Edit, Trash2, Eye, LayoutList } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard-layout";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function ListingsPage() {
   const { toast } = useToast();
@@ -92,14 +93,19 @@ export default function ListingsPage() {
 
         <div className="grid gap-6">
           {services?.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <p>You haven't created any listings yet.</p>
-                <Link href="/dashboard/listings/new" className="mt-4">
-                  <Button variant="outline">Get Started</Button>
+            <EmptyState
+              icon={LayoutList}
+              title="No listings yet"
+              description="Start growing your business by creating your first service listing on Awthar."
+              action={
+                <Link href="/dashboard/listings/new">
+                  <Button size="lg" className="rounded-xl px-8">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create My First Listing
+                  </Button>
                 </Link>
-              </CardContent>
-            </Card>
+              }
+            />
           ) : (
             services?.map((service) => (
               <Card key={service.id} className="overflow-hidden">

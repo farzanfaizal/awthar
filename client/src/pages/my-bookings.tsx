@@ -13,6 +13,7 @@ import { Loader2, MessageSquare, Calendar as CalendarIcon, MapPin, XCircle } fro
 import { Link, useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type BookingWithRelations = Booking & {
   service: Service;
@@ -90,14 +91,24 @@ export default function MyBookingsPage() {
 
             <div className="flex flex-col gap-6">
               {filteredBookings?.length === 0 ? (
-                <div className="text-center py-16 border-2 border-dashed rounded-xl">
-                  <CalendarIcon className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <h3 className="text-lg font-semibold mb-2">No bookings found</h3>
-                  <p className="text-muted-foreground mb-6">You haven't made any bookings yet.</p>
-                  <Link href="/browse">
-                    <Button>Browse Services</Button>
-                  </Link>
-                </div>
+                <EmptyState
+                  icon={CalendarIcon}
+                  title={activeTab === "all" ? "No bookings yet" : `No ${activeTab} bookings`}
+                  description={
+                    activeTab === "all" 
+                      ? "You haven't made any bookings yet. Start exploring services across the GCC."
+                      : `You don't have any bookings in the ${activeTab} category.`
+                  }
+                  action={
+                    activeTab === "all" ? (
+                      <Link href="/browse">
+                        <Button size="lg" className="rounded-xl px-8">Browse Services</Button>
+                      </Link>
+                    ) : (
+                      <Button variant="outline" onClick={() => setActiveTab("all")}>View All Bookings</Button>
+                    )
+                  }
+                />
               ) : (
                 filteredBookings?.map((booking) => (
                   <Card key={booking.id} className="overflow-hidden hover:shadow-md transition-shadow border-muted-foreground/20">

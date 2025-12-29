@@ -18,6 +18,7 @@ import { getImageUrl } from "@/lib/image-utils";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { MapView } from "@/components/map-view";
 import { reverseGeocode } from "@/lib/geocoding";
+import { ServiceCard } from "@/components/service-card";
 
 type ServiceWithRelations = Service & {
   provider: ProviderProfile & { user: User };
@@ -147,27 +148,34 @@ export default function Browse() {
     },
   });
 
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+// ... existing imports
+
   const filters = (
     <div className="space-y-6">
       {/* Location Filter */}
       <div>
-        <h3 className="font-semibold mb-4">Location</h3>
+        <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-3">Location</h3>
         <div className="space-y-4">
           {appliedFilters.latitude && appliedFilters.longitude ? (
-            <div className="bg-primary/10 p-3 rounded-lg border border-primary/20">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                  <MapPin className="w-4 h-4 flex-shrink-0" />
-                  <span className="truncate">{locationName || "Using your location"}</span>
+            <div className="bg-muted/50 p-4 rounded-xl border border-border/50 shadow-sm">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <span className="truncate leading-tight">{locationName || "Using your location"}</span>
                 </div>
-                <Button variant="ghost" size="sm" className="h-auto p-0 text-xs text-muted-foreground hover:text-destructive ml-2" onClick={handleClearLocation}>
-                  Clear
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive -mr-2" onClick={handleClearLocation}>
+                   <span className="sr-only">Clear</span>
+                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4"><path d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.1929 2.99391 11.557 3.21846 11.7816C3.44301 12.0061 3.80708 12.0061 4.03164 11.7816L7.50005 8.31316L10.9685 11.7816C11.193 12.0061 11.5571 12.0061 11.7816 11.7816C12.0062 11.557 12.0062 11.1929 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
                 </Button>
               </div>
-              <div className="mt-3 space-y-2">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Radius</span>
-                  <span>{radius} km</span>
+              <div className="space-y-3">
+                <div className="flex justify-between text-xs text-muted-foreground font-medium">
+                  <span>Radius: <span className="text-foreground">{radius} km</span></span>
                 </div>
                 <Slider
                   min={1}
@@ -183,50 +191,62 @@ export default function Browse() {
             <div>
               <Button 
                 variant="outline" 
-                className="w-full" 
+                className="w-full h-12 justify-start px-4 text-muted-foreground hover:text-foreground border-2 border-dashed shadow-none hover:border-solid hover:border-primary/50 bg-transparent" 
                 onClick={handleUseLocation}
                 disabled={locationLoading}
               >
                 {locationLoading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-3 animate-spin" />
                 ) : (
-                  <MapPin className="w-4 h-4 mr-2" />
+                  <MapPin className="w-4 h-4 mr-3" />
                 )}
                 Use my location
               </Button>
               {locationError && (
-                <p className="text-xs text-destructive mt-2">{locationError}</p>
+                <p className="text-xs text-destructive mt-2 font-medium">{locationError}</p>
               )}
             </div>
           )}
         </div>
       </div>
 
-      <div>
-        <h3 className="font-semibold mb-4">Category</h3>
-        <div className="space-y-3">
-          {categories?.map((cat) => (
-            <div key={cat.id} className="flex items-center space-x-2">
-              <Checkbox 
-                id={`cat-${cat.slug}`} 
-                checked={selectedCategories.includes(cat.slug)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedCategories([...selectedCategories, cat.slug]);
-                  } else {
-                    setSelectedCategories(selectedCategories.filter(c => c !== cat.slug));
-                  }
-                }}
-              />
-              <Label htmlFor={`cat-${cat.slug}`} className="cursor-pointer">{cat.nameEn}</Label>
-            </div>
-          ))}
-        </div>
-      </div>
+      <Separator />
 
       <div>
-        <h3 className="font-semibold mb-4">Price Range (AED)</h3>
-        <div className="space-y-4">
+        <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-3">Categories</h3>
+        <ScrollArea className="h-[200px] pr-4">
+          <div className="space-y-3">
+            {categories?.map((cat) => (
+              <div key={cat.id} className="flex items-center space-x-3">
+                <Checkbox 
+                  id={`cat-${cat.slug}`} 
+                  checked={selectedCategories.includes(cat.slug)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedCategories([...selectedCategories, cat.slug]);
+                    } else {
+                      setSelectedCategories(selectedCategories.filter(c => c !== cat.slug));
+                    }
+                  }}
+                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                />
+                <Label 
+                  htmlFor={`cat-${cat.slug}`} 
+                  className="cursor-pointer text-sm font-normal text-foreground leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 hover:text-primary transition-colors"
+                >
+                  {cat.nameEn}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+
+      <Separator />
+
+      <div>
+        <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-3">Price Range</h3>
+        <div className="space-y-6 pt-2">
           <Slider
             min={0}
             max={2000}
@@ -235,16 +255,23 @@ export default function Browse() {
             onValueChange={setPriceRange}
             className="w-full"
           />
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">AED {priceRange[0]}</span>
-            <span className="text-muted-foreground">AED {priceRange[1]}</span>
+          <div className="flex items-center justify-between">
+            <div className="bg-background border rounded-md px-3 py-1 text-sm font-medium shadow-sm w-24 text-center">
+              AED {priceRange[0]}
+            </div>
+            <span className="text-muted-foreground">-</span>
+            <div className="bg-background border rounded-md px-3 py-1 text-sm font-medium shadow-sm w-24 text-center">
+              AED {priceRange[1]}
+            </div>
           </div>
         </div>
       </div>
 
-      <Button className="w-full mt-6" onClick={handleApplyFilters}>
-        Apply Filters
-      </Button>
+      <div className="pt-2">
+         <Button className="w-full h-11 rounded-lg shadow-md hover:shadow-lg transition-all" onClick={handleApplyFilters}>
+            Apply Filters
+        </Button>
+      </div>
     </div>
   );
   
@@ -343,32 +370,34 @@ export default function Browse() {
           <div className="flex gap-8">
             {/* Desktop Filters Sidebar */}
             <aside className="hidden md:block w-64 xl:w-80 flex-shrink-0">
-              <Card className="sticky top-32 rounded-xl">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="font-semibold text-lg">Filters</h2>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-muted-foreground"
-                      onClick={() => {
-                        setPriceRange([0, 2000]);
-                        setSelectedCategories([]);
-                        setSearchQuery("");
-                        setAppliedFilters({
-                          search: "",
-                          categories: [],
-                          minPrice: 0,
-                          maxPrice: 2000,
-                        });
-                      }}
-                    >
-                      Clear All
-                    </Button>
-                  </div>
-                  {filters}
-                </CardContent>
-              </Card>
+              <div className="sticky top-24">
+                <Card className="rounded-xl border-none shadow-lg bg-card/50 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="font-bold text-lg tracking-tight">Filters</h2>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-muted-foreground hover:text-primary h-8 px-2 text-xs uppercase tracking-wide font-semibold"
+                        onClick={() => {
+                          setPriceRange([0, 2000]);
+                          setSelectedCategories([]);
+                          setSearchQuery("");
+                          setAppliedFilters({
+                            search: "",
+                            categories: [],
+                            minPrice: 0,
+                            maxPrice: 2000,
+                          });
+                        }}
+                      >
+                        Reset All
+                      </Button>
+                    </div>
+                    {filters}
+                  </CardContent>
+                </Card>
+              </div>
             </aside>
 
             {/* Results */}
@@ -383,11 +412,39 @@ export default function Browse() {
                 <div className="flex justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
+              import { ServiceCard } from "@/components/service-card";
+import { EmptyState } from "@/components/ui/empty-state";
+
+type ServiceWithRelations = Service & {
+  provider: ProviderProfile & { user: User };
+  category: Category;
+};
+
+// ... inside Browse component where services are rendered
               ) : !services || services.length === 0 ? (
-                <div className="text-center py-12 border-2 border-dashed rounded-xl">
-                  <h3 className="text-lg font-semibold mb-2">No services found</h3>
-                  <p className="text-muted-foreground">Try adjusting your search or filters</p>
-                </div>
+                <EmptyState
+                  icon={Search}
+                  title="No services found"
+                  description="Try adjusting your search or filters to find what you're looking for."
+                  action={
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setPriceRange([0, 2000]);
+                        setSelectedCategories([]);
+                        setSearchQuery("");
+                        setAppliedFilters({
+                          search: "",
+                          categories: [],
+                          minPrice: 0,
+                          maxPrice: 2000,
+                        });
+                      }}
+                    >
+                      Clear All Filters
+                    </Button>
+                  }
+                />
               ) : viewMode === 'map' ? (
                 <div className="h-[600px] w-full rounded-xl border-2 overflow-hidden">
                   <MapView 
@@ -400,85 +457,9 @@ export default function Browse() {
                   />
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {services.map((service) => (
-                    <Link key={service.id} href={`/service/${service.id}`}>
-                      <Card className="hover:shadow-lg active:shadow-md cursor-pointer transition-all duration-300 border-2 rounded-xl h-full group">
-                        <CardContent className="p-0 flex flex-col h-full">
-                          {/* Image */}
-                          <div className="aspect-video bg-muted rounded-t-xl relative overflow-hidden">
-                            {service.images?.[0] ? (
-                              <img
-                                src={getImageUrl(service.images[0])}
-                                alt={service.titleEn}
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20" />
-                            )}
-                            {service.isFeatured && (
-                              <Badge className="absolute top-4 right-4 bg-secondary text-secondary-foreground">
-                                Featured
-                              </Badge>
-                            )}
-                          </div>
-
-                          <div className="p-6 flex flex-col flex-1">
-                            <div className="flex items-start gap-3 mb-3">
-                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary flex-shrink-0 overflow-hidden">
-                                {service.provider.user.profileImageUrl ? (
-                                  <img src={getImageUrl(service.provider.user.profileImageUrl)} className="w-full h-full object-cover" />
-                                ) : (
-                                  service.provider.user.firstName?.[0]
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-lg mb-1 line-clamp-1">
-                                  {service.titleEn}
-                                </h3>
-                                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                                  {service.provider.companyName || `${service.provider.user.firstName} ${service.provider.user.lastName}`}
-                                  {service.provider.verificationStatus === 'verified' && <Shield className="w-4 h-4 text-success" />}
-                                </p>
-                              </div>
-                            </div>
-
-                            <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                              {service.descriptionEn}
-                            </p>
-
-                            <div className="flex items-center justify-between mb-4">
-                              <div className="flex items-center gap-1">
-                                <Star className="w-4 h-4 fill-warning text-warning" />
-                                <span className="font-semibold text-sm">{service.provider.rating || "New"}</span>
-                                <span className="text-xs text-muted-foreground">({service.provider.totalReviews} reviews)</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <MapPin className="w-4 h-4" />
-                                {service.location?.emirate || "UAE"}
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between pt-4 border-t mt-auto">
-                              <div>
-                                <div className="text-2xl font-bold text-primary">
-                                  {service.pricingType === 'fixed' ?
-                                    `${service.priceMin} ${service.currency}` :
-                                    service.pricingType === 'hourly' ?
-                                    `${service.priceMin}/hr` : 'Custom'}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {service.pricingType === 'hourly' ? 'Hourly rate' : 'Starting price'}
-                                </div>
-                              </div>
-                              <Button className="rounded-lg">
-                                View Details
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
+                    <ServiceCard key={service.id} service={service} />
                   ))}
                 </div>
               )}

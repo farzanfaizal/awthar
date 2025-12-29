@@ -7,6 +7,7 @@ import { ConversationList } from "@/components/chat/conversation-list";
 import { ChatWindow } from "@/components/chat/chat-window";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Loader2, MessageSquare } from "lucide-react";
 import { Conversation, User, ProviderProfile } from "@shared/schema";
 import { cn } from "@/lib/utils";
@@ -87,9 +88,13 @@ export default function MessagesPage() {
               onBack={() => setActiveConversationId(undefined)}
             />
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground bg-muted/5">
-              <MessageSquare className="w-16 h-16 mb-4 opacity-20" />
-              <p>Select a conversation to start chatting</p>
+            <div className="flex-1 flex flex-col items-center justify-center bg-muted/5">
+              <EmptyState
+                variant="minimal"
+                icon={MessageSquare}
+                title="Your Inbox"
+                description="Select a conversation from the sidebar to start chatting with service providers or customers."
+              />
             </div>
           )}
         </div>

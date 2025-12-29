@@ -2,7 +2,8 @@ import { Conversation, User, ProviderProfile } from "@shared/schema";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageSquare } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface ConversationListProps {
   conversations: (Conversation & {
@@ -21,7 +22,14 @@ export function ConversationList({ conversations, activeId, onSelect, isLoading,
   }
 
   if (!conversations.length) {
-    return <div className="p-4 text-center text-sm text-muted-foreground">No conversations yet</div>;
+    return (
+      <EmptyState
+        variant="minimal"
+        icon={MessageSquare}
+        title="No messages yet"
+        description="Your conversations will appear here once you start messaging providers."
+      />
+    );
   }
 
   return (
