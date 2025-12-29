@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2 } from "lucide-react";
+import { Loader2, User, Briefcase } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function SignupPage() {
   const [, setLocation] = useLocation();
@@ -19,6 +20,7 @@ export default function SignupPage() {
     confirmPassword: "",
     firstName: "",
     lastName: "",
+    role: "customer" as "customer" | "provider",
   });
 
   const signupMutation = useMutation({
@@ -30,13 +32,14 @@ export default function SignupPage() {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
         title: "Welcome to Awthar!",
         description: "Your account has been created successfully.",
       });
-      setLocation("/");
+      // Redirect providers to dashboard, customers to home
+      setLocation(data.role === "provider" ? "/dashboard" : "/");
     },
     onError: (error: Error) => {
       toast({
@@ -83,6 +86,50 @@ export default function SignupPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            
+            <div className="space-y-2">
+              <Label>I want to...</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div 
+                  className={cn(
+                    "cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center gap-2 transition-all hover:border-primary/50",
+                    formData.role === "customer" 
+                      ? "border-primary bg-primary/5 ring-1 ring-primary" 
+                      : "border-muted bg-background hover:bg-muted/50"
+                  )}
+                  onClick={() => setFormData({ ...formData, role: "customer" })}
+                >
+                  <User className={cn(
+                    "w-6 h-6",
+                    formData.role === "customer" ? "text-primary" : "text-muted-foreground"
+                  )} />
+                  <span className={cn(
+                    "font-semibold text-sm",
+                    formData.role === "customer" ? "text-primary" : "text-muted-foreground"
+                  )}>Hire Professionals</span>
+                </div>
+
+                <div 
+                  className={cn(
+                    "cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center gap-2 transition-all hover:border-primary/50",
+                    formData.role === "provider" 
+                      ? "border-primary bg-primary/5 ring-1 ring-primary" 
+                      : "border-muted bg-background hover:bg-muted/50"
+                  )}
+                  onClick={() => setFormData({ ...formData, role: "provider" })}
+                >
+                  <Briefcase className={cn(
+                    "w-6 h-6",
+                    formData.role === "provider" ? "text-primary" : "text-muted-foreground"
+                  )} />
+                  <span className={cn(
+                    "font-semibold text-sm",
+                    formData.role === "provider" ? "text-primary" : "text-muted-foreground"
+                  )}>Offer Services</span>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name</Label>

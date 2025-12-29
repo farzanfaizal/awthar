@@ -51,7 +51,7 @@
 ### Phase 12: Functional Gaps & Logic (New)
 **Category A: Critical Flows**
 - [x] **Issue #84** - Landing: Connect Hero Search inputs (Keyword/Location) to Browse Page URL params. ✅ DONE
-- [ ] **Issue #85** - Auth: Add "Account Type" (Customer/Provider) selection during Signup to streamline onboarding.
+- [x] **Issue #85** - Auth: Add "Account Type" (Customer/Provider) selection during Signup to streamline onboarding. ✅ DONE
 - [ ] **Issue #86** - Booking: Implement backend conflict detection (prevent double-booking same provider/time).
 - [ ] **Issue #87** - Booking: Validate "Minimum Notice" (prevent booking 5 mins from now) & "Working Hours".
 
@@ -125,7 +125,7 @@
 ## 📊 Statistics
 
 - **Total Issues:** 94
-- **Completed:** 84
+- **Completed:** 85
 - **In Progress:** 0
-- **Not Started:** 10
-- **Progress:** 89%
+- **Not Started:** 9
+- **Progress:** 90%

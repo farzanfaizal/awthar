@@ -115,7 +115,7 @@ export async function setupAuth(app: Express) {
   // Signup endpoint
   app.post("/api/signup", signupLimiter, async (req, res) => {
     try {
-      const { email, password, firstName, lastName } = req.body;
+      const { email, password, firstName, lastName, role } = req.body;
 
       if (!email || !password) {
         return res.status(400).json({ message: "Email and password are required" });
@@ -124,6 +124,10 @@ export async function setupAuth(app: Express) {
       if (password.length < 8) {
         return res.status(400).json({ message: "Password must be at least 8 characters" });
       }
+
+      // Validate role if provided
+      const validRoles = ["customer", "provider"];
+      const userRole = role && validRoles.includes(role) ? role : "customer";
 
       // Check if user already exists
       const existingUser = await db.query.users.findFirst({
@@ -143,6 +147,7 @@ export async function setupAuth(app: Express) {
         password: hashedPassword,
         firstName: firstName || null,
         lastName: lastName || null,
+        role: userRole,
       }).returning();
 
       // Log them in
