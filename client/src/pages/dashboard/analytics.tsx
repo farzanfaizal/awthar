@@ -8,33 +8,53 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  Bar, 
-  BarChart,
   Cell,
   Pie,
   PieChart
 } from "recharts";
-import { TrendingUp, Users, Eye, DollarSign, Calendar, ArrowUpRight, ArrowDownRight } from "lucide-react";
-
-const revenueData = [
-  { name: "Jul", total: 4200 },
-  { name: "Aug", total: 3800 },
-  { name: "Sep", total: 5100 },
-  { name: "Oct", total: 4800 },
-  { name: "Nov", total: 6200 },
-  { name: "Dec", total: 7400 },
-];
-
-const serviceData = [
-  { name: "Cleaning", value: 45 },
-  { name: "Plumbing", value: 25 },
-  { name: "Electrical", value: 20 },
-  { name: "Others", value: 10 },
-];
+import { Users, Eye, DollarSign, Calendar, ArrowUpRight, ArrowDownRight, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', '#fbbf24', '#94a3b8'];
 
+type AnalyticsData = {
+  stats: {
+    totalRevenue: number;
+    totalBookings: number;
+    totalViews: number;
+    conversionRate: number;
+  };
+  charts: {
+    revenue: { name: string; total: number }[];
+    services: { name: string; value: number }[];
+  };
+};
+
 export default function AnalyticsPage() {
+  const { data, isLoading } = useQuery<AnalyticsData>({
+    queryKey: ["/api/analytics/provider"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/analytics/provider");
+      return res.json();
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-[500px]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Default empty state if no data
+  const revenueData = data?.charts.revenue || [];
+  const serviceData = data?.charts.services || [];
+  const stats = data?.stats || { totalRevenue: 0, totalBookings: 0, totalViews: 0, conversionRate: 0 };
+
   return (
     <DashboardLayout>
       <div className="space-y-8 pb-12">
@@ -59,11 +79,10 @@ export default function AnalyticsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">AED 12,450</div>
-              <div className="flex items-center gap-1 mt-2 text-success font-medium text-sm">
-                <ArrowUpRight className="h-4 w-4" />
-                <span>+20.1%</span>
-                <span className="text-muted-foreground font-normal ml-1 text-xs text-nowrap">vs last month</span>
+              <div className="text-3xl font-bold">AED {stats.totalRevenue.toLocaleString()}</div>
+              {/* Note: Growth percentages require comparison with previous period data which we haven't implemented yet */}
+              <div className="flex items-center gap-1 mt-2 text-muted-foreground font-medium text-sm">
+                <span className="text-xs text-nowrap">Lifetime Revenue</span>
               </div>
             </CardContent>
           </Card>
@@ -76,11 +95,9 @@ export default function AnalyticsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">184</div>
-              <div className="flex items-center gap-1 mt-2 text-success font-medium text-sm">
-                <ArrowUpRight className="h-4 w-4" />
-                <span>+12.5%</span>
-                <span className="text-muted-foreground font-normal ml-1 text-xs text-nowrap">vs last month</span>
+              <div className="text-3xl font-bold">{stats.totalBookings}</div>
+              <div className="flex items-center gap-1 mt-2 text-muted-foreground font-medium text-sm">
+                <span className="text-xs text-nowrap">Total Bookings</span>
               </div>
             </CardContent>
           </Card>
@@ -93,11 +110,9 @@ export default function AnalyticsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">2,547</div>
-              <div className="flex items-center gap-1 mt-2 text-destructive font-medium text-sm">
-                <ArrowDownRight className="h-4 w-4" />
-                <span>-4.2%</span>
-                <span className="text-muted-foreground font-normal ml-1 text-xs text-nowrap">vs last month</span>
+              <div className="text-3xl font-bold">{stats.totalViews}</div>
+              <div className="flex items-center gap-1 mt-2 text-muted-foreground font-medium text-sm">
+                <span className="text-xs text-nowrap">Service Views</span>
               </div>
             </CardContent>
           </Card>
@@ -110,11 +125,9 @@ export default function AnalyticsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">7.2%</div>
-              <div className="flex items-center gap-1 mt-2 text-success font-medium text-sm">
-                <ArrowUpRight className="h-4 w-4" />
-                <span>+1.2%</span>
-                <span className="text-muted-foreground font-normal ml-1 text-xs text-nowrap">vs last month</span>
+              <div className="text-3xl font-bold">{stats.conversionRate.toFixed(1)}%</div>
+              <div className="flex items-center gap-1 mt-2 text-muted-foreground font-medium text-sm">
+                <span className="text-xs text-nowrap">Bookings / Views</span>
               </div>
             </CardContent>
           </Card>
@@ -125,7 +138,7 @@ export default function AnalyticsPage() {
           <Card className="lg:col-span-4 border-none shadow-lg">
             <CardHeader>
               <CardTitle>Revenue Overview</CardTitle>
-              <CardDescription>Monthly revenue trends for the current period.</CardDescription>
+              <CardDescription>Monthly revenue trends for the last 6 months.</CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
               <div className="h-[350px] w-full">
@@ -178,39 +191,47 @@ export default function AnalyticsPage() {
               <CardDescription>Bookings shared across your service categories.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={serviceData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {serviceData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                       contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="mt-4 space-y-3">
-                {serviceData.map((item, i) => (
-                  <div key={item.name} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                      <span className="font-medium">{item.name}</span>
-                    </div>
-                    <span className="text-muted-foreground">{item.value}%</span>
+              {serviceData.length > 0 ? (
+                <>
+                  <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={serviceData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {serviceData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                           contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                ))}
-              </div>
+                  <div className="mt-4 space-y-3">
+                    {serviceData.map((item, i) => (
+                      <div key={item.name} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                          <span className="font-medium">{item.name}</span>
+                        </div>
+                        <span className="text-muted-foreground">{item.value} bookings</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                  No bookings yet
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

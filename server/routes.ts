@@ -10,6 +10,7 @@ import { bookingController } from "./controllers/booking.controller";
 import { uploadController } from "./controllers/upload.controller";
 import { favoritesController } from "./controllers/favorites.controller";
 import { reportsController } from "./controllers/reports.controller";
+import { analyticsController } from "./controllers/analytics.controller";
 import { ChatService } from "./services/chat.service";
 
 // Define session type extension
@@ -38,6 +39,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/upload", uploadController);
   app.use("/api/favorites", favoritesController);
   app.use("/api/reports", reportsController);
+  app.use("/api/analytics", analyticsController);
 
   // HTTP Server and WebSocket setup
   const httpServer = createServer(app);
