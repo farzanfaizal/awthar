@@ -19,6 +19,9 @@ import { useUserLocation } from "@/hooks/useUserLocation";
 import { MapView } from "@/components/map-view";
 import { reverseGeocode } from "@/lib/geocoding";
 import { ServiceCard } from "@/components/service-card";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type ServiceWithRelations = Service & {
   provider: ProviderProfile & { user: User };
@@ -148,10 +151,7 @@ export default function Browse() {
     },
   });
 
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
-// ... existing imports
 
   const filters = (
     <div className="space-y-6">
@@ -412,13 +412,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
                 <div className="flex justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
-              import { ServiceCard } from "@/components/service-card";
-import { EmptyState } from "@/components/ui/empty-state";
-
-type ServiceWithRelations = Service & {
-  provider: ProviderProfile & { user: User };
-  category: Category;
-};
+              
 
 // ... inside Browse component where services are rendered
               ) : !services || services.length === 0 ? (
