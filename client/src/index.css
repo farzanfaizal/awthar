@@ -233,6 +233,23 @@
   p {
     @apply leading-7 [&:not(:first-child)]:mt-6;
   }
+
+  /* Global Shadcn Overrides for Corporate Look */
+  .shadcn-card {
+    @apply rounded-2xl shadow-sm border-border/50 transition-all duration-300;
+  }
+
+  input, textarea, select {
+    @apply focus-visible:ring-primary/20 focus-visible:border-primary transition-all !important;
+  }
+
+  button {
+    @apply active:scale-[0.98] transition-all;
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 @layer utilities {

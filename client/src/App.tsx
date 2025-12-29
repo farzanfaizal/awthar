@@ -33,6 +33,8 @@ import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
 import { AppModeProvider, useAppMode } from "@/context/app-mode-context";
 import { useEffect } from "react";
+import ErrorBoundary from "@/components/error-boundary";
+import { BottomNav } from "@/components/layout/bottom-nav";
 
 function AppRouter() {
   const { isLoading: isAuthLoading } = useAuth();
@@ -95,20 +97,23 @@ function AppRouter() {
       <Route path="/provider/:id" component={ProviderProfile} />
       <Route component={NotFound} />
     </Switch>
+    <BottomNav />
   );
 }
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <Toaster />
-          <AppModeProvider>
-            <AppRouter />
-          </AppModeProvider>
-        </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="light">
+          <TooltipProvider>
+            <Toaster />
+            <AppModeProvider>
+              <AppRouter />
+            </AppModeProvider>
+          </TooltipProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

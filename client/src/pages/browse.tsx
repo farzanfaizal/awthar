@@ -19,9 +19,8 @@ import { useUserLocation } from "@/hooks/useUserLocation";
 import { MapView } from "@/components/map-view";
 import { reverseGeocode } from "@/lib/geocoding";
 import { ServiceCard } from "@/components/service-card";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ServiceCardSkeleton } from "@/components/skeletons";
 
 type ServiceWithRelations = Service & {
   provider: ProviderProfile & { user: User };
@@ -404,17 +403,16 @@ export default function Browse() {
             <div className="flex-1">
               <div className="mb-4 flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Showing <span className="font-semibold">{services?.length || 0}</span> results
+                  Showing <span className="font-semibold">{isLoading ? "..." : (services?.length || 0)}</span> results
                 </p>
               </div>
 
               {isLoading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <ServiceCardSkeleton key={i} />
+                  ))}
                 </div>
-              
-
-// ... inside Browse component where services are rendered
               ) : !services || services.length === 0 ? (
                 <EmptyState
                   icon={Search}

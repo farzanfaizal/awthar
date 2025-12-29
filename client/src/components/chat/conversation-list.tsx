@@ -1,24 +1,20 @@
-import { Conversation, User, ProviderProfile } from "@shared/schema";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { Loader2, MessageSquare } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ConversationItemSkeleton } from "@/components/skeletons";
 
 interface ConversationListProps {
-  conversations: (Conversation & {
-    customer: User;
-    provider: ProviderProfile & { user: User };
-  })[];
-  activeId?: string;
-  onSelect: (id: string) => void;
-  isLoading: boolean;
-  currentUserId: string;
-}
-
+// ... inside the component
 export function ConversationList({ conversations, activeId, onSelect, isLoading, currentUserId }: ConversationListProps) {
   if (isLoading) {
-    return <div className="flex justify-center p-4"><Loader2 className="w-6 h-6 animate-spin" /></div>;
+    return (
+      <div className="flex flex-col gap-1 p-2">
+        <ConversationItemSkeleton />
+        <ConversationItemSkeleton />
+        <ConversationItemSkeleton />
+        <ConversationItemSkeleton />
+      </div>
+    );
   }
 
   if (!conversations.length) {

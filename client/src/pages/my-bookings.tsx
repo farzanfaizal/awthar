@@ -14,6 +14,7 @@ import { Link, useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { EmptyState } from "@/components/ui/empty-state";
+import { BookingCardSkeleton } from "@/components/skeletons";
 
 type BookingWithRelations = Booking & {
   service: Service;
@@ -77,8 +78,10 @@ export default function MyBookingsPage() {
         <h1 className="text-3xl font-bold mb-8">My Bookings</h1>
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="space-y-6">
+            <BookingCardSkeleton />
+            <BookingCardSkeleton />
+            <BookingCardSkeleton />
           </div>
         ) : (
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
