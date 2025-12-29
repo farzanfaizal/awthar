@@ -38,8 +38,23 @@ export class BookingService {
     }
 
     // Validation: Ensure date is in the future
-    if (new Date(data.scheduledDate) < new Date()) {
+    const now = new Date();
+    const scheduledTime = new Date(data.scheduledDate);
+    
+    if (scheduledTime < now) {
       throw new Error("Cannot book a time in the past.");
+    }
+
+    // Minimum Notice: 2 Hours
+    const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    if (scheduledTime < twoHoursFromNow) {
+      throw new Error("Bookings must be made at least 2 hours in advance.");
+    }
+
+    // Working Hours: 8 AM to 8 PM
+    const hour = scheduledTime.getHours();
+    if (hour < 8 || hour >= 20) {
+      throw new Error("Bookings are only available between 8:00 AM and 8:00 PM.");
     }
 
     // Conflict Detection: Check for existing bookings at the same time

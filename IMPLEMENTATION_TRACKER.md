@@ -53,7 +53,7 @@
 - [x] **Issue #84** - Landing: Connect Hero Search inputs (Keyword/Location) to Browse Page URL params. ✅ DONE
 - [x] **Issue #85** - Auth: Add "Account Type" (Customer/Provider) selection during Signup to streamline onboarding. ✅ DONE
 - [x] **Issue #86** - Booking: Implement backend conflict detection (prevent double-booking same provider/time). ✅ DONE
-- [ ] **Issue #87** - Booking: Validate "Minimum Notice" (prevent booking 5 mins from now) & "Working Hours".
+- [x] **Issue #87** - Booking: Validate "Minimum Notice" (prevent booking 5 mins from now) & "Working Hours". ✅ DONE
 
 **Category B: Real Data Integration**
 - [ ] **Issue #88** - Analytics: Connect Dashboard Charts to real backend data (Revenue, Bookings, Views).
@@ -125,7 +125,7 @@
 ## 📊 Statistics
 
 - **Total Issues:** 94
-- **Completed:** 86
+- **Completed:** 87
 - **In Progress:** 0
-- **Not Started:** 8
-- **Progress:** 91%
+- **Not Started:** 7
+- **Progress:** 92%
