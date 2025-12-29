@@ -369,8 +369,8 @@ export const insertServiceSchema = createInsertSchema(services, {
     latitude: z.number().optional(),
     longitude: z.number().optional(),
   }).optional().nullable(),
-  latitude: z.number().optional().nullable(),
-  longitude: z.number().optional().nullable(),
+  latitude: z.coerce.string().optional().nullable(),
+  longitude: z.coerce.string().optional().nullable(),
 }).omit({
   id: true,
   createdAt: true,

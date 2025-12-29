@@ -90,15 +90,13 @@ export default function ProfilePage() {
                     <AvatarFallback className="text-2xl">{firstName?.[0] || user.firstName?.[0]}</AvatarFallback>
                   </Avatar>
                   {isEditing && (
-                    <ImageUpload
-                      onUploadComplete={handleImageUpload}
-                      maxFiles={1}
-                      trigger={
-                        <Button variant="outline" size="sm" type="button">
-                          Change Photo
-                        </Button>
-                      }
-                    />
+                    <div className="flex flex-col items-center gap-2">
+                      <ImageUpload
+                        value={profileImageUrl ? [profileImageUrl] : []}
+                        onChange={(urls) => handleImageUpload(urls)}
+                        maxFiles={1}
+                      />
+                    </div>
                   )}
                 </div>
 

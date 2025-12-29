@@ -176,10 +176,10 @@ export class ServiceService {
     // Auto-populate lat/lng columns from location JSON if available
     if (data.location && typeof data.location === 'object') {
       if (data.location.latitude && !data.latitude) {
-        data.latitude = data.location.latitude;
+        data.latitude = data.location.latitude.toString();
       }
       if (data.location.longitude && !data.longitude) {
-        data.longitude = data.location.longitude;
+        data.longitude = data.location.longitude.toString();
       }
     }
 
@@ -195,10 +195,10 @@ export class ServiceService {
     // Auto-populate lat/lng columns from location JSON if available
     if (data.location && typeof data.location === 'object') {
       if (data.location.latitude && !data.latitude) {
-        data.latitude = data.location.latitude;
+        data.latitude = data.location.latitude.toString();
       }
       if (data.location.longitude && !data.longitude) {
-        data.longitude = data.location.longitude;
+        data.longitude = data.location.longitude.toString();
       }
     }
 

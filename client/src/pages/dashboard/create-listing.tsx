@@ -35,6 +35,7 @@ import { ImageUpload } from "@/components/image-upload";
 import { LocationPicker } from "@/components/location-picker";
 import { reverseGeocode } from "@/lib/geocoding";
 import { cn } from "@/lib/utils";
+import { Category } from "@shared/schema";
 
 const createListingSchema = z.object({
   titleEn: z.string().min(10, "Title must be at least 10 characters"),
@@ -96,7 +97,7 @@ export default function CreateListingPage() {
   });
 
   // Fetch categories
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
+  const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
 
@@ -291,7 +292,7 @@ export default function CreateListingPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {categories?.map((category: any) => (
+                              {categories?.map((category: Category) => (
                                 <SelectItem key={category.id} value={category.id}>
                                   {category.nameEn}
                                 </SelectItem>
@@ -471,7 +472,7 @@ export default function CreateListingPage() {
                         <div>
                           <span className="text-muted-foreground block">Category</span>
                           <span className="font-medium">
-                            {categories?.find((c: any) => c.id === form.getValues("categoryId"))?.nameEn || "Selected"}
+                            {categories?.find((c: Category) => c.id === form.getValues("categoryId"))?.nameEn || "Selected"}
                           </span>
                         </div>
                         <div>

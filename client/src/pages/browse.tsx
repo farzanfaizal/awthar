@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -387,6 +389,10 @@ export default function Browse() {
                             categories: [],
                             minPrice: 0,
                             maxPrice: 2000,
+                            sortBy: "newest",
+                            latitude: undefined,
+                            longitude: undefined,
+                            radius: undefined,
                           });
                         }}
                       >
@@ -430,6 +436,10 @@ export default function Browse() {
                           categories: [],
                           minPrice: 0,
                           maxPrice: 2000,
+                          sortBy: "newest",
+                          latitude: undefined,
+                          longitude: undefined,
+                          radius: undefined,
                         });
                       }}
                     >

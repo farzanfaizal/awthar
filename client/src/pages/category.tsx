@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { ServiceCard } from "@/components/service-card";
 import { ServiceCardSkeleton } from "@/components/skeletons";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Category } from "@shared/schema";
 
 export default function CategoryPage() {
   const [, params] = useRoute("/category/:slug");
@@ -24,11 +25,16 @@ export default function CategoryPage() {
     enabled: !!slug,
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
+    queryFn: async () => {
+      const res = await fetch("/api/categories");
+      if (!res.ok) throw new Error("Failed to fetch categories");
+      return res.json();
+    },
   });
 
-  const category = categories?.find((c: any) => c.slug === slug);
+  const category = categories?.find((c: Category) => c.slug === slug);
 
   return (
     <div className="min-h-screen flex flex-col">

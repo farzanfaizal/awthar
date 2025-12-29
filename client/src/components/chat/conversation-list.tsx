@@ -1,10 +1,24 @@
 import { formatDistanceToNow } from "date-fns";
-import { Loader2, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConversationItemSkeleton } from "@/components/skeletons";
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Conversation, ProviderProfile, User } from "@shared/schema";
+
+type ConversationWithRelations = Conversation & {
+  customer: User;
+  provider: ProviderProfile & { user: User };
+};
 
 interface ConversationListProps {
-// ... inside the component
+  conversations: ConversationWithRelations[];
+  activeId?: string;
+  onSelect: (id: string) => void;
+  isLoading: boolean;
+  currentUserId: string;
+}
+
 export function ConversationList({ conversations, activeId, onSelect, isLoading, currentUserId }: ConversationListProps) {
   if (isLoading) {
     return (
@@ -61,7 +75,6 @@ export function ConversationList({ conversations, activeId, onSelect, isLoading,
                 )}
               </div>
               <p className="text-xs text-muted-foreground truncate">
-                {/* We don't have the last message preview in the conversation object yet, but could add it */}
                 Click to view chat
               </p>
             </div>

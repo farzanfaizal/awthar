@@ -33,6 +33,7 @@ import { LocationPicker } from "@/components/location-picker";
 import { reverseGeocode } from "@/lib/geocoding";
 import { useState, useEffect } from "react";
 import { getImageUrl } from "@/lib/image-utils";
+import { Category } from "@shared/schema";
 
 const editListingSchema = z.object({
   titleEn: z.string().min(10, "Title must be at least 10 characters"),
@@ -129,7 +130,7 @@ export default function EditListingPage() {
   }, [service, form]);
 
   // Fetch categories
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
+  const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
 
@@ -341,7 +342,7 @@ export default function EditListingPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {categories?.map((category: any) => (
+                            {categories?.map((category: Category) => (
                               <SelectItem key={category.id} value={category.id}>
                                 {category.nameEn}
                               </SelectItem>
