@@ -52,7 +52,7 @@
 **Category A: Critical Flows**
 - [x] **Issue #84** - Landing: Connect Hero Search inputs (Keyword/Location) to Browse Page URL params. ✅ DONE
 - [x] **Issue #85** - Auth: Add "Account Type" (Customer/Provider) selection during Signup to streamline onboarding. ✅ DONE
-- [ ] **Issue #86** - Booking: Implement backend conflict detection (prevent double-booking same provider/time).
+- [x] **Issue #86** - Booking: Implement backend conflict detection (prevent double-booking same provider/time). ✅ DONE
 - [ ] **Issue #87** - Booking: Validate "Minimum Notice" (prevent booking 5 mins from now) & "Working Hours".
 
 **Category B: Real Data Integration**
@@ -125,7 +125,7 @@
 ## 📊 Statistics
 
 - **Total Issues:** 94
-- **Completed:** 85
+- **Completed:** 86
 - **In Progress:** 0
-- **Not Started:** 9
-- **Progress:** 90%
+- **Not Started:** 8
+- **Progress:** 91%

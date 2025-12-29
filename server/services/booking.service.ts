@@ -8,7 +8,7 @@ import {
   type InsertBooking, 
   bookingStatusEnum
 } from "@shared/schema";
-import { eq, and, desc, or, gte, lte, sql } from "drizzle-orm";
+import { eq, and, desc, or, gte, lte, sql, inArray } from "drizzle-orm";
 
 type BookingStatus = "pending" | "accepted" | "in_progress" | "completed" | "cancelled";
 
@@ -35,6 +35,24 @@ export class BookingService {
 
     if (service.status !== "active") {
       throw new Error("Service is not active");
+    }
+
+    // Validation: Ensure date is in the future
+    if (new Date(data.scheduledDate) < new Date()) {
+      throw new Error("Cannot book a time in the past.");
+    }
+
+    // Conflict Detection: Check for existing bookings at the same time
+    const conflict = await db.query.bookings.findFirst({
+      where: and(
+        eq(bookings.providerId, service.providerId),
+        eq(bookings.scheduledDate, data.scheduledDate),
+        inArray(bookings.status, ['pending', 'accepted', 'in_progress'])
+      )
+    });
+
+    if (conflict) {
+      throw new Error("This time slot is already booked. Please choose another time.");
     }
 
     // Use provided price or service minimum price as fallback
