@@ -66,9 +66,18 @@ router.get("/file/:key", async (req, res) => {
     res.setHeader("Content-Type", fileResponse.ContentType || "image/webp");
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
 
-    // Pipe stream
-    // @ts-ignore - AWS SDK stream type compatibility
-    fileResponse.Body.pipe(res);
+    // Handle stream safely
+    const body = fileResponse.Body as any;
+    if (body.pipe) {
+      body.pipe(res);
+    } else if (body.transformToByteArray) {
+      // Handle modern AWS SDK bodies (blobs/byte arrays)
+      const bytes = await body.transformToByteArray();
+      res.send(Buffer.from(bytes));
+    } else {
+      console.error("Unknown body type from S3", body);
+      res.status(500).send("Failed to stream file");
+    }
   } catch (error) {
     console.error("Proxy error:", error);
     res.status(404).send("File not found");

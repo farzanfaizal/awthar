@@ -28,21 +28,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Star, Eye, MessageCircle, MapPin, Share2, Flag, Heart, Loader2, Calendar, Info, Map as MapIcon, ShieldCheck } from "lucide-react";
+import { Star, Eye, MessageCircle, MapPin, Share2, Flag, Heart, Loader2, Calendar, Info, Map as MapIcon, ShieldCheck, ArrowLeft } from "lucide-react";
 import { Service, ProviderProfile, User, Category } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
@@ -233,28 +225,15 @@ export default function ServiceDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
-        {/* Breadcrumb */}
-        <Breadcrumb className="mb-6">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/">Home</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/browse">Browse</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink href={`/browse?category=${service.category.slug}`}>
-                {service.category.nameEn}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="max-w-[200px] truncate">{service.titleEn}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+        {/* Back Button */}
+        <div className="mb-6">
+          <Link href="/browse">
+            <Button variant="ghost" className="pl-0 hover:pl-2 transition-all gap-2 text-muted-foreground hover:text-primary">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Browse
+            </Button>
+          </Link>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Left Column: Media & Info (8/12) */}
