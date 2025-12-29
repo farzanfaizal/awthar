@@ -403,7 +403,7 @@ export default function Browse() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {services.map((service) => (
                     <Link key={service.id} href={`/service/${service.id}`}>
-                      <Card className="hover-elevate active-elevate-2 cursor-pointer transition-all border-2 rounded-xl h-full group">
+                      <Card className="hover:shadow-lg active:shadow-md cursor-pointer transition-all duration-300 border-2 rounded-xl h-full group">
                         <CardContent className="p-0 flex flex-col h-full">
                           {/* Image */}
                           <div className="aspect-video bg-muted rounded-t-xl relative overflow-hidden">

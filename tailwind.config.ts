@@ -91,6 +91,16 @@ export default {
           foreground: "hsl(var(--warning-foreground) / <alpha-value>)",
         },
       },
+      boxShadow: {
+        xs: "var(--shadow-xs)",
+        sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow-md)", // Default 'shadow' maps to 'shadow-md' variable for consistency
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)",
+        "2xl": "var(--shadow-2xl)",
+        inner: "var(--shadow-inner)",
+      },
       fontFamily: {
         sans: ["var(--font-sans)"],
         serif: ["var(--font-serif)"],

@@ -14,7 +14,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(npm run check:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(timeout /t 10)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []

@@ -135,7 +135,7 @@ export default function Landing() {
             ) : (
               categories?.map((category: any) => (
                 <Link key={category.slug} href={`/category/${category.slug}`}>
-                  <Card className="hover-elevate active-elevate-2 cursor-pointer transition-all border-2 rounded-xl h-full" data-testid={`card-category-${category.slug}`}>
+                  <Card className="hover:shadow-lg active:shadow-md cursor-pointer transition-all duration-300 border-2 rounded-xl h-full" data-testid={`card-category-${category.slug}`}>
                     <CardContent className="p-6 flex flex-col items-center text-center gap-4">
                       <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center">
                         <IconComponent name={category.iconName} className="w-8 h-8 text-primary" />
@@ -205,7 +205,7 @@ export default function Landing() {
 
                 return (
                   <Link key={service.id} href={`/service/${service.id}`}>
-                    <Card className="hover-elevate active-elevate-2 cursor-pointer transition-all border-2 rounded-xl h-full flex flex-col" data-testid={`card-service-${service.id}`}>
+                    <Card className="hover:shadow-lg active:shadow-md cursor-pointer transition-all duration-300 border-2 rounded-xl h-full flex flex-col" data-testid={`card-service-${service.id}`}>
                       <CardContent className="p-6 flex flex-col h-full">
                         <div className="flex items-start gap-4 mb-4">
                           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center font-bold text-xl text-primary flex-shrink-0 overflow-hidden">

@@ -82,19 +82,19 @@ export default function Dashboard() {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Link href="/dashboard/listings/new">
-                <Button className="w-full h-auto py-4 md:py-6 rounded-xl hover-elevate active-elevate-2 flex flex-col gap-2" data-testid="button-create-listing">
+                <Button className="w-full h-auto py-4 md:py-6 rounded-xl hover:shadow-lg active:shadow-md transition-all duration-300 flex flex-col gap-2" data-testid="button-create-listing">
                   <ListPlus className="h-6 w-6" />
                   <span>Create New Listing</span>
                 </Button>
               </Link>
               <Link href="/dashboard/messages">
-                <Button variant="outline" className="w-full h-auto py-4 md:py-6 rounded-xl hover-elevate active-elevate-2 flex flex-col gap-2" data-testid="button-view-messages">
+                <Button variant="outline" className="w-full h-auto py-4 md:py-6 rounded-xl hover:shadow-lg active:shadow-md transition-all duration-300 flex flex-col gap-2" data-testid="button-view-messages">
                   <MessageSquare className="h-6 w-6" />
                   <span>View Messages</span>
                 </Button>
               </Link>
               <Link href="/dashboard/analytics">
-                <Button variant="outline" className="w-full h-auto py-4 md:py-6 rounded-xl hover-elevate active-elevate-2 flex flex-col gap-2" data-testid="button-view-analytics">
+                <Button variant="outline" className="w-full h-auto py-4 md:py-6 rounded-xl hover:shadow-lg active:shadow-md transition-all duration-300 flex flex-col gap-2" data-testid="button-view-analytics">
                   <BarChart3 className="h-6 w-6" />
                   <span>View Analytics</span>
                 </Button>
@@ -113,7 +113,7 @@ export default function Dashboard() {
             <CardContent>
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover-elevate cursor-pointer" data-testid={`message-item-${i + 1}`}>
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer" data-testid={`message-item-${i + 1}`}>
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-semibold text-primary flex-shrink-0">
                       {String.fromCharCode(65 + i)}
                     </div>
