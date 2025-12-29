@@ -54,3 +54,31 @@ export async function reverseGeocode(lat: number, lng: number): Promise<{
     return null;
   }
 }
+
+export async function searchLocation(query: string): Promise<{ lat: number; lng: number; displayName: string } | null> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
+      {
+        headers: {
+          "User-Agent": "AwtharMarketplace/1.0",
+        },
+      }
+    );
+
+    if (!res.ok) return null;
+
+    const data: GeocodingResult[] = await res.json();
+    
+    if (data.length === 0) return null;
+
+    return {
+      lat: parseFloat(data[0].lat),
+      lng: parseFloat(data[0].lon),
+      displayName: data[0].display_name,
+    };
+  } catch (error) {
+    console.error("Geocoding search error:", error);
+    return null;
+  }
+}

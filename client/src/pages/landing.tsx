@@ -1,5 +1,6 @@
-import { Link } from "wouter";
-import { Search, Star, Shield, MessageSquare, MapPin, Clock, Wrench, Home as HomeIcon, Briefcase, Car, Users, TrendingUp, Laptop, GraduationCap } from "lucide-react";
+import { useState } from "react";
+import { Link, useLocation } from "wouter";
+import { Search, Star, Shield, MessageSquare, MapPin, Clock, Wrench, Home as HomeIcon, Briefcase, Car, Users, TrendingUp, Laptop, GraduationCap, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +9,8 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { searchLocation } from "@/lib/geocoding";
+import { useToast } from "@/hooks/use-toast";
 
 // Map icon names to Lucide components
 const iconMap: Record<string, any> = {
@@ -27,6 +30,12 @@ const IconComponent = ({ name, className }: { name: string; className?: string }
 };
 
 export default function Landing() {
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [locationQuery, setLocationQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+
   const { data: categories, isLoading: isLoadingCategories, isError: isCategoriesError } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
@@ -45,6 +54,39 @@ export default function Landing() {
       return res.json();
     },
   });
+
+  const handleSearch = async () => {
+    setIsSearching(true);
+    const params = new URLSearchParams();
+    
+    if (searchQuery) {
+      params.append("search", searchQuery);
+    }
+
+    if (locationQuery) {
+      const coords = await searchLocation(locationQuery);
+      if (coords) {
+        params.append("latitude", coords.lat.toString());
+        params.append("longitude", coords.lng.toString());
+        params.append("radius", "25"); // Default radius
+      } else {
+        toast({
+          title: "Location not found",
+          description: "We couldn't find that location. Searching without it.",
+          variant: "destructive",
+        });
+      }
+    }
+
+    setIsSearching(false);
+    setLocation(`/browse?${params.toString()}`);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -71,6 +113,9 @@ export default function Landing() {
                     type="search"
                     placeholder="What service do you need?"
                     className="pl-12 h-14 text-base rounded-xl border-2 text-foreground"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleKeyDown}
                     data-testid="input-hero-search"
                     aria-label="Search for services"
                   />
@@ -81,14 +126,28 @@ export default function Landing() {
                     type="text"
                     placeholder="Location (Emirate, City, Area)"
                     className="pl-12 h-14 text-base rounded-xl border-2 text-foreground"
+                    value={locationQuery}
+                    onChange={(e) => setLocationQuery(e.target.value)}
+                    onKeyDown={handleKeyDown}
                     data-testid="input-hero-location"
                     aria-label="Location"
                   />
                 </div>
-                <Button size="lg" className="h-14 px-8 rounded-xl bg-secondary hover:bg-secondary/90 text-white font-semibold whitespace-nowrap flex-shrink-0" data-testid="button-hero-search" asChild>
-                  <Link href="/browse">
-                    Search Services
-                  </Link>
+                <Button 
+                  size="lg" 
+                  className="h-14 px-8 rounded-xl bg-secondary hover:bg-secondary/90 text-white font-semibold whitespace-nowrap flex-shrink-0" 
+                  data-testid="button-hero-search"
+                  onClick={handleSearch}
+                  disabled={isSearching}
+                >
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Searching...
+                    </>
+                  ) : (
+                    "Search Services"
+                  )}
                 </Button>
               </div>
             </div>

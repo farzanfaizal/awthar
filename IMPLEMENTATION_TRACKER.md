@@ -48,11 +48,33 @@
 - [x] **Issue #82** - Mobile: Audit & Fix Mobile Navigation (Bottom Bar vs Hamburger) ✅ DONE
 - [x] **Issue #83** - Mobile: Ensure Touch Targets & Safe Areas (iPhone Dynamic Island compatibility) ✅ DONE
 
+### Phase 12: Functional Gaps & Logic (New)
+**Category A: Critical Flows**
+- [x] **Issue #84** - Landing: Connect Hero Search inputs (Keyword/Location) to Browse Page URL params. ✅ DONE
+- [ ] **Issue #85** - Auth: Add "Account Type" (Customer/Provider) selection during Signup to streamline onboarding.
+- [ ] **Issue #86** - Booking: Implement backend conflict detection (prevent double-booking same provider/time).
+- [ ] **Issue #87** - Booking: Validate "Minimum Notice" (prevent booking 5 mins from now) & "Working Hours".
+
+**Category B: Real Data Integration**
+- [ ] **Issue #88** - Analytics: Connect Dashboard Charts to real backend data (Revenue, Bookings, Views).
+- [ ] **Issue #89** - Profile: Ensure Provider "Completed Jobs" & "Rating" counts auto-update on booking completion.
+
+### Phase 13: Advanced Features & Polish (Future)
+**Category A: Communication & Notifications**
+- [ ] **Issue #90** - Notifications: Implement in-app notification center (Bell icon) for Booking Status/New Messages.
+- [ ] **Issue #91** - Chat: Add "Typing..." indicators and "Read" receipts.
+- [ ] **Issue #92** - Email: Setup transactional email templates (Welcome, Booking Confirmed) - *Mock/Log for now*.
+
+**Category B: Admin & Safety**
+- [ ] **Issue #93** - Admin: Basic Admin Dashboard to approve/reject Provider verification documents.
+- [ ] **Issue #94** - Trust: Add "Report User" functionality on Profile pages.
+
 ---
 
 ## 📝 Detailed Implementation Notes
 
 ### Phase 10: Location & Maps
+
 
 #### Issue #65: Location Picker
 - **Component:** `LocationPicker` (Leaflet map + Click handler).
@@ -102,8 +124,8 @@
 
 ## 📊 Statistics
 
-- **Total Issues:** 83
-- **Completed:** 57
+- **Total Issues:** 94
+- **Completed:** 84
 - **In Progress:** 0
-- **Not Started:** 26
-- **Progress:** 69%
+- **Not Started:** 10
+- **Progress:** 89%
