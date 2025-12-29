@@ -57,7 +57,7 @@
 
 **Category B: Real Data Integration**
 - [x] **Issue #88** - Analytics: Connect Dashboard Charts to real backend data (Revenue, Bookings, Views). ✅ DONE
-- [ ] **Issue #89** - Profile: Ensure Provider "Completed Jobs" & "Rating" counts auto-update on booking completion.
+- [x] **Issue #89** - Profile: Ensure Provider "Completed Jobs" & "Rating" counts auto-update on booking completion. ✅ DONE
 
 ### Phase 13: Advanced Features & Polish (Future)
 **Category A: Communication & Notifications**
@@ -125,7 +125,7 @@
 ## 📊 Statistics
 
 - **Total Issues:** 94
-- **Completed:** 88
+- **Completed:** 89
 - **In Progress:** 0
-- **Not Started:** 6
-- **Progress:** 93%
+- **Not Started:** 5
+- **Progress:** 95%

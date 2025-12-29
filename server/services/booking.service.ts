@@ -143,7 +143,8 @@ export class BookingService {
           with: {
             user: true
           }
-        }
+        },
+        review: true
       }
     });
   }

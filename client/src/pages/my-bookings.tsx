@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Booking, Service, User, ProviderProfile } from "@shared/schema";
+import { Booking, Service, User, ProviderProfile, Review } from "@shared/schema";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,21 +9,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, MessageSquare, Calendar as CalendarIcon, MapPin, XCircle } from "lucide-react";
+import { Loader2, MessageSquare, Calendar as CalendarIcon, MapPin, XCircle, Star } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BookingCardSkeleton } from "@/components/skeletons";
+import { ReviewDialog } from "@/components/review-dialog";
 
 type BookingWithRelations = Booking & {
   service: Service;
   customer: User;
   provider: ProviderProfile & { user: User };
+  review?: Review;
 };
 
 export default function MyBookingsPage() {
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [reviewBooking, setReviewBooking] = useState<{ id: string; providerId: string } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -210,9 +213,19 @@ export default function MyBookingsPage() {
                             )}
 
                             {booking.status === "completed" && (
-                              <Button size="sm">
-                                Leave Review
-                              </Button>
+                              booking.review ? (
+                                <Badge variant="outline" className="flex gap-1 py-1 px-3">
+                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                  <span>{booking.review.rating} / 5 Reviewed</span>
+                                </Badge>
+                              ) : (
+                                <Button 
+                                  size="sm"
+                                  onClick={() => setReviewBooking({ id: booking.id, providerId: booking.providerId })}
+                                >
+                                  Leave Review
+                                </Button>
+                              )
                             )}
                           </div>
                         </div>
@@ -223,6 +236,15 @@ export default function MyBookingsPage() {
               )}
             </div>
           </Tabs>
+        )}
+
+        {reviewBooking && (
+          <ReviewDialog
+            open={!!reviewBooking}
+            onOpenChange={(open) => !open && setReviewBooking(null)}
+            bookingId={reviewBooking.id}
+            providerId={reviewBooking.providerId}
+          />
         )}
       </main>
       <Footer />
