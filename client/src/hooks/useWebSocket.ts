@@ -3,11 +3,17 @@ import { useToast } from "@/hooks/use-toast";
 
 type WebSocketStatus = "connecting" | "connected" | "disconnected" | "error";
 
+const MAX_RECONNECT_DELAY = 30000; // 30 seconds max
+const INITIAL_RECONNECT_DELAY = 1000; // 1 second initial
+const MAX_RECONNECT_ATTEMPTS = 10;
+
 export function useWebSocket() {
   const [status, setStatus] = useState<WebSocketStatus>("disconnected");
   const wsRef = useRef<WebSocket | null>(null);
   const { toast } = useToast();
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const reconnectAttemptsRef = useRef<number>(0);
+  const reconnectDelayRef = useRef<number>(INITIAL_RECONNECT_DELAY);
 
   useEffect(() => {
     connect();
@@ -22,6 +28,17 @@ export function useWebSocket() {
   }, []);
 
   const connect = () => {
+    // Check if max reconnect attempts reached
+    if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
+      setStatus("error");
+      toast({
+        title: "Connection Failed",
+        description: "Unable to connect to the server. Please refresh the page.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Build WebSocket URL relative to current host
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const host = window.location.host;
@@ -33,19 +50,32 @@ export function useWebSocket() {
 
     ws.onopen = () => {
       setStatus("connected");
+      // Reset reconnect tracking on successful connection
+      reconnectAttemptsRef.current = 0;
+      reconnectDelayRef.current = INITIAL_RECONNECT_DELAY;
     };
 
     ws.onclose = () => {
       setStatus("disconnected");
-      // Attempt reconnect after 3 seconds
+      reconnectAttemptsRef.current++;
+
+      // Implement exponential backoff with jitter
+      const delay = Math.min(
+        reconnectDelayRef.current + Math.random() * 1000,
+        MAX_RECONNECT_DELAY
+      );
+
       reconnectTimeoutRef.current = setTimeout(() => {
         connect();
-      }, 3000);
+      }, delay);
+
+      // Increase delay for next attempt (exponential backoff)
+      reconnectDelayRef.current = Math.min(reconnectDelayRef.current * 2, MAX_RECONNECT_DELAY);
     };
 
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
+    ws.onerror = () => {
       setStatus("error");
+      // onclose will handle reconnection
     };
 
     ws.onmessage = (event) => {
@@ -68,9 +98,9 @@ export function useWebSocket() {
   const sendMessage = (data: any) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(data));
-    } else {
-      console.warn("WebSocket not connected, cannot send message");
+      return true;
     }
+    return false;
   };
 
   return { status, ws: wsRef.current, sendMessage };

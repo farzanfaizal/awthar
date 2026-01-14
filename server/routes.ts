@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
+import { createServer, type Server, type IncomingMessage } from "http";
 import { setupAuth, getSession } from "./auth";
 import { WebSocketServer, WebSocket } from "ws";
 import { authController } from "./controllers/auth.controller";
@@ -12,15 +12,26 @@ import { favoritesController } from "./controllers/favorites.controller";
 import { reportsController } from "./controllers/reports.controller";
 import { analyticsController } from "./controllers/analytics.controller";
 import { ChatService } from "./services/chat.service";
+import { logger } from "./lib/logger";
 
-// Define session type extension
+// Define session type extension for WebSocket auth
+import type { SessionData } from "express-session";
+
+interface AuthenticatedIncomingMessage extends IncomingMessage {
+  session?: SessionData & {
+    passport?: {
+      user?: string;
+    };
+  };
+}
+
 declare module "http" {
   interface IncomingMessage {
-    session: {
+    session?: SessionData & {
       passport?: {
         user?: string;
-      }
-    }
+      };
+    };
   }
 }
 
@@ -52,13 +63,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Session parser for WS
   const sessionParser = getSession();
 
-  httpServer.on("upgrade", (request, socket, head) => {
+  httpServer.on("upgrade", (request: AuthenticatedIncomingMessage, socket, head) => {
     if (request.url !== "/ws") {
       return;
     }
 
-    // @ts-ignore - express-session types are tricky with raw http request
-    sessionParser(request, {} as any, () => {
+    sessionParser(request as any, {} as any, () => {
       // Check if user is authenticated
       const userId = request.session?.passport?.user;
       if (!userId) {
@@ -67,13 +77,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return;
       }
 
-      wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.handleUpgrade(request as any, socket, head, (ws) => {
         wss.emit("connection", ws, request);
       });
     });
   });
 
-  wss.on("connection", (ws: WebSocket, req: any) => {
+  wss.on("connection", (ws: WebSocket, req: AuthenticatedIncomingMessage) => {
     // Get user ID from session (local passport auth)
     const userId = req.session?.passport?.user;
 
@@ -142,7 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       } catch (error) {
-        console.error("WebSocket error:", error);
+        logger.error("WebSocket message handling error", error as Error, { userId });
         ws.send(JSON.stringify({ type: "error", message: "Invalid message format" }));
       }
     });

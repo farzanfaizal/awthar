@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { isAuthenticated, getUserId } from "../auth";
 import { ChatService } from "../services/chat.service";
+import { messageLimiter, writeOperationsLimiter } from "../middleware/rate-limit";
 
 const conversationRouter = Router();
 const messageRouter = Router();
@@ -17,7 +18,7 @@ conversationRouter.get("/", isAuthenticated, async (req: any, res) => {
   }
 });
 
-conversationRouter.post("/", isAuthenticated, async (req: any, res) => {
+conversationRouter.post("/", isAuthenticated, writeOperationsLimiter, async (req: any, res) => {
   try {
     const userId = getUserId(req);
     const conversation = await ChatService.createConversation(userId, req.body);
@@ -48,7 +49,7 @@ messageRouter.get("/:conversationId", isAuthenticated, async (req: any, res) => 
 });
 
 // POST message (REST API fallback if WebSocket fails)
-messageRouter.post("/", isAuthenticated, async (req: any, res) => {
+messageRouter.post("/", isAuthenticated, messageLimiter, async (req: any, res) => {
   try {
     const userId = getUserId(req);
     const { conversationId, content, attachments } = req.body;

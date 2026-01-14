@@ -8,6 +8,7 @@ import { db } from "./db";
 import { users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import rateLimit from "express-rate-limit";
+import { env } from "./config/env";
 
 // Password utilities
 export async function hashPassword(password: string): Promise<string> {
@@ -22,20 +23,21 @@ export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
+    conString: env.DATABASE_URL,
     createTableIfMissing: false,
     ttl: sessionTtl,
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET || "awthar-marketplace-secret-key-change-in-production",
+    secret: env.SESSION_SECRET,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.IS_PRODUCTION,
       maxAge: sessionTtl,
+      sameSite: env.IS_PRODUCTION ? "strict" : "lax",
     },
   });
 }
@@ -121,8 +123,20 @@ export async function setupAuth(app: Express) {
         return res.status(400).json({ message: "Email and password are required" });
       }
 
-      if (password.length < 8) {
-        return res.status(400).json({ message: "Password must be at least 8 characters" });
+      if (password.length < 12) {
+        return res.status(400).json({ message: "Password must be at least 12 characters" });
+      }
+
+      // Check password complexity
+      const hasUpperCase = /[A-Z]/.test(password);
+      const hasLowerCase = /[a-z]/.test(password);
+      const hasNumber = /[0-9]/.test(password);
+      const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+      if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
+        return res.status(400).json({
+          message: "Password must contain uppercase, lowercase, number, and special character"
+        });
       }
 
       // Validate role if provided

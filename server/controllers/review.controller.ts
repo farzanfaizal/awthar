@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { isAuthenticated, getUserId } from "../auth";
 import { ReviewService } from "../services/review.service";
+import { reviewLimiter } from "../middleware/rate-limit";
 
 const router = Router();
 
@@ -13,7 +14,7 @@ router.get("/provider/:providerId", async (req, res) => {
   }
 });
 
-router.post("/", isAuthenticated, async (req: any, res) => {
+router.post("/", isAuthenticated, reviewLimiter, async (req: any, res) => {
   try {
     const userId = getUserId(req);
     const newReview = await ReviewService.createReview(userId, req.body);

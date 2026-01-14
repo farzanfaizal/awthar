@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { BookingService } from "../services/booking.service";
 import { isAuthenticated, getUserId } from "../auth";
+import { bookingLimiter } from "../middleware/rate-limit";
 import { z } from "zod";
 
 const router = Router();
 
 // Create booking
-router.post("/", isAuthenticated, async (req, res) => {
+router.post("/", isAuthenticated, bookingLimiter, async (req, res) => {
   try {
     // Basic validation schema
     const createBookingSchema = z.object({
@@ -141,7 +142,7 @@ router.patch("/:id/status", isAuthenticated, async (req, res) => {
 // Cancel booking (Delete verb often used for cancellation, but here we update status)
 router.delete("/:id", isAuthenticated, async (req, res) => {
   try {
-    const userId = (req.user as any).claims.sub;
+    const userId = getUserId(req);
     const bookingId = req.params.id;
 
     // Reuse the status update logic logic

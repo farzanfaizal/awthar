@@ -2,6 +2,8 @@ import { Router } from "express";
 import { isAuthenticated } from "../auth";
 import multer from "multer";
 import { SupabaseStorage } from "../storage/supabase-upload";
+import { uploadLimiter } from "../middleware/rate-limit";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -20,7 +22,7 @@ const upload = multer({
   }
 });
 
-router.post("/image", isAuthenticated, upload.single('image'), async (req, res) => {
+router.post("/image", isAuthenticated, uploadLimiter, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
@@ -29,12 +31,12 @@ router.post("/image", isAuthenticated, upload.single('image'), async (req, res) 
     const url = await SupabaseStorage.uploadFile(req.file);
     res.json({ url });
   } catch (error: any) {
-    console.error("Upload error:", error);
+    logger.error("File upload failed", error);
     res.status(500).json({ message: error.message || "Failed to upload image" });
   }
 });
 
-router.post("/images", isAuthenticated, upload.array('images', 10), async (req, res) => {
+router.post("/images", isAuthenticated, uploadLimiter, upload.array('images', 10), async (req, res) => {
   try {
     const files = req.files as Express.Multer.File[];
     if (!files || !Array.isArray(files) || files.length === 0) {
@@ -47,7 +49,7 @@ router.post("/images", isAuthenticated, upload.array('images', 10), async (req, 
     
     res.json({ urls });
   } catch (error: any) {
-    console.error("Upload error:", error);
+    logger.error("File upload failed", error);
     res.status(500).json({ message: error.message || "Failed to upload images" });
   }
 });
@@ -75,11 +77,11 @@ router.get("/file/:key", async (req, res) => {
       const bytes = await body.transformToByteArray();
       res.send(Buffer.from(bytes));
     } else {
-      console.error("Unknown body type from S3", body);
+      logger.error("Unknown body type from S3", new Error("Unknown body type"), { bodyType: typeof body });
       res.status(500).send("Failed to stream file");
     }
   } catch (error) {
-    console.error("Proxy error:", error);
+    logger.error("File proxy error", error as Error);
     res.status(404).send("File not found");
   }
 });

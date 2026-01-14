@@ -1,7 +1,9 @@
 import "dotenv/config";
+import "./config/env"; // Validate environment variables on startup
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { logger } from "./lib/logger";
 
 const app = express();
 
@@ -54,8 +56,8 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    // Don't throw, just log
-    console.error(err);
+    // Log error with context
+    logger.error("Request error", err, { status, path: _req.path, method: _req.method });
     res.status(status).json({ message });
   });
 
@@ -81,7 +83,7 @@ app.use((req, res, next) => {
         server.close();
         startServer(port + 1);
       } else {
-        console.error(err);
+        logger.error("Server error", err, { port });
       }
     };
 

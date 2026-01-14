@@ -62,10 +62,25 @@ export default function SignupPage() {
       return;
     }
 
-    if (formData.password.length < 6) {
+    if (formData.password.length < 12) {
       toast({
         title: "Weak Password",
-        description: "Password must be at least 6 characters long.",
+        description: "Password must be at least 12 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check password complexity
+    const hasUpperCase = /[A-Z]/.test(formData.password);
+    const hasLowerCase = /[a-z]/.test(formData.password);
+    const hasNumber = /[0-9]/.test(formData.password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(formData.password);
+
+    if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
+      toast({
+        title: "Weak Password",
+        description: "Password must contain uppercase, lowercase, number, and special character.",
         variant: "destructive",
       });
       return;

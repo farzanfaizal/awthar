@@ -8,6 +8,9 @@
     "build": "npx vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "npx tsc",
+    "db:generate": "npx drizzle-kit generate",
+    "db:migrate": "npx tsx server/migrate.ts",
+    "db:studio": "npx drizzle-kit studio",
     "db:push": "npx drizzle-kit push"
   },
   "dependencies": {

@@ -16,7 +16,13 @@
       "Bash(npm run check:*)",
       "Bash(npm run build:*)",
       "Bash(timeout /t 10)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(npx tsc:*)",
+      "Bash(find:*)",
+      "Bash(npx drizzle-kit:*)",
+      "Bash(npm audit fix:*)",
+      "Bash(npx update-browserslist-db@latest)",
+      "Bash(move:*)"
     ],
     "deny": [],
     "ask": []
