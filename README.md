@@ -83,6 +83,22 @@ npm start
 | `npm run db:migrate` | Run database migrations |
 | `npm run db:studio` | Open Drizzle Studio |
 
+## 🚀 Deployment Workflow
+
+The project uses **automatic deployment from GitHub to Render**:
+
+```bash
+# Make your changes
+git add .
+git commit -m "your changes"
+git push origin main
+
+# Render automatically deploys! (2-5 minutes)
+# Monitor progress at dashboard.render.com
+```
+
+No manual deployment needed - just push to GitHub!
+
 ## 🚨 Before Production Deployment
 
 **CRITICAL:** Rotate all credentials found in the repository:

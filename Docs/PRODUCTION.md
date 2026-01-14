@@ -173,24 +173,103 @@ Severity: moderate
 
 ## 📝 Deployment Platforms
 
-### Render.com Deployment
+### Render.com Deployment with Auto-Deploy
 
-1. Connect your GitHub repository
-2. Set build command: `npm run build`
-3. Set start command: `npm start`
-4. Add all environment variables in Render dashboard
-5. Enable auto-deploy from main branch
+**Current Setup:** The project is configured with automatic deployment from GitHub.
 
-### Environment Variables in Render
+#### How It Works
 
-Go to Environment tab and add:
-- `DATABASE_URL`
-- `SESSION_SECRET`
-- `SUPABASE_ENDPOINT`
-- `SUPABASE_ACCESS_KEY`
-- `SUPABASE_SECRET_KEY`
-- `SUPABASE_BUCKET`
-- `NODE_ENV=production`
+1. **Push to GitHub** → Automatic deployment to Render
+   ```bash
+   git add .
+   git commit -m "your changes"
+   git push origin main
+   ```
+
+2. **Render automatically:**
+   - Detects the push to `main` branch
+   - Pulls the latest code
+   - Runs `npm run build`
+   - Restarts the service with `npm start`
+   - No manual intervention needed!
+
+#### Initial Setup (One-Time)
+
+If you need to set up a new Render service:
+
+1. **Connect Repository**
+   - Go to [Render Dashboard](https://dashboard.render.com)
+   - Click "New +" → "Web Service"
+   - Connect your GitHub account
+   - Select the `awthar` repository
+   - Branch: `main`
+
+2. **Configure Build Settings**
+   - **Build Command:** `npm run build`
+   - **Start Command:** `npm start`
+   - **Environment:** Node
+
+3. **Add Environment Variables**
+   Go to Environment tab and add all required variables:
+   - `DATABASE_URL` - Your production PostgreSQL URL
+   - `SESSION_SECRET` - Secure random string (32+ chars)
+   - `SUPABASE_ENDPOINT` - Supabase storage endpoint
+   - `SUPABASE_ACCESS_KEY` - Supabase S3 access key
+   - `SUPABASE_SECRET_KEY` - Supabase S3 secret key
+   - `SUPABASE_BUCKET` - Your S3 bucket name
+   - `NODE_ENV=production`
+
+4. **Enable Auto-Deploy**
+   - Under "Settings" → "Build & Deploy"
+   - Enable "Auto-Deploy: Yes"
+   - This is already configured for the current setup
+
+#### Development Workflow
+
+```bash
+# 1. Make changes locally
+npm run dev  # Test changes
+
+# 2. Commit and push
+git add .
+git commit -m "feat: your feature description"
+git push origin main
+
+# 3. Render automatically deploys
+# Watch deployment progress in Render dashboard
+# Typically takes 2-5 minutes
+
+# 4. Verify deployment
+# Check Render logs for any errors
+# Test the production URL
+```
+
+#### Monitoring Deployments
+
+- **Dashboard:** [Render Dashboard](https://dashboard.render.com) → Your Service
+- **Build Logs:** Shows build output and any errors
+- **Deploy Logs:** Real-time logs during deployment
+- **Runtime Logs:** Application logs after deployment
+
+#### Deployment Best Practices
+
+1. **Test Locally First**
+   ```bash
+   npm run check    # TypeScript checks
+   npm run build    # Ensure build succeeds
+   ```
+
+2. **Monitor After Push**
+   - Watch Render dashboard for deployment status
+   - Check logs for any startup errors
+   - Verify environment validation passes
+
+3. **Rollback if Needed**
+   ```bash
+   git revert <commit-hash>
+   git push origin main
+   # Render will auto-deploy the reverted version
+   ```
 
 ### Database (Neon)
 
