@@ -22,7 +22,8 @@
       "Bash(npx drizzle-kit:*)",
       "Bash(npm audit fix:*)",
       "Bash(npx update-browserslist-db@latest)",
-      "Bash(move:*)"
+      "Bash(move:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []

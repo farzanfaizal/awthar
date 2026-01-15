@@ -8,11 +8,32 @@ import {
   TrendingUp,
   Award,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/dashboard-layout";
 
+interface DashboardStats {
+  profileViews: number;
+  contactRequests: number;
+  activeListings: number;
+  totalListings: number;
+  averageRating: number;
+  reviewCount: number;
+}
+
 export default function Dashboard() {
+  // Fetch dashboard stats
+  const { data: stats, isLoading } = useQuery<DashboardStats>({
+    queryKey: ["/api/analytics/dashboard"],
+    queryFn: async () => {
+      const res = await fetch("/api/analytics/dashboard", {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch dashboard stats");
+      return res.json();
+    },
+  });
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -24,10 +45,13 @@ export default function Dashboard() {
               <Eye className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">2,547</div>
-              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                <TrendingUp className="h-3 w-3 text-success" />
-                <span className="text-success">+12%</span> from last month
+              {isLoading ? (
+                <div className="h-8 w-24 bg-muted animate-pulse rounded-md" />
+              ) : (
+                <div className="text-2xl font-bold">{stats?.profileViews.toLocaleString() || 0}</div>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Total service views
               </p>
             </CardContent>
           </Card>
@@ -38,10 +62,13 @@ export default function Dashboard() {
               <MessageCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">184</div>
-              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                <TrendingUp className="h-3 w-3 text-success" />
-                <span className="text-success">+8%</span> from last month
+              {isLoading ? (
+                <div className="h-8 w-24 bg-muted animate-pulse rounded-md" />
+              ) : (
+                <div className="text-2xl font-bold">{stats?.contactRequests || 0}</div>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Total conversations
               </p>
             </CardContent>
           </Card>
@@ -52,9 +79,13 @@ export default function Dashboard() {
               <ListPlus className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">12</div>
+              {isLoading ? (
+                <div className="h-8 w-24 bg-muted animate-pulse rounded-md" />
+              ) : (
+                <div className="text-2xl font-bold">{stats?.activeListings || 0}</div>
+              )}
               <p className="text-xs text-muted-foreground mt-1">
-                Out of 15 total listings
+                Out of {stats?.totalListings || 0} total listings
               </p>
             </CardContent>
           </Card>
@@ -65,9 +96,15 @@ export default function Dashboard() {
               <Award className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">4.8</div>
+              {isLoading ? (
+                <div className="h-8 w-24 bg-muted animate-pulse rounded-md" />
+              ) : (
+                <div className="text-2xl font-bold">
+                  {stats?.averageRating ? stats.averageRating.toFixed(1) : "N/A"}
+                </div>
+              )}
               <p className="text-xs text-muted-foreground mt-1">
-                Based on 127 reviews
+                Based on {stats?.reviewCount || 0} reviews
               </p>
             </CardContent>
           </Card>
