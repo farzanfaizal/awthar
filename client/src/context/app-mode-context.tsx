@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { errorHandler } from '@/lib/error-handler';
 
 type AppMode = 'customer' | 'provider';
 
@@ -52,7 +53,7 @@ export const AppModeProvider = ({ children }: AppModeProviderProps) => {
   const setMode = useCallback((newMode: AppMode) => {
     if (newMode === 'provider' && !userCanBeProvider) {
       // Prevent setting provider mode if user is not eligible
-      console.warn("User is not eligible to be a provider.");
+      errorHandler.warn("User is not eligible to be a provider");
       return;
     }
     setModeState(newMode);

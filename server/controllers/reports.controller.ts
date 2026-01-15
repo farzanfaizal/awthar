@@ -1,60 +1,56 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { isAuthenticated, getUserId } from "../auth";
 import { db } from "../db";
 import { reports } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { asyncHandler, BadRequestError } from "../lib/errors";
 
 const router = Router();
 
+// Validation schemas
+const createReportSchema = z.object({
+  serviceId: z.string().uuid().optional(),
+  providerId: z.string().uuid().optional(),
+  type: z.enum(['spam', 'inappropriate', 'fraud', 'other']),
+  reason: z.string().min(10).max(1000),
+}).refine(data => data.serviceId || data.providerId, {
+  message: "Either serviceId or providerId must be provided",
+});
+
 // Create a report
-router.post("/", isAuthenticated, async (req: any, res) => {
-  try {
-    const reporterId = getUserId(req);
-    const { serviceId, providerId, type, reason } = req.body;
+router.post("/", isAuthenticated, asyncHandler(async (req: Request, res: Response) => {
+  const reporterId = getUserId(req);
+  const validatedData = createReportSchema.parse(req.body);
 
-    if (!type || !reason) {
-      return res.status(400).json({ message: "Type and reason are required" });
-    }
+  const [report] = await db
+    .insert(reports)
+    .values({
+      reporterId,
+      serviceId: validatedData.serviceId || null,
+      providerId: validatedData.providerId || null,
+      type: validatedData.type,
+      reason: validatedData.reason,
+      status: "pending",
+    })
+    .returning();
 
-    if (!serviceId && !providerId) {
-      return res.status(400).json({ message: "Either serviceId or providerId is required" });
-    }
+  res.status(201).json({
+    message: "Report submitted successfully. Our team will review it shortly.",
+    report
+  });
+}));
 
-    const [report] = await db
-      .insert(reports)
-      .values({
-        reporterId,
-        serviceId: serviceId || null,
-        providerId: providerId || null,
-        type,
-        reason,
-        status: "pending",
-      })
-      .returning();
+// Get user's reports
+router.get("/my-reports", isAuthenticated, asyncHandler(async (req: Request, res: Response) => {
+  const reporterId = getUserId(req);
 
-    res.status(201).json({
-      message: "Report submitted successfully. Our team will review it shortly.",
-      report
-    });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-});
+  const userReports = await db.query.reports.findMany({
+    where: eq(reports.reporterId, reporterId),
+    orderBy: (reports, { desc }) => [desc(reports.createdAt)],
+  });
 
-// Get user's reports (optional - for user to see their report history)
-router.get("/my-reports", isAuthenticated, async (req: any, res) => {
-  try {
-    const reporterId = getUserId(req);
-
-    const userReports = await db.query.reports.findMany({
-      where: eq(reports.reporterId, reporterId),
-      orderBy: (reports, { desc }) => [desc(reports.createdAt)],
-    });
-
-    res.json(userReports);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-});
+  res.json(userReports);
+}));
 
 export const reportsController = router;

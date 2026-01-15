@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Upload, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { errorHandler } from "@/lib/error-handler";
 
 interface ImageUploadProps {
   value?: string[];
@@ -45,7 +46,7 @@ export function ImageUpload({ value = [], onChange, maxFiles = 5 }: ImageUploadP
         description: "Images uploaded successfully",
       });
     } catch (error) {
-      console.error(error);
+      errorHandler.error("Image upload failed", error);
       toast({
         title: "Upload Failed",
         description: "Could not upload images. Please try again.",

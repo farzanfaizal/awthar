@@ -1,168 +1,150 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { BookingService } from "../services/booking.service";
 import { isAuthenticated, getUserId } from "../auth";
 import { bookingLimiter } from "../middleware/rate-limit";
 import { z } from "zod";
+import { asyncHandler, BadRequestError, NotFoundError, ForbiddenError } from "../lib/errors";
 
 const router = Router();
 
-// Create booking
-router.post("/", isAuthenticated, bookingLimiter, async (req, res) => {
-  try {
-    // Basic validation schema
-    const createBookingSchema = z.object({
-      serviceId: z.string().uuid(),
-      scheduledDate: z.string().datetime(), // Expect ISO string
-      notes: z.string().optional(),
-      agreedPrice: z.number().optional(),
-    });
-
-    const validatedData = createBookingSchema.parse(req.body);
-    const userId = getUserId(req);
-
-    const booking = await BookingService.createBooking({
-      serviceId: validatedData.serviceId,
-      customerId: userId,
-      scheduledDate: new Date(validatedData.scheduledDate),
-      notes: validatedData.notes,
-      agreedPrice: validatedData.agreedPrice
-    });
-
-    res.status(201).json(booking);
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ message: "Validation failed", errors: error.errors });
-    }
-    res.status(500).json({ message: error.message });
-  }
+// Validation schemas
+const createBookingSchema = z.object({
+  serviceId: z.string().uuid(),
+  scheduledDate: z.string().datetime(),
+  notes: z.string().max(500).optional(),
+  agreedPrice: z.number().positive().optional(),
 });
+
+const updateStatusSchema = z.object({
+  status: z.enum(['pending', 'accepted', 'in_progress', 'completed', 'cancelled']),
+});
+
+const getBookingsSchema = z.object({
+  role: z.enum(['customer', 'provider']),
+  status: z.enum(['pending', 'accepted', 'in_progress', 'completed', 'cancelled']).optional(),
+  limit: z.string().transform(val => parseInt(val)).pipe(z.number().positive().max(100)).optional(),
+  offset: z.string().transform(val => parseInt(val)).pipe(z.number().nonnegative()).optional(),
+});
+
+// Helper to check booking access
+function checkBookingAccess(booking: any, userId: string): {isCustomer: boolean, isProvider: boolean} {
+  const isCustomer = booking.customerId === userId;
+  const isProvider = booking.service?.providerId === userId || booking.provider?.userId === userId;
+  return { isCustomer, isProvider };
+}
+
+// Create booking
+router.post("/", isAuthenticated, bookingLimiter, asyncHandler(async (req: Request, res: Response) => {
+  const validatedData = createBookingSchema.parse(req.body);
+  const userId = getUserId(req);
+
+  const scheduledDate = new Date(validatedData.scheduledDate);
+
+  // Validate future date
+  if (scheduledDate <= new Date()) {
+    throw new BadRequestError("Scheduled date must be in the future");
+  }
+
+  const booking = await BookingService.createBooking({
+    serviceId: validatedData.serviceId,
+    customerId: userId,
+    scheduledDate,
+    notes: validatedData.notes,
+    agreedPrice: validatedData.agreedPrice
+  });
+
+  res.status(201).json(booking);
+}));
 
 // Get bookings (for logged-in user)
-router.get("/", isAuthenticated, async (req, res) => {
-  try {
-    const userId = getUserId(req);
-    const { role, status, limit, offset } = req.query;
+router.get("/", isAuthenticated, asyncHandler(async (req: Request, res: Response) => {
+  const userId = getUserId(req);
+  const validatedQuery = getBookingsSchema.parse(req.query);
 
-    if (role !== 'customer' && role !== 'provider') {
-      return res.status(400).json({ message: "Role must be 'customer' or 'provider'" });
-    }
+  const bookings = await BookingService.getBookings({
+    userId,
+    role: validatedQuery.role,
+    status: validatedQuery.status,
+    limit: validatedQuery.limit,
+    offset: validatedQuery.offset
+  });
 
-    const bookings = await BookingService.getBookings({
-      userId,
-      role: role as 'customer' | 'provider',
-      status: status as any,
-      limit: limit ? parseInt(limit as string) : undefined,
-      offset: offset ? parseInt(offset as string) : undefined
-    });
-
-    res.json(bookings);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-});
+  res.json(bookings);
+}));
 
 // Get booking details
-router.get("/:id", isAuthenticated, async (req, res) => {
-  try {
-    const userId = getUserId(req);
-    const bookingId = req.params.id;
+router.get("/:id", isAuthenticated, asyncHandler(async (req: Request, res: Response) => {
+  const userId = getUserId(req);
+  const bookingId = req.params.id;
 
-    const booking = await BookingService.getBookingById(bookingId);
+  const booking = await BookingService.getBookingById(bookingId);
 
-    if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
-    }
-
-    // Check access rights
-    // Customer can see their own bookings
-    // Provider can see bookings for their services
-    const isCustomer = booking.customerId === userId;
-    const isProvider = (booking as any).provider.userId === userId;
-
-    if (!isCustomer && !isProvider) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-
-    res.json(booking);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
+  if (!booking) {
+    throw new NotFoundError("Booking not found");
   }
-});
+
+  // Check access rights
+  const { isCustomer, isProvider } = checkBookingAccess(booking, userId);
+
+  if (!isCustomer && !isProvider) {
+    throw new ForbiddenError("You don't have permission to view this booking");
+  }
+
+  res.json(booking);
+}));
 
 // Update booking status
-router.patch("/:id/status", isAuthenticated, async (req, res) => {
-  try {
-    const userId = getUserId(req);
-    const bookingId = req.params.id;
-    const { status } = req.body;
+router.patch("/:id/status", isAuthenticated, asyncHandler(async (req: Request, res: Response) => {
+  const userId = getUserId(req);
+  const bookingId = req.params.id;
+  const { status } = updateStatusSchema.parse(req.body);
 
-    if (!status) {
-      return res.status(400).json({ message: "Status is required" });
-    }
-
-    const booking = await BookingService.getBookingById(bookingId);
-    if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
-    }
-
-    const isCustomer = booking.customerId === userId;
-    const isProvider = (booking as any).provider.userId === userId;
-
-    // Validate status transitions
-    // pending -> accepted (provider only)
-    // pending -> cancelled (both)
-    // accepted -> in_progress (provider only)
-    // accepted -> cancelled (both)
-    // in_progress -> completed (provider only)
-    // in_progress -> cancelled (both)
-    
-    let allowed = false;
-
-    if (isProvider) {
-      if (booking.status === 'pending' && (status === 'accepted' || status === 'cancelled')) allowed = true;
-      if (booking.status === 'accepted' && (status === 'in_progress' || status === 'cancelled')) allowed = true;
-      if (booking.status === 'in_progress' && (status === 'completed' || status === 'cancelled')) allowed = true;
-    }
-
-    if (isCustomer) {
-      if (['pending', 'accepted', 'in_progress'].includes(booking.status) && status === 'cancelled') allowed = true;
-    }
-
-    if (!allowed) {
-      return res.status(403).json({ message: `Transition from ${booking.status} to ${status} not allowed for this user role` });
-    }
-
-    const updatedBooking = await BookingService.updateBookingStatus(bookingId, status, userId);
-    res.json(updatedBooking);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
+  const booking = await BookingService.getBookingById(bookingId);
+  if (!booking) {
+    throw new NotFoundError("Booking not found");
   }
-});
 
-// Cancel booking (Delete verb often used for cancellation, but here we update status)
-router.delete("/:id", isAuthenticated, async (req, res) => {
-  try {
-    const userId = getUserId(req);
-    const bookingId = req.params.id;
+  const { isCustomer, isProvider } = checkBookingAccess(booking, userId);
 
-    // Reuse the status update logic logic
-    const booking = await BookingService.getBookingById(bookingId);
-    if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
-    }
+  // Validate status transitions
+  let allowed = false;
 
-    const isCustomer = booking.customerId === userId;
-    const isProvider = (booking as any).provider.userId === userId;
-
-    if (!isCustomer && !isProvider) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-
-    const updatedBooking = await BookingService.cancelBooking(bookingId, userId);
-    res.json(updatedBooking);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
+  if (isProvider) {
+    if (booking.status === 'pending' && (status === 'accepted' || status === 'cancelled')) allowed = true;
+    if (booking.status === 'accepted' && (status === 'in_progress' || status === 'cancelled')) allowed = true;
+    if (booking.status === 'in_progress' && (status === 'completed' || status === 'cancelled')) allowed = true;
   }
-});
+
+  if (isCustomer) {
+    if (['pending', 'accepted', 'in_progress'].includes(booking.status) && status === 'cancelled') allowed = true;
+  }
+
+  if (!allowed) {
+    throw new ForbiddenError(`Transition from ${booking.status} to ${status} not allowed for your role`);
+  }
+
+  const updatedBooking = await BookingService.updateBookingStatus(bookingId, status, userId);
+  res.json(updatedBooking);
+}));
+
+// Cancel booking
+router.delete("/:id", isAuthenticated, asyncHandler(async (req: Request, res: Response) => {
+  const userId = getUserId(req);
+  const bookingId = req.params.id;
+
+  const booking = await BookingService.getBookingById(bookingId);
+  if (!booking) {
+    throw new NotFoundError("Booking not found");
+  }
+
+  const { isCustomer, isProvider } = checkBookingAccess(booking, userId);
+
+  if (!isCustomer && !isProvider) {
+    throw new ForbiddenError("You don't have permission to cancel this booking");
+  }
+
+  const updatedBooking = await BookingService.cancelBooking(bookingId, userId);
+  res.json(updatedBooking);
+}));
 
 export const bookingController = router;

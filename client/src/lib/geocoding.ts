@@ -3,6 +3,8 @@
  * Note: This has usage limits (1 req/sec). For production, consider Mapbox or Google Maps.
  */
 
+import { errorHandler } from './error-handler';
+
 interface GeocodingResult {
   lat: string;
   lon: string;
@@ -50,7 +52,7 @@ export async function reverseGeocode(lat: number, lng: number): Promise<{
       emirate,
     };
   } catch (error) {
-    console.error("Geocoding error:", error);
+    errorHandler.error("Geocoding error", error);
     return null;
   }
 }
@@ -78,7 +80,7 @@ export async function searchLocation(query: string): Promise<{ lat: number; lng:
       displayName: data[0].display_name,
     };
   } catch (error) {
-    console.error("Geocoding search error:", error);
+    errorHandler.error("Geocoding search error", error);
     return null;
   }
 }

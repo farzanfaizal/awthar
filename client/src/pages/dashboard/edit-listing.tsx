@@ -34,6 +34,7 @@ import { reverseGeocode } from "@/lib/geocoding";
 import { useState, useEffect } from "react";
 import { getImageUrl } from "@/lib/image-utils";
 import { Category } from "@shared/schema";
+import { errorHandler } from "@/lib/error-handler";
 
 const editListingSchema = z.object({
   titleEn: z.string().min(10, "Title must be at least 10 characters"),
@@ -149,7 +150,7 @@ export default function EditListingPage() {
         if (address.area) form.setValue("area", address.area);
       }
     } catch (error) {
-      console.error("Failed to auto-fill address:", error);
+      errorHandler.error("Failed to auto-fill address", error);
     }
   };
 

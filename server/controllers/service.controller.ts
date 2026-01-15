@@ -1,134 +1,177 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { isAuthenticated, getUserId } from "../auth";
 import { ServiceService } from "../services/service.service";
 import { ProviderService } from "../services/provider.service";
+import { z } from "zod";
+import { asyncHandler, BadRequestError, NotFoundError, ForbiddenError } from "../lib/errors";
 
 const serviceRouter = Router();
 const categoryRouter = Router();
 
-// Categories Routes
-categoryRouter.get("/", async (_req, res) => {
-  try {
-    const categories = await ServiceService.getCategories();
-    res.json(categories);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
+// Validation schemas
+const searchServicesSchema = z.object({
+  role: z.enum(['provider']).optional(),
+  category: z.union([z.string(), z.array(z.string())]).optional(),
+  search: z.string().optional(),
+  minPrice: z.string().transform(val => parseFloat(val)).pipe(z.number().positive()).optional(),
+  maxPrice: z.string().transform(val => parseFloat(val)).pipe(z.number().positive()).optional(),
+  limit: z.string().transform(val => parseInt(val)).pipe(z.number().positive().max(100)).optional(),
+  offset: z.string().transform(val => parseInt(val)).pipe(z.number().nonnegative()).optional(),
+  sortBy: z.enum(['price_asc', 'price_desc', 'rating', 'newest']).optional(),
+  latitude: z.string().transform(val => parseFloat(val)).pipe(z.number()).optional(),
+  longitude: z.string().transform(val => parseFloat(val)).pipe(z.number()).optional(),
+  radius: z.string().transform(val => parseFloat(val)).pipe(z.number().positive()).optional(),
 });
 
-categoryRouter.get("/:slug", async (req, res) => {
-  try {
-    const category = await ServiceService.getCategoryBySlug(req.params.slug);
-    if (!category) {
-      return res.status(404).json({ message: "Category not found" });
-    }
-    res.json(category);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
+const createServiceSchema = z.object({
+  title: z.string().min(3).max(100),
+  description: z.string().min(10).max(2000),
+  categoryId: z.string().uuid(),
+  price: z.number().positive(),
+  images: z.array(z.string().url()).min(1).max(10),
+  minNoticeHours: z.number().int().nonnegative().optional(),
+  workingHours: z.object({
+    monday: z.object({ start: z.string(), end: z.string() }).optional(),
+    tuesday: z.object({ start: z.string(), end: z.string() }).optional(),
+    wednesday: z.object({ start: z.string(), end: z.string() }).optional(),
+    thursday: z.object({ start: z.string(), end: z.string() }).optional(),
+    friday: z.object({ start: z.string(), end: z.string() }).optional(),
+    saturday: z.object({ start: z.string(), end: z.string() }).optional(),
+    sunday: z.object({ start: z.string(), end: z.string() }).optional(),
+  }).optional(),
 });
+
+const updateServiceSchema = z.object({
+  title: z.string().min(3).max(100).optional(),
+  description: z.string().min(10).max(2000).optional(),
+  price: z.number().positive().optional(),
+  images: z.array(z.string().url()).min(1).max(10).optional(),
+  minNoticeHours: z.number().int().nonnegative().optional(),
+  workingHours: z.object({
+    monday: z.object({ start: z.string(), end: z.string() }).optional(),
+    tuesday: z.object({ start: z.string(), end: z.string() }).optional(),
+    wednesday: z.object({ start: z.string(), end: z.string() }).optional(),
+    thursday: z.object({ start: z.string(), end: z.string() }).optional(),
+    friday: z.object({ start: z.string(), end: z.string() }).optional(),
+    saturday: z.object({ start: z.string(), end: z.string() }).optional(),
+    sunday: z.object({ start: z.string(), end: z.string() }).optional(),
+  }).optional(),
+});
+
+// Categories Routes
+categoryRouter.get("/", asyncHandler(async (req: Request, res: Response) => {
+  const categories = await ServiceService.getCategories();
+  res.json(categories);
+}));
+
+categoryRouter.get("/:slug", asyncHandler(async (req: Request, res: Response) => {
+  const { slug } = req.params;
+  const category = await ServiceService.getCategoryBySlug(slug);
+
+  if (!category) {
+    throw new NotFoundError("Category not found");
+  }
+
+  res.json(category);
+}));
 
 // Services Routes
-serviceRouter.get("/", async (req, res) => {
-  try {
-    // Filter by provider if requested and authenticated
-    let providerId: string | undefined;
-    
-    if (req.query.role === 'provider') {
-      if (req.isAuthenticated()) {
-        const userId = getUserId(req);
-        const provider = await ProviderService.getProviderByUserId(userId);
-        if (provider) {
-          providerId = provider.id;
-        }
+serviceRouter.get("/", asyncHandler(async (req: Request, res: Response) => {
+  const validatedQuery = searchServicesSchema.parse(req.query);
+
+  // Filter by provider if requested and authenticated
+  let providerId: string | undefined;
+
+  if (validatedQuery.role === 'provider') {
+    if (req.isAuthenticated()) {
+      const userId = getUserId(req);
+      const provider = await ProviderService.getProviderByUserId(userId);
+      if (provider) {
+        providerId = provider.id;
       }
     }
-
-    const services = await ServiceService.searchServices({
-      category: req.query.category as string | string[],
-      search: req.query.search as string,
-      minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
-      maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
-      providerId: providerId,
-      limit: req.query.limit ? parseInt(req.query.limit as string) : 20,
-      offset: req.query.offset ? parseInt(req.query.offset as string) : 0,
-      sortBy: req.query.sortBy as 'price_asc' | 'price_desc' | 'rating' | 'newest',
-      latitude: req.query.latitude ? parseFloat(req.query.latitude as string) : undefined,
-      longitude: req.query.longitude ? parseFloat(req.query.longitude as string) : undefined,
-      radius: req.query.radius ? parseFloat(req.query.radius as string) : undefined,
-    });
-    res.json(services);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
   }
-});
+
+  const services = await ServiceService.searchServices({
+    category: validatedQuery.category,
+    search: validatedQuery.search,
+    minPrice: validatedQuery.minPrice,
+    maxPrice: validatedQuery.maxPrice,
+    providerId: providerId,
+    limit: validatedQuery.limit ?? 20,
+    offset: validatedQuery.offset ?? 0,
+    sortBy: validatedQuery.sortBy,
+    latitude: validatedQuery.latitude,
+    longitude: validatedQuery.longitude,
+    radius: validatedQuery.radius,
+  });
+
+  res.json(services);
+}));
 
 // Get Service
-serviceRouter.get("/:id", async (req, res) => {
-  try {
-    const service = await ServiceService.getServiceById(req.params.id);
-    if (!service) {
-      return res.status(404).json({ message: "Service not found" });
-    }
-    await ServiceService.incrementViewCount(req.params.id);
-    res.json(service);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
+serviceRouter.get("/:id", asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const service = await ServiceService.getServiceById(id);
+
+  if (!service) {
+    throw new NotFoundError("Service not found");
   }
-});
+
+  await ServiceService.incrementViewCount(id);
+  res.json(service);
+}));
 
 // Create Service (Provider only)
-serviceRouter.post("/", isAuthenticated, async (req: any, res) => {
-  try {
-    const userId = getUserId(req);
-    const provider = await ProviderService.getProviderByUserId(userId);
+serviceRouter.post("/", isAuthenticated, asyncHandler(async (req: Request, res: Response) => {
+  const userId = getUserId(req);
+  const validatedData = createServiceSchema.parse(req.body);
 
-    if (!provider) {
-      return res.status(400).json({ message: "Provider profile required" });
-    }
-
-    const newService = await ServiceService.createService(provider.id, req.body);
-    res.status(201).json(newService);
-  } catch (error: any) {
-    res.status(400).json({ message: error.message });
+  const provider = await ProviderService.getProviderByUserId(userId);
+  if (!provider) {
+    throw new BadRequestError("Provider profile required to create services");
   }
-});
+
+  const newService = await ServiceService.createService(provider.id, validatedData);
+  res.status(201).json(newService);
+}));
 
 // Update Service
-serviceRouter.patch("/:id", isAuthenticated, async (req: any, res) => {
-  try {
-    const service = await ServiceService.getServiceById(req.params.id);
-    if (!service) return res.status(404).json({ message: "Service not found" });
+serviceRouter.patch("/:id", isAuthenticated, asyncHandler(async (req: Request, res: Response) => {
+  const userId = getUserId(req);
+  const { id } = req.params;
+  const validatedData = updateServiceSchema.parse(req.body);
 
-    const userId = getUserId(req);
-    if (service.provider.userId !== userId) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-
-    const updated = await ServiceService.updateService(req.params.id, req.body);
-    res.json(updated);
-  } catch (error: any) {
-    res.status(400).json({ message: error.message });
+  const service = await ServiceService.getServiceById(id);
+  if (!service) {
+    throw new NotFoundError("Service not found");
   }
-});
+
+  if (service.provider.userId !== userId) {
+    throw new ForbiddenError("You don't have permission to update this service");
+  }
+
+  const updated = await ServiceService.updateService(id, validatedData);
+  res.json(updated);
+}));
 
 // Delete Service
-serviceRouter.delete("/:id", isAuthenticated, async (req: any, res) => {
-  try {
-    const service = await ServiceService.getServiceById(req.params.id);
-    if (!service) return res.status(404).json({ message: "Service not found" });
+serviceRouter.delete("/:id", isAuthenticated, asyncHandler(async (req: Request, res: Response) => {
+  const userId = getUserId(req);
+  const { id } = req.params;
 
-    const userId = getUserId(req);
-    if (service.provider.userId !== userId) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-
-    await ServiceService.deleteService(req.params.id);
-    res.json({ message: "Service deleted" });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
+  const service = await ServiceService.getServiceById(id);
+  if (!service) {
+    throw new NotFoundError("Service not found");
   }
-});
+
+  if (service.provider.userId !== userId) {
+    throw new ForbiddenError("You don't have permission to delete this service");
+  }
+
+  await ServiceService.deleteService(id);
+  res.json({ message: "Service deleted successfully" });
+}));
 
 export const serviceController = serviceRouter;
 export const categoryController = categoryRouter;

@@ -36,6 +36,7 @@ import { LocationPicker } from "@/components/location-picker";
 import { reverseGeocode } from "@/lib/geocoding";
 import { cn } from "@/lib/utils";
 import { Category } from "@shared/schema";
+import { errorHandler } from "@/lib/error-handler";
 
 const createListingSchema = z.object({
   titleEn: z.string().min(10, "Title must be at least 10 characters"),
@@ -113,7 +114,7 @@ export default function CreateListingPage() {
         if (address.area) form.setValue("area", address.area);
       }
     } catch (error) {
-      console.error("Failed to auto-fill address:", error);
+      errorHandler.error("Failed to auto-fill address", error);
     }
   };
 

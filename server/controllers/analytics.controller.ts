@@ -1,17 +1,15 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { isAuthenticated, getUserId } from "../auth";
 import { ProviderService } from "../services/provider.service";
+import { asyncHandler } from "../lib/errors";
 
 const router = Router();
 
-router.get("/provider", isAuthenticated, async (req, res) => {
-  try {
-    const userId = getUserId(req);
-    const data = await ProviderService.getAnalytics(userId);
-    res.json(data);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-});
+// Get provider analytics
+router.get("/provider", isAuthenticated, asyncHandler(async (req: Request, res: Response) => {
+  const userId = getUserId(req);
+  const data = await ProviderService.getAnalytics(userId);
+  res.json(data);
+}));
 
 export const analyticsController = router;
