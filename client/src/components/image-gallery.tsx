@@ -53,7 +53,7 @@ export function ImageGallery({ images }: ImageGalleryProps) {
         <div className="flex gap-4 overflow-x-auto pb-2">
           {images.map((image, index) => (
             <button
-              key={index}
+              key={image}
               onClick={() => setSelectedIndex(index)}
               className={cn(
                 "relative flex-none overflow-hidden rounded-md border bg-background transition-all hover:ring-2 hover:ring-primary hover:ring-offset-2 w-24 h-24",

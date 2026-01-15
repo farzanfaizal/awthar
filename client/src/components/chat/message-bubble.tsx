@@ -33,11 +33,11 @@ export function MessageBubble({ message, isOwn, sender }: MessageBubbleProps) {
         
         {message.attachments && message.attachments.length > 0 && (
           <div className="mt-2 grid gap-2">
-            {message.attachments.map((url, i) => (
-              <img 
-                key={i} 
-                src={url} 
-                alt="attachment" 
+            {message.attachments.map((url) => (
+              <img
+                key={url}
+                src={url}
+                alt="attachment"
                 className="max-w-[200px] rounded-lg border cursor-pointer hover:opacity-90"
                 onClick={() => window.open(url, '_blank')}
               />

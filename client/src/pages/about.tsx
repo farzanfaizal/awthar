@@ -8,21 +8,25 @@ import { Target, Users, Shield, Zap } from "lucide-react";
 export default function AboutPage() {
   const values = [
     {
+      id: "mission",
       icon: <Target className="h-10 w-10 text-primary" />,
       title: "Our Mission",
       description: "To connect people with trusted service providers, making it easy to find and book quality services in the UAE.",
     },
     {
+      id: "community",
       icon: <Users className="h-10 w-10 text-primary" />,
       title: "Community First",
       description: "We build meaningful connections between service providers and customers, fostering trust and reliability.",
     },
     {
+      id: "trust",
       icon: <Shield className="h-10 w-10 text-primary" />,
       title: "Trust & Safety",
       description: "Every provider is verified, and our review system ensures transparency and quality across the platform.",
     },
     {
+      id: "innovation",
       icon: <Zap className="h-10 w-10 text-primary" />,
       title: "Innovation",
       description: "We continuously improve our platform with cutting-edge technology to provide the best experience.",
@@ -66,8 +70,8 @@ export default function AboutPage() {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-12">Our Values</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8">
-              {values.map((value, index) => (
-                <Card key={index}>
+              {values.map((value) => (
+                <Card key={value.id}>
                   <CardContent className="p-6 text-center">
                     <div className="flex justify-center mb-4">{value.icon}</div>
                     <h3 className="text-xl font-semibold mb-3">{value.title}</h3>

@@ -156,8 +156,8 @@ export function ChatWindow({ conversationId, currentUserId, recipientName, onBac
       <div className="p-4 border-t bg-background">
         {attachments.length > 0 && (
           <div className="flex gap-2 mb-2 overflow-x-auto pb-2">
-            {attachments.map((url, i) => (
-              <div key={i} className="relative w-16 h-16 flex-shrink-0">
+            {attachments.map((url) => (
+              <div key={url} className="relative w-16 h-16 flex-shrink-0">
                 <img src={url} className="w-full h-full object-cover rounded-lg border" />
               </div>
             ))}

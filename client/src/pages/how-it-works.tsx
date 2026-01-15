@@ -8,21 +8,25 @@ import { Search, MessageCircle, CheckCircle, Star } from "lucide-react";
 export default function HowItWorksPage() {
   const steps = [
     {
+      id: "browse",
       icon: <Search className="h-12 w-12 text-primary" />,
       title: "1. Browse Services",
       description: "Search through thousands of services across various categories. Filter by location, price, and ratings to find exactly what you need.",
     },
     {
+      id: "contact",
       icon: <MessageCircle className="h-12 w-12 text-primary" />,
       title: "2. Contact Providers",
       description: "Message service providers directly to discuss your requirements, ask questions, and get custom quotes.",
     },
     {
+      id: "book",
       icon: <CheckCircle className="h-12 w-12 text-primary" />,
       title: "3. Book & Confirm",
       description: "Once you've found the right provider, book the service, agree on pricing, and schedule a time that works for you.",
     },
     {
+      id: "review",
       icon: <Star className="h-12 w-12 text-primary" />,
       title: "4. Review & Rate",
       description: "After the service is completed, leave a review to help other customers and build trust in the community.",
@@ -46,8 +50,8 @@ export default function HowItWorksPage() {
         {/* Steps Section */}
         <div className="container mx-auto px-4 py-16">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {steps.map((step, index) => (
-              <Card key={index} className="text-center">
+            {steps.map((step) => (
+              <Card key={step.id} className="text-center">
                 <CardContent className="pt-8">
                   <div className="flex justify-center mb-4">{step.icon}</div>
                   <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
