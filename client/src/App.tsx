@@ -5,36 +5,47 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useAuth } from "@/hooks/useAuth";
-import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing";
-import Browse from "@/pages/browse";
-import Dashboard from "@/pages/dashboard";
-import ListingsPage from "@/pages/dashboard/listings";
-import BookingsPage from "@/pages/dashboard/bookings";
-import CreateListingPage from "@/pages/dashboard/create-listing";
-import EditListingPage from "@/pages/dashboard/edit-listing";
-import ServiceDetail from "@/pages/service-detail";
-import ProviderProfile from "@/pages/provider-profile";
-import MyBookingsPage from "@/pages/my-bookings";
-import MessagesPage from "@/pages/messages";
-import AnalyticsPage from "@/pages/dashboard/analytics";
-import SettingsPage from "@/pages/dashboard/settings";
-import ProfilePage from "@/pages/profile";
-import LoginPage from "@/pages/login";
-import SignupPage from "@/pages/signup";
-import BecomeProviderPage from "@/pages/become-provider";
-import CategoriesPage from "@/pages/categories";
-import CategoryPage from "@/pages/category";
-import HowItWorksPage from "@/pages/how-it-works";
-import PricingPage from "@/pages/pricing";
-import AboutPage from "@/pages/about";
-import ContactPage from "@/pages/contact";
-import TermsPage from "@/pages/terms";
-import PrivacyPage from "@/pages/privacy";
 import { AppModeProvider, useAppMode } from "@/context/app-mode-context";
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import ErrorBoundary from "@/components/error-boundary";
 import { BottomNav } from "@/components/layout/bottom-nav";
+
+// Lazy load all page components for code splitting
+const NotFound = lazy(() => import("@/pages/not-found"));
+const Landing = lazy(() => import("@/pages/landing"));
+const Browse = lazy(() => import("@/pages/browse"));
+const Dashboard = lazy(() => import("@/pages/dashboard"));
+const ListingsPage = lazy(() => import("@/pages/dashboard/listings"));
+const BookingsPage = lazy(() => import("@/pages/dashboard/bookings"));
+const CreateListingPage = lazy(() => import("@/pages/dashboard/create-listing"));
+const EditListingPage = lazy(() => import("@/pages/dashboard/edit-listing"));
+const ServiceDetail = lazy(() => import("@/pages/service-detail"));
+const ProviderProfile = lazy(() => import("@/pages/provider-profile"));
+const MyBookingsPage = lazy(() => import("@/pages/my-bookings"));
+const MessagesPage = lazy(() => import("@/pages/messages"));
+const AnalyticsPage = lazy(() => import("@/pages/dashboard/analytics"));
+const SettingsPage = lazy(() => import("@/pages/dashboard/settings"));
+const ProfilePage = lazy(() => import("@/pages/profile"));
+const LoginPage = lazy(() => import("@/pages/login"));
+const SignupPage = lazy(() => import("@/pages/signup"));
+const BecomeProviderPage = lazy(() => import("@/pages/become-provider"));
+const CategoriesPage = lazy(() => import("@/pages/categories"));
+const CategoryPage = lazy(() => import("@/pages/category"));
+const HowItWorksPage = lazy(() => import("@/pages/how-it-works"));
+const PricingPage = lazy(() => import("@/pages/pricing"));
+const AboutPage = lazy(() => import("@/pages/about"));
+const ContactPage = lazy(() => import("@/pages/contact"));
+const TermsPage = lazy(() => import("@/pages/terms"));
+const PrivacyPage = lazy(() => import("@/pages/privacy"));
+
+// Loading fallback component
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+    </div>
+  );
+}
 
 function AppRouter() {
   const { isLoading: isAuthLoading } = useAuth();
@@ -64,40 +75,42 @@ function AppRouter() {
 
   return (
     <>
-      <Switch>
-        <Route path="/" component={Landing} />
-      <Route path="/login" component={LoginPage} />
-      <Route path="/signup" component={SignupPage} />
-      <Route path="/become-provider" component={BecomeProviderPage} />
-      <Route path="/browse" component={Browse} />
-      <Route path="/bookings" component={MyBookingsPage} />
-      <Route path="/messages" component={MessagesPage} />
-      <Route path="/profile" component={ProfilePage} />
-      <Route path="/dashboard/messages" component={MessagesPage} />
+      <Suspense fallback={<PageLoader />}>
+        <Switch>
+          <Route path="/" component={Landing} />
+          <Route path="/login" component={LoginPage} />
+          <Route path="/signup" component={SignupPage} />
+          <Route path="/become-provider" component={BecomeProviderPage} />
+          <Route path="/browse" component={Browse} />
+          <Route path="/bookings" component={MyBookingsPage} />
+          <Route path="/messages" component={MessagesPage} />
+          <Route path="/profile" component={ProfilePage} />
+          <Route path="/dashboard/messages" component={MessagesPage} />
 
-      {/* Dashboard Routes */}
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/dashboard/listings" component={ListingsPage} />
-      <Route path="/dashboard/listings/new" component={CreateListingPage} />
-      <Route path="/dashboard/listings/:id/edit" component={EditListingPage} />
-      <Route path="/dashboard/bookings" component={BookingsPage} />
-      <Route path="/dashboard/analytics" component={AnalyticsPage} />
-      <Route path="/dashboard/settings" component={SettingsPage} />
+          {/* Dashboard Routes */}
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/dashboard/listings" component={ListingsPage} />
+          <Route path="/dashboard/listings/new" component={CreateListingPage} />
+          <Route path="/dashboard/listings/:id/edit" component={EditListingPage} />
+          <Route path="/dashboard/bookings" component={BookingsPage} />
+          <Route path="/dashboard/analytics" component={AnalyticsPage} />
+          <Route path="/dashboard/settings" component={SettingsPage} />
 
-      {/* Static Pages */}
-      <Route path="/categories" component={CategoriesPage} />
-      <Route path="/category/:slug" component={CategoryPage} />
-      <Route path="/how-it-works" component={HowItWorksPage} />
-      <Route path="/pricing" component={PricingPage} />
-      <Route path="/about" component={AboutPage} />
-      <Route path="/contact" component={ContactPage} />
-      <Route path="/terms" component={TermsPage} />
-      <Route path="/privacy" component={PrivacyPage} />
+          {/* Static Pages */}
+          <Route path="/categories" component={CategoriesPage} />
+          <Route path="/category/:slug" component={CategoryPage} />
+          <Route path="/how-it-works" component={HowItWorksPage} />
+          <Route path="/pricing" component={PricingPage} />
+          <Route path="/about" component={AboutPage} />
+          <Route path="/contact" component={ContactPage} />
+          <Route path="/terms" component={TermsPage} />
+          <Route path="/privacy" component={PrivacyPage} />
 
-      <Route path="/service/:id" component={ServiceDetail} />
-      <Route path="/provider/:id" component={ProviderProfile} />
-      <Route component={NotFound} />
-      </Switch>
+          <Route path="/service/:id" component={ServiceDetail} />
+          <Route path="/provider/:id" component={ProviderProfile} />
+          <Route component={NotFound} />
+        </Switch>
+      </Suspense>
       <BottomNav />
     </>
   );
