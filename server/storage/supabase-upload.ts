@@ -16,43 +16,73 @@ const s3Client = new S3Client({
 
 const BUCKET_NAME = process.env.SUPABASE_BUCKET || "awthar";
 
+interface ImageVariant {
+  size: "thumbnail" | "medium" | "full";
+  width: number;
+  quality: number;
+}
+
+const IMAGE_VARIANTS: ImageVariant[] = [
+  { size: "thumbnail", width: 200, quality: 80 },
+  { size: "medium", width: 800, quality: 85 },
+  { size: "full", width: 1920, quality: 90 },
+];
+
 export class SupabaseStorage {
   /**
-   * Compresses and uploads a file to Supabase Storage (S3).
-   * Returns a proxy URL to serve the file via the backend.
+   * Compresses and uploads a file to Supabase Storage (S3) with multiple size variants.
+   * Returns a proxy URL to serve the medium-sized file via the backend.
    */
   static async uploadFile(file: Express.Multer.File): Promise<string> {
-    // 1. Optimize Image with Sharp
-    const optimizedBuffer = await sharp(file.buffer)
-      .resize(1920, 1920, { // Max dimensions
-        fit: 'inside',
-        withoutEnlargement: true
-      })
-      .webp({ 
-        quality: 80, 
-        effort: 4 
-      })
-      .toBuffer();
+    const baseFilename = uuidv4();
 
-    // 2. Generate Unique Filename
-    const filename = `${uuidv4()}.webp`;
-    
-    // 3. Upload to S3
-    const command = new PutObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: filename,
-      Body: optimizedBuffer,
-      ContentType: "image/webp",
-      // We still set public-read for good measure, but we will proxy it now
-      ACL: 'public-read', 
+    // Get image metadata to check original dimensions
+    const metadata = await sharp(file.buffer).metadata();
+
+    // Upload all variants in parallel
+    const uploadPromises = IMAGE_VARIANTS.map(async (variant) => {
+      let processedBuffer: Buffer;
+
+      // Only resize if image is larger than target width
+      if (metadata.width && metadata.width > variant.width) {
+        processedBuffer = await sharp(file.buffer)
+          .resize(variant.width, null, {
+            fit: 'inside',
+            withoutEnlargement: true
+          })
+          .webp({
+            quality: variant.quality,
+            effort: 4
+          })
+          .toBuffer();
+      } else {
+        // If image is smaller, just optimize it
+        processedBuffer = await sharp(file.buffer)
+          .webp({
+            quality: variant.quality,
+            effort: 4
+          })
+          .toBuffer();
+      }
+
+      const filename = `${baseFilename}-${variant.size}.webp`;
+
+      const command = new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: filename,
+        Body: processedBuffer,
+        ContentType: "image/webp",
+        ACL: 'public-read',
+      });
+
+      await s3Client.send(command);
     });
 
-    await s3Client.send(command);
+    // Wait for all variants to upload
+    await Promise.all(uploadPromises);
 
-    // 4. Return Proxy URL
-    // Instead of returning the direct Supabase URL (which fails if bucket is private),
-    // we return a URL that routes through our backend.
-    return `/api/upload/file/${filename}`;
+    // Return proxy URL for the medium variant (default for display)
+    return `/api/upload/file/${baseFilename}-medium.webp`;
   }
 
   /**
@@ -71,5 +101,18 @@ export class SupabaseStorage {
     } catch (error) {
       return null;
     }
+  }
+
+  /**
+   * Get different size variants of an image URL
+   * Converts a medium URL to thumbnail, medium, or full variant
+   */
+  static getImageVariant(
+    url: string,
+    size: "thumbnail" | "medium" | "full"
+  ): string {
+    // URL format: /api/upload/file/{uuid}-medium.webp
+    // Replace -medium with desired size
+    return url.replace(/-medium\.webp$/, `-${size}.webp`);
   }
 }

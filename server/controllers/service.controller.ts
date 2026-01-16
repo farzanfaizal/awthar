@@ -92,21 +92,36 @@ serviceRouter.get("/", asyncHandler(async (req: Request, res: Response) => {
     }
   }
 
+  const limit = validatedQuery.limit ?? 20;
+  const offset = validatedQuery.offset ?? 0;
+
   const services = await ServiceService.searchServices({
     category: validatedQuery.category,
     search: validatedQuery.search,
     minPrice: validatedQuery.minPrice,
     maxPrice: validatedQuery.maxPrice,
     providerId: providerId,
-    limit: validatedQuery.limit ?? 20,
-    offset: validatedQuery.offset ?? 0,
+    limit: limit + 1, // Fetch one extra to check if there are more
+    offset: offset,
     sortBy: validatedQuery.sortBy,
     latitude: validatedQuery.latitude,
     longitude: validatedQuery.longitude,
     radius: validatedQuery.radius,
   });
 
-  res.json(services);
+  // Check if there are more results
+  const hasMore = services.length > limit;
+  const results = hasMore ? services.slice(0, limit) : services;
+
+  res.json({
+    services: results,
+    pagination: {
+      offset,
+      limit,
+      hasMore,
+      total: results.length,
+    },
+  });
 }));
 
 // Get Service

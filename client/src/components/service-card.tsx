@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Shield, Star, MapPin } from "lucide-react";
 import { getImageUrl } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
+import { getImageVariant, getImageSrcSet, getImageSizes } from "@/lib/image-variants";
 
 interface ServiceCardProps {
   service: Service & {
@@ -65,9 +66,12 @@ export function ServiceCard({ service, className }: ServiceCardProps) {
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           {service.images && service.images.length > 0 ? (
             <img
-              src={getImageUrl(service.images[0])}
+              src={getImageVariant(getImageUrl(service.images[0]), "medium")}
+              srcSet={getImageSrcSet(getImageUrl(service.images[0]))}
+              sizes={getImageSizes("card")}
               alt={service.titleEn}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
             />
           ) : (
              <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-muted-foreground">
@@ -92,7 +96,12 @@ export function ServiceCard({ service, className }: ServiceCardProps) {
              <div className="flex items-center gap-2 min-w-0">
                 <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0 border border-border">
                     {user.profileImageUrl ? (
-                        <img src={getImageUrl(user.profileImageUrl)} alt={user.firstName || "Provider"} className="w-full h-full object-cover" />
+                        <img
+                          src={getImageVariant(getImageUrl(user.profileImageUrl), "thumbnail")}
+                          alt={user.firstName || "Provider"}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
                     ) : (
                         <span className="text-xs font-bold text-primary">{user.firstName?.[0]}</span>
                     )}

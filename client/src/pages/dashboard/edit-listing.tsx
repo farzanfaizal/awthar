@@ -35,10 +35,11 @@ import { useState, useEffect } from "react";
 import { getImageUrl } from "@/lib/image-utils";
 import { Category } from "@shared/schema";
 import { errorHandler } from "@/lib/error-handler";
+import { cn } from "@/lib/utils";
 
 const editListingSchema = z.object({
-  titleEn: z.string().min(10, "Title must be at least 10 characters"),
-  descriptionEn: z.string().min(50, "Description must be at least 50 characters"),
+  titleEn: z.string().min(10, "Title must be at least 10 characters").max(100, "Title must not exceed 100 characters"),
+  descriptionEn: z.string().min(50, "Description must be at least 50 characters").max(2000, "Description must not exceed 2000 characters"),
   categoryId: z.string().min(1, "Please select a category"),
   pricingType: z.enum(["fixed", "hourly", "custom"]),
   priceMin: z.coerce.number().min(0, "Price must be positive"),
@@ -299,7 +300,15 @@ export default function EditListingPage() {
                     name="titleEn"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Service Title</FormLabel>
+                        <FormLabel className="flex justify-between">
+                          <span>Service Title</span>
+                          <span className={cn(
+                            "text-xs font-normal",
+                            field.value.length > 100 ? "text-destructive" : "text-muted-foreground"
+                          )}>
+                            {field.value.length}/100
+                          </span>
+                        </FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. Professional Plumbing Services" {...field} />
                         </FormControl>
@@ -313,7 +322,15 @@ export default function EditListingPage() {
                     name="descriptionEn"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel className="flex justify-between">
+                          <span>Description</span>
+                          <span className={cn(
+                            "text-xs font-normal",
+                            field.value.length > 2000 ? "text-destructive" : "text-muted-foreground"
+                          )}>
+                            {field.value.length}/2000
+                          </span>
+                        </FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="Describe your service..."

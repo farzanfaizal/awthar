@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { cn } from "@/lib/utils";
+import { getImageVariant, getImageSrcSet, getImageSizes } from "@/lib/image-variants";
 
 interface ImageGalleryProps {
   images?: string[] | null;
@@ -42,9 +43,12 @@ export function ImageGallery({ images }: ImageGalleryProps) {
       <div className="overflow-hidden rounded-lg border bg-background">
         <AspectRatio ratio={16 / 9}>
           <img
-            src={images[selectedIndex]}
+            src={getImageVariant(images[selectedIndex], "full")}
+            srcSet={getImageSrcSet(images[selectedIndex])}
+            sizes={getImageSizes("gallery")}
             alt={`Service image ${selectedIndex + 1}`}
             className="h-full w-full object-cover transition-all hover:scale-105"
+            loading="lazy"
           />
         </AspectRatio>
       </div>
@@ -61,9 +65,12 @@ export function ImageGallery({ images }: ImageGalleryProps) {
               )}
             >
               <img
-                src={image}
+                src={getImageVariant(image, "thumbnail")}
+                srcSet={getImageSrcSet(image)}
+                sizes={getImageSizes("thumbnail")}
                 alt={`Thumbnail ${index + 1}`}
                 className="h-full w-full object-cover"
+                loading="lazy"
               />
             </button>
           ))}
