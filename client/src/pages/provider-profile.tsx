@@ -40,7 +40,9 @@ export default function ProviderProfilePage() {
     enabled: !!id,
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/services?providerId=${id}`);
-      return res.json();
+      const data = await res.json();
+      // API returns { services, pagination } - extract services array
+      return data.services ?? data;
     }
   });
 

@@ -20,7 +20,9 @@ export default function CategoryPage() {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch services");
-      return res.json();
+      const data = await res.json();
+      // API returns { services, pagination } - extract services array
+      return data.services ?? data;
     },
     enabled: !!slug,
   });

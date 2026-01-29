@@ -49,9 +49,11 @@ export default function Landing() {
     queryKey: ["featured-services"],
     queryFn: async () => {
       // Fetching services to display as "Featured" - filtering for featured could be a query param later
-      const res = await fetch("/api/services?limit=3"); 
+      const res = await fetch("/api/services?limit=3");
       if (!res.ok) throw new Error("Failed to fetch services");
-      return res.json();
+      const data = await res.json();
+      // API returns { services, pagination } - extract services array
+      return data.services ?? data;
     },
   });
 

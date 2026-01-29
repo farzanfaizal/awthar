@@ -24,7 +24,12 @@ export default function ListingsPage() {
 
   const { data: services, isLoading, isError } = useQuery<Service[]>({
     queryKey: ["/api/services", { role: "provider" }],
-    queryFn: () => apiRequest("GET", "/api/services?role=provider").then(res => res.json())
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/services?role=provider");
+      const data = await res.json();
+      // API returns { services, pagination } - extract services array
+      return data.services ?? data;
+    }
   });
 
   const toggleStatusMutation = useMutation({
