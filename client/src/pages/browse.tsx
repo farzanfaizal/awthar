@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, Filter, MapPin, Star, Shield, SlidersHorizontal, Loader2, LayoutList, Map as MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Link, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { Service, ProviderProfile, User, Category } from "@shared/schema";
 import { getImageUrl } from "@/lib/image-utils";
 import { useUserLocation } from "@/hooks/useUserLocation";
@@ -28,6 +28,18 @@ type ServiceWithRelations = Service & {
   provider: ProviderProfile & { user: User };
   category: Category;
 };
+
+type PaginatedResponse = {
+  services: ServiceWithRelations[];
+  pagination: {
+    offset: number;
+    limit: number;
+    hasMore: boolean;
+    total: number;
+  };
+};
+
+const PAGE_SIZE = 12;
 
 export default function Browse() {
   const [location] = useLocation();
@@ -139,9 +151,57 @@ export default function Browse() {
     queryParams.append("radius", appliedFilters.radius.toString());
   }
 
-  const { data: services, isLoading } = useQuery<ServiceWithRelations[]>({
-    queryKey: [`/api/services?${queryParams.toString()}`],
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery<PaginatedResponse>({
+    queryKey: [`/api/services`, queryParams.toString()],
+    queryFn: async ({ pageParam }) => {
+      const params = new URLSearchParams(queryParams.toString());
+      params.set("limit", PAGE_SIZE.toString());
+      params.set("offset", String(pageParam));
+      const res = await fetch(`/api/services?${params.toString()}`, {
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const text = (await res.text()) || res.statusText;
+        throw new Error(`${res.status}: ${text}`);
+      }
+      return res.json();
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.pagination.hasMore) return undefined;
+      return lastPage.pagination.offset + lastPage.pagination.limit;
+    },
   });
+
+  const services = data?.pages.flatMap((page) => page.services) ?? [];
+
+  // Intersection observer for auto-loading
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [entry] = entries;
+      if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    [fetchNextPage, hasNextPage, isFetchingNextPage],
+  );
+
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(handleObserver, {
+      rootMargin: "200px",
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [handleObserver]);
 
   const { data: categories } = useQuery<Category[]>({
     queryKey: ["categories"],
@@ -409,7 +469,7 @@ export default function Browse() {
             <div className="flex-1">
               <div className="mb-4 flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Showing <span className="font-semibold">{isLoading ? "..." : (services?.length || 0)}</span> results
+                  Showing <span className="font-semibold">{isLoading ? "..." : services.length}</span> results
                 </p>
               </div>
 
@@ -419,7 +479,7 @@ export default function Browse() {
                     <ServiceCardSkeleton key={i} />
                   ))}
                 </div>
-              ) : !services || services.length === 0 ? (
+              ) : services.length === 0 ? (
                 <EmptyState
                   icon={Search}
                   title="No services found"
@@ -466,17 +526,23 @@ export default function Browse() {
                 </div>
               )}
 
-              {/* Pagination (Placeholder for now) */}
-              {services && services.length > 0 && (
-                <div className="mt-12 flex items-center justify-center gap-2">
-                  <Button variant="outline" className="rounded-lg" disabled>
-                    Previous
-                  </Button>
-                  <Button variant="default" className="rounded-lg w-10 h-10 p-0">
-                    1
-                  </Button>
-                  <Button variant="outline" className="rounded-lg" disabled>
-                    Next
+              {/* Infinite scroll trigger */}
+              <div ref={loadMoreRef} className="mt-8 flex justify-center">
+                {isFetchingNextPage && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="text-sm">Loading more services...</span>
+                  </div>
+                )}
+              </div>
+              {hasNextPage && !isFetchingNextPage && services.length > 0 && (
+                <div className="mt-4 flex justify-center">
+                  <Button
+                    variant="outline"
+                    className="rounded-lg"
+                    onClick={() => fetchNextPage()}
+                  >
+                    Load More
                   </Button>
                 </div>
               )}
