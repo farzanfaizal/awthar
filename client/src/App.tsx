@@ -8,7 +8,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { AppModeProvider, useAppMode } from "@/context/app-mode-context";
 import { useEffect, lazy, Suspense } from "react";
 import ErrorBoundary from "@/components/error-boundary";
-import { BottomNav } from "@/components/layout/bottom-nav";
 
 // Lazy load all page components for code splitting
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -111,7 +110,6 @@ function AppRouter() {
           <Route component={NotFound} />
         </Switch>
       </Suspense>
-      <BottomNav />
     </>
   );
 }

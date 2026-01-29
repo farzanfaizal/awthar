@@ -107,14 +107,14 @@ export default function Landing() {
             </p>
             
             {/* Hero Search */}
-            <div className="bg-background/95 backdrop-blur-sm rounded-2xl p-4 shadow-2xl">
-              <div className="flex flex-col md:flex-row gap-4">
+            <div className="bg-background/95 backdrop-blur-sm rounded-2xl p-4 md:p-6 shadow-2xl">
+              <div className="flex flex-col md:flex-row gap-3 md:gap-4">
                 <div className="relative flex-1 min-w-0">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                   <Input
                     type="search"
                     placeholder="What service do you need?"
-                    className="pl-12 h-14 text-base rounded-xl border-2 text-foreground"
+                    className="pl-12 h-12 md:h-14 text-base rounded-xl border-2 text-foreground"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -127,7 +127,7 @@ export default function Landing() {
                   <Input
                     type="text"
                     placeholder="Location (Emirate, City, Area)"
-                    className="pl-12 h-14 text-base rounded-xl border-2 text-foreground"
+                    className="pl-12 h-12 md:h-14 text-base rounded-xl border-2 text-foreground"
                     value={locationQuery}
                     onChange={(e) => setLocationQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -135,9 +135,9 @@ export default function Landing() {
                     aria-label="Location"
                   />
                 </div>
-                <Button 
-                  size="lg" 
-                  className="h-14 px-8 rounded-xl bg-secondary hover:bg-secondary/90 text-white font-semibold whitespace-nowrap flex-shrink-0" 
+                <Button
+                  size="lg"
+                  className="h-12 md:h-14 px-6 md:px-8 rounded-xl font-semibold whitespace-nowrap flex-shrink-0"
                   data-testid="button-hero-search"
                   onClick={handleSearch}
                   disabled={isSearching}
@@ -148,10 +148,41 @@ export default function Landing() {
                       Searching...
                     </>
                   ) : (
-                    "Search Services"
+                    <>
+                      <Search className="mr-2 h-4 w-4 md:hidden" />
+                      <span className="hidden md:inline">Search Services</span>
+                      <span className="md:hidden">Search</span>
+                    </>
                   )}
                 </Button>
               </div>
+
+              {/* Category Pills */}
+              {categories && categories.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-border/50">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-sm text-muted-foreground mr-1 self-center">Popular:</span>
+                    {categories.slice(0, 5).map((category: any) => (
+                      <Link key={category.slug} href={`/browse?category=${category.slug}`}>
+                        <Badge
+                          variant="secondary"
+                          className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors px-3 py-1.5 text-sm font-medium rounded-full"
+                        >
+                          {category.nameEn}
+                        </Badge>
+                      </Link>
+                    ))}
+                    <Link href="/categories">
+                      <Badge
+                        variant="outline"
+                        className="cursor-pointer hover:bg-muted transition-colors px-3 py-1.5 text-sm font-medium rounded-full border-dashed"
+                      >
+                        View All
+                      </Badge>
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Quick Stats */}
