@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useAuth } from "@/hooks/useAuth";
+import { AuthProvider } from "@/context/auth-context";
 import { AppModeProvider, useAppMode } from "@/context/app-mode-context";
 import { useEffect, lazy, Suspense } from "react";
 import ErrorBoundary from "@/components/error-boundary";
@@ -36,6 +37,11 @@ const AboutPage = lazy(() => import("@/pages/about"));
 const ContactPage = lazy(() => import("@/pages/contact"));
 const TermsPage = lazy(() => import("@/pages/terms"));
 const PrivacyPage = lazy(() => import("@/pages/privacy"));
+
+// Auth pages
+const AuthCallback = lazy(() => import("@/pages/auth/callback"));
+const ForgotPassword = lazy(() => import("@/pages/forgot-password"));
+const ResetPassword = lazy(() => import("@/pages/auth/reset-password"));
 
 // Loading fallback component
 function PageLoader() {
@@ -79,6 +85,9 @@ function AppRouter() {
           <Route path="/" component={Landing} />
           <Route path="/login" component={LoginPage} />
           <Route path="/signup" component={SignupPage} />
+          <Route path="/forgot-password" component={ForgotPassword} />
+          <Route path="/auth/callback" component={AuthCallback} />
+          <Route path="/auth/reset-password" component={ResetPassword} />
           <Route path="/become-provider" component={BecomeProviderPage} />
           <Route path="/browse" component={Browse} />
           <Route path="/bookings" component={MyBookingsPage} />
@@ -121,9 +130,11 @@ export default function App() {
         <ThemeProvider defaultTheme="light">
           <TooltipProvider>
             <Toaster />
-            <AppModeProvider>
-              <AppRouter />
-            </AppModeProvider>
+            <AuthProvider>
+              <AppModeProvider>
+                <AppRouter />
+              </AppModeProvider>
+            </AuthProvider>
           </TooltipProvider>
         </ThemeProvider>
       </QueryClientProvider>

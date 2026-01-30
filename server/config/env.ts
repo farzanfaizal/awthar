@@ -10,10 +10,16 @@ function validateEnv() {
   const required = [
     "DATABASE_URL",
     "SESSION_SECRET",
+    // Supabase Storage (S3)
     "SUPABASE_ENDPOINT",
     "SUPABASE_ACCESS_KEY",
     "SUPABASE_SECRET_KEY",
     "SUPABASE_BUCKET",
+    // Supabase Auth
+    "SUPABASE_URL",
+    "SUPABASE_ANON_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_JWT_SECRET",
   ];
 
   const missing: string[] = [];
@@ -70,11 +76,18 @@ export const env = {
   SESSION_SECRET: process.env.SESSION_SECRET!,
   REPLIT_DOMAINS: process.env.REPLIT_DOMAINS || "localhost:5000",
   REPL_ID: process.env.REPL_ID || "local-dev",
+  // Supabase Storage (S3)
   SUPABASE_ENDPOINT: process.env.SUPABASE_ENDPOINT!,
   SUPABASE_REGION: process.env.SUPABASE_REGION || "ap-northeast-1",
   SUPABASE_ACCESS_KEY: process.env.SUPABASE_ACCESS_KEY!,
   SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY!,
   SUPABASE_BUCKET: process.env.SUPABASE_BUCKET!,
+  // Supabase Auth
+  SUPABASE_URL: process.env.SUPABASE_URL!,
+  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY!,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  SUPABASE_JWT_SECRET: process.env.SUPABASE_JWT_SECRET!,
+  // Environment
   NODE_ENV: process.env.NODE_ENV || "development",
   IS_PRODUCTION: process.env.NODE_ENV === "production",
   IS_DEVELOPMENT: process.env.NODE_ENV === "development",

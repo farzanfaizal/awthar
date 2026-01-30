@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { supabase } from "./supabase";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -7,16 +8,41 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+/**
+ * Gets the current access token from Supabase session
+ */
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (session?.access_token) {
+    return {
+      Authorization: `Bearer ${session.access_token}`,
+    };
+  }
+
+  return {};
+}
+
+/**
+ * Makes an authenticated API request
+ * Automatically adds Authorization header if user is logged in
+ */
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const authHeaders = await getAuthHeaders();
+
+  const headers: HeadersInit = {
+    ...authHeaders,
+    ...(data ? { "Content-Type": "application/json" } : {}),
+  };
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
   });
 
   await throwIfResNotOk(res);
@@ -24,13 +50,20 @@ export async function apiRequest(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
+
+/**
+ * Creates a query function with auth headers
+ * Used by react-query for fetching data
+ */
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const authHeaders = await getAuthHeaders();
+
     const res = await fetch(queryKey.join("/") as string, {
-      credentials: "include",
+      headers: authHeaders,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
@@ -41,13 +74,16 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+/**
+ * Query client instance with default configuration
+ */
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      staleTime: 5 * 60 * 1000, // 5 minutes
       retry: false,
     },
     mutations: {

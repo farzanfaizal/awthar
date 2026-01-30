@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server, type IncomingMessage } from "http";
-import { setupAuth, getSession } from "./auth";
+import { setupAuth } from "./auth";
 import { WebSocketServer, WebSocket } from "ws";
 import { authController } from "./controllers/auth.controller";
 import { serviceController, categoryController } from "./controllers/service.controller";
@@ -13,26 +13,15 @@ import { reportsController } from "./controllers/reports.controller";
 import { analyticsController } from "./controllers/analytics.controller";
 import { ChatService } from "./services/chat.service";
 import { logger } from "./lib/logger";
+import jwt from "jsonwebtoken";
+import { env } from "./config/env";
+import { db } from "./db";
+import { users } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
-// Define session type extension for WebSocket auth
-import type { SessionData } from "express-session";
-
+// Extended IncomingMessage with userId for WebSocket
 interface AuthenticatedIncomingMessage extends IncomingMessage {
-  session?: SessionData & {
-    passport?: {
-      user?: string;
-    };
-  };
-}
-
-declare module "http" {
-  interface IncomingMessage {
-    session?: SessionData & {
-      passport?: {
-        user?: string;
-      };
-    };
-  }
+  userId?: string;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -60,32 +49,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Map<UserId, Set<WebSocket>>
   const clients = new Map<string, Set<WebSocket>>();
 
-  // Session parser for WS
-  const sessionParser = getSession();
-
-  httpServer.on("upgrade", (request: AuthenticatedIncomingMessage, socket, head) => {
-    if (request.url !== "/ws") {
+  /**
+   * WebSocket upgrade handler with JWT authentication
+   * Token is passed as query parameter: /ws?token=<jwt>
+   */
+  httpServer.on("upgrade", async (request: AuthenticatedIncomingMessage, socket, head) => {
+    if (!request.url?.startsWith("/ws")) {
       return;
     }
 
-    sessionParser(request as any, {} as any, () => {
-      // Check if user is authenticated
-      const userId = request.session?.passport?.user;
-      if (!userId) {
+    try {
+      // Extract token from query string
+      const url = new URL(request.url, `http://${request.headers.host}`);
+      const token = url.searchParams.get("token");
+
+      if (!token) {
         socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
         socket.destroy();
         return;
       }
 
+      // Verify JWT token
+      let decoded: { sub: string };
+      try {
+        decoded = jwt.verify(token, env.SUPABASE_JWT_SECRET) as { sub: string; exp: number };
+      } catch (jwtError) {
+        logger.warn("WebSocket JWT verification failed", { error: jwtError });
+        socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+        socket.destroy();
+        return;
+      }
+
+      // Get user from our database using Supabase ID
+      const user = await db.query.users.findFirst({
+        where: eq(users.supabaseId, decoded.sub),
+      });
+
+      if (!user) {
+        logger.warn("WebSocket user not found", { supabaseId: decoded.sub });
+        socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+        socket.destroy();
+        return;
+      }
+
+      // Attach user ID to request for connection handler
+      request.userId = user.id;
+
       wss.handleUpgrade(request as any, socket, head, (ws) => {
         wss.emit("connection", ws, request);
       });
-    });
+    } catch (error) {
+      logger.error("WebSocket upgrade error", error as Error);
+      socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
+      socket.destroy();
+    }
   });
 
   wss.on("connection", (ws: WebSocket, req: AuthenticatedIncomingMessage) => {
-    // Get user ID from session (local passport auth)
-    const userId = req.session?.passport?.user;
+    const userId = req.userId;
 
     if (!userId) {
       ws.send(JSON.stringify({ type: "error", message: "Authentication required" }));
@@ -98,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       clients.set(userId, new Set());
     }
     clients.get(userId)!.add(ws);
-    
+
     // Send initial success
     ws.send(JSON.stringify({ type: "auth", status: "success" }));
 
@@ -118,8 +139,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const conversation = await ChatService.getConversationById(message.conversationId);
 
           if (conversation) {
-            const recipientId = conversation.customerId === userId 
-              ? conversation.providerId 
+            const recipientId = conversation.customerId === userId
+              ? conversation.providerId
               : conversation.customerId;
 
             // Send to recipient if online

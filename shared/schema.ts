@@ -37,15 +37,21 @@ export const serviceStatusEnum = pgEnum("service_status", ["draft", "active", "p
 export const bookingStatusEnum = pgEnum("booking_status", ["pending", "accepted", "in_progress", "completed", "cancelled"]);
 export const messageStatusEnum = pgEnum("message_status", ["sent", "delivered", "read"]);
 
-// Users table - Referenced from javascript_log_in_with_replit blueprint
+// Auth provider enum for Supabase Auth
+export const authProviderEnum = pgEnum("auth_provider", ["email", "google", "apple", "github"]);
+
+// Users table - Synced with Supabase Auth
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  supabaseId: varchar("supabase_id").unique(), // Links to Supabase auth.users.id
   email: varchar("email").unique(),
-  password: varchar("password"), // For local auth (bcrypt hashed)
+  password: varchar("password"), // Legacy - for migration only
+  emailVerified: boolean("email_verified").default(false).notNull(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   role: userRoleEnum("role").default("customer").notNull(),
+  authProvider: authProviderEnum("auth_provider").default("email").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

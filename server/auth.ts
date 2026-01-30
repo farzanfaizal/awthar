@@ -1,228 +1,152 @@
-import { Strategy as LocalStrategy } from "passport-local";
-import passport from "passport";
-import session from "express-session";
-import type { Express, RequestHandler } from "express";
-import connectPg from "connect-pg-simple";
+import type { Express } from "express";
+import rateLimit from "express-rate-limit";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
 import { users } from "@shared/schema";
 import { eq } from "drizzle-orm";
-import rateLimit from "express-rate-limit";
-import { env } from "./config/env";
 
-// Password utilities
+/**
+ * Hash a password using bcrypt
+ * Used for seeding and legacy password migration
+ */
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
 }
 
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash);
-}
+// Re-export authentication middleware and helpers from supabase-auth
+export {
+  isAuthenticated,
+  optionalAuth,
+  verifySupabaseToken,
+  getUserId,
+  getSupabaseUserId,
+  type AuthenticatedUser,
+} from "./middleware/supabase-auth";
 
-export function getSession() {
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: env.DATABASE_URL,
-    createTableIfMissing: false,
-    ttl: sessionTtl,
-    tableName: "sessions",
-  });
-  return session({
-    secret: env.SESSION_SECRET,
-    store: sessionStore,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: env.IS_PRODUCTION,
-      maxAge: sessionTtl,
-      sameSite: env.IS_PRODUCTION ? "strict" : "lax",
-    },
-  });
-}
-
+/**
+ * Sets up authentication routes and middleware
+ * Uses Supabase Auth for authentication - JWT verification happens in middleware
+ */
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
-  app.use(getSession());
-  app.use(passport.initialize());
-  app.use(passport.session());
 
-  // Local Strategy (email/password)
-  passport.use(new LocalStrategy(
-    {
-      usernameField: 'email',
-      passwordField: 'password'
-    },
-    async (email, password, done) => {
-      try {
-        const user = await db.query.users.findFirst({
-          where: eq(users.email, email)
-        });
-
-        if (!user) {
-          return done(null, false, { message: 'Invalid email or password' });
-        }
-
-        if (!user.password) {
-          return done(null, false, { message: 'Account authentication error' });
-        }
-
-        const isValid = await verifyPassword(password, user.password);
-        if (!isValid) {
-          return done(null, false, { message: 'Invalid email or password' });
-        }
-
-        // Don't include password in session
-        const { password: _, ...userWithoutPassword } = user;
-        return done(null, userWithoutPassword);
-      } catch (error) {
-        return done(error);
-      }
-    }
-  ));
-
-  passport.serializeUser((user: any, cb) => cb(null, user.id));
-  passport.deserializeUser(async (id: string, cb) => {
-    try {
-      const user = await db.query.users.findFirst({
-        where: eq(users.id, id)
-      });
-      if (!user) {
-        return cb(new Error('User not found'));
-      }
-      const { password: _, ...userWithoutPassword } = user;
-      cb(null, userWithoutPassword);
-    } catch (error) {
-      cb(error);
-    }
-  });
-
-  const loginLimiter = rateLimit({
+  // Rate limiters for profile endpoints
+  const profileLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 5, // Limit each IP to 5 login attempts per windowMs
-    message: "Too many login attempts from this IP, please try again after 15 minutes",
+    limit: 30, // Allow more requests for profile updates
+    message: "Too many requests, please try again later",
     standardHeaders: true,
     legacyHeaders: false,
   });
 
-  const signupLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    limit: 5, // Limit each IP to 5 accounts per hour
-    message: "Too many accounts created from this IP, please try again after an hour",
-    standardHeaders: true,
-    legacyHeaders: false,
+  // Import the auth middleware
+  const { isAuthenticated: authMiddleware } = await import("./middleware/supabase-auth");
+
+  /**
+   * Get current authenticated user
+   * This endpoint is called by the client to get user data after Supabase auth
+   */
+  app.get("/api/auth/user", authMiddleware, (req, res) => {
+    // User is already attached to request by middleware
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    res.json(req.user);
   });
 
-  // Signup endpoint
-  app.post("/api/signup", signupLimiter, async (req, res) => {
+  /**
+   * Update user profile
+   * Allows updating firstName, lastName, profileImageUrl
+   */
+  app.patch("/api/auth/user", profileLimiter, authMiddleware, async (req, res) => {
     try {
-      const { email, password, firstName, lastName, role } = req.body;
+      const { firstName, lastName, profileImageUrl, role } = req.body;
+      const userId = req.user!.id;
 
-      if (!email || !password) {
-        return res.status(400).json({ message: "Email and password are required" });
-      }
+      const updateData: Record<string, any> = {
+        updatedAt: new Date(),
+      };
 
-      if (password.length < 12) {
-        return res.status(400).json({ message: "Password must be at least 12 characters" });
-      }
+      if (firstName !== undefined) updateData.firstName = firstName;
+      if (lastName !== undefined) updateData.lastName = lastName;
+      if (profileImageUrl !== undefined) updateData.profileImageUrl = profileImageUrl;
 
-      // Check password complexity
-      const hasUpperCase = /[A-Z]/.test(password);
-      const hasLowerCase = /[a-z]/.test(password);
-      const hasNumber = /[0-9]/.test(password);
-      const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-      if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
-        return res.status(400).json({
-          message: "Password must contain uppercase, lowercase, number, and special character"
-        });
-      }
-
-      // Validate role if provided
-      const validRoles = ["customer", "provider"];
-      const userRole = role && validRoles.includes(role) ? role : "customer";
-
-      // Check if user already exists
-      const existingUser = await db.query.users.findFirst({
-        where: eq(users.email, email)
-      });
-
-      if (existingUser) {
-        return res.status(400).json({ message: "Email already registered" });
-      }
-
-      // Hash password
-      const hashedPassword = await hashPassword(password);
-
-      // Create user
-      const [newUser] = await db.insert(users).values({
-        email,
-        password: hashedPassword,
-        firstName: firstName || null,
-        lastName: lastName || null,
-        role: userRole,
-      }).returning();
-
-      // Log them in
-      const { password: _, ...userWithoutPassword } = newUser;
-      req.login(userWithoutPassword, (err) => {
-        if (err) {
-          return res.status(500).json({ message: "Error logging in after signup" });
+      // Role can only be upgraded to 'both' if currently 'customer'
+      // Or changed between 'customer' and 'provider' by admin
+      if (role !== undefined) {
+        const currentRole = req.user!.role;
+        // Allow upgrade from customer to both when becoming a provider
+        if (currentRole === "customer" && role === "both") {
+          updateData.role = "both";
         }
-        res.status(201).json(userWithoutPassword);
-      });
+      }
+
+      const [updatedUser] = await db
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, userId))
+        .returning();
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Return updated user without password
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
     }
   });
 
-  // Login endpoint
-  app.post("/api/login", loginLimiter, (req, res, next) => {
-    passport.authenticate('local', (err: any, user: any, info: any) => {
-      if (err) {
-        return res.status(500).json({ message: err.message });
+  /**
+   * Complete profile after signup
+   * Called after Supabase signup to set additional profile data
+   */
+  app.post("/api/auth/complete-profile", profileLimiter, authMiddleware, async (req, res) => {
+    try {
+      const { firstName, lastName, role } = req.body;
+      const userId = req.user!.id;
+
+      const updateData: Record<string, any> = {
+        updatedAt: new Date(),
+      };
+
+      if (firstName) updateData.firstName = firstName;
+      if (lastName) updateData.lastName = lastName;
+
+      // Set role if provided and valid
+      const validRoles = ["customer", "provider"];
+      if (role && validRoles.includes(role)) {
+        updateData.role = role;
       }
-      if (!user) {
-        return res.status(401).json({ message: info?.message || 'Authentication failed' });
+
+      const [updatedUser] = await db
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, userId))
+        .returning();
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
       }
-      req.login(user, (err) => {
-        if (err) {
-          return res.status(500).json({ message: err.message });
-        }
-        res.json(user);
-      });
-    })(req, res, next);
+
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error: any) {
+      console.error("Error completing profile:", error);
+      res.status(500).json({ message: "Failed to complete profile" });
+    }
   });
 
-  // Logout endpoint
+  /**
+   * Logout endpoint
+   * Client-side handles Supabase signout, this is for any server cleanup
+   */
   app.post("/api/logout", (req, res) => {
-    req.logout((err) => {
-      if (err) {
-        return res.status(500).json({ message: "Error logging out" });
-      }
-      res.json({ message: "Logged out successfully" });
-    });
+    // With Supabase Auth, logout is handled client-side
+    // This endpoint is kept for compatibility and any server-side cleanup
+    res.json({ message: "Logged out successfully" });
   });
-}
-
-export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  // Check if user is authenticated via passport
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  return next();
-};
-
-// Helper function to get user ID from request
-export function getUserId(req: any): string {
-  const user = req.user;
-  if (!user) {
-    throw new Error("User not authenticated");
-  }
-  if (user.id) {
-    return user.id;
-  }
-  throw new Error("Unable to determine user ID");
 }

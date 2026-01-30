@@ -83,7 +83,7 @@ serviceRouter.get("/", asyncHandler(async (req: Request, res: Response) => {
   let providerId: string | undefined;
 
   if (validatedQuery.role === 'provider') {
-    if (req.isAuthenticated()) {
+    if (req.user) {
       const userId = getUserId(req);
       const provider = await ProviderService.getProviderByUserId(userId);
       if (provider) {
