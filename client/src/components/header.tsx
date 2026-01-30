@@ -23,6 +23,7 @@ import {
   Info,
   Tag,
   Star,
+  Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +33,11 @@ import {
   SheetTitle,
   SheetClose,
 } from "@/components/ui/sheet";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -122,8 +128,8 @@ export function Header() {
         { href: "/how-it-works", label: "How It Works", icon: HelpCircle },
       ];
 
-  // Drawer menu sections
-  const drawerSections = isProviderMode
+  // Site navigation sections (for hamburger menu - no user-specific items)
+  const siteNavSections = isProviderMode
     ? [
         {
           title: "Dashboard",
@@ -132,7 +138,6 @@ export function Header() {
             { href: "/dashboard/listings", label: "My Listings", icon: Briefcase },
             { href: "/dashboard/bookings", label: "Jobs", icon: Calendar },
             { href: "/dashboard/analytics", label: "Analytics", icon: Star },
-            { href: "/messages", label: "Messages", icon: MessageCircle },
             { href: "/dashboard/settings", label: "Settings", icon: Settings },
           ],
         },
@@ -143,13 +148,6 @@ export function Header() {
           items: [
             { href: "/browse", label: "All Services", icon: Search },
             { href: "/categories", label: "Categories", icon: Grid3X3 },
-          ],
-        },
-        {
-          title: "For Customers",
-          items: [
-            { href: "/bookings", label: "My Bookings", icon: Calendar },
-            { href: "/messages", label: "Messages", icon: MessageCircle },
           ],
         },
         {
@@ -206,65 +204,15 @@ export function Header() {
                     <img src="/awthar.png" alt="Awthar" className="w-10 h-10 object-contain" />
                     <div>
                       <span className="font-bold text-xl">Awthar</span>
-                      {isAuthenticated && (
-                        <p className="text-xs text-muted-foreground">
-                          {isProviderMode ? "Provider Mode" : "Customer Mode"}
-                        </p>
-                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Site Navigation
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                {/* User Section */}
-                {isAuthenticated ? (
-                  <div className="p-4 border-b bg-muted/30">
-                    <div className="flex items-center gap-3 mb-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={user?.profileImageUrl || undefined} />
-                        <AvatarFallback className="text-sm font-medium">
-                          {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">
-                          {user?.firstName} {user?.lastName}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => handleNavigation("/profile")}
-                      >
-                        <User className="h-4 w-4 mr-1" />
-                        Profile
-                      </Button>
-                      {(userCanBeProvider || user?.role === "provider") && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => setMode(isCustomerMode ? "provider" : "customer")}
-                        >
-                          {isCustomerMode ? (
-                            <>
-                              <Building2 className="h-4 w-4 mr-1" />
-                              Host
-                            </>
-                          ) : (
-                            <>
-                              <Users className="h-4 w-4 mr-1" />
-                              Buy
-                            </>
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ) : (
+                {/* Auth Buttons for non-authenticated users */}
+                {!isAuthenticated && (
                   <div className="p-4 border-b">
                     <div className="flex gap-2">
                       <Button className="flex-1" onClick={() => handleNavigation("/login")}>
@@ -277,65 +225,46 @@ export function Header() {
                   </div>
                 )}
 
-                {/* Navigation Sections */}
+                {/* Site Navigation Sections */}
                 <div className="py-2">
-                  {drawerSections.map((section, sectionIdx) => (
+                  {siteNavSections.map((section, sectionIdx) => (
                     <div key={section.title}>
-                      {(!isAuthenticated && (section.title === "For Customers" && section.items.some(i => i.href === "/bookings" || i.href === "/messages"))) ? null : (
-                        <>
-                          <div className="px-4 py-2">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                              {section.title}
-                            </p>
-                          </div>
-                          {section.items.map((item) => {
-                            // Hide auth-required items for non-authenticated users
-                            if (!isAuthenticated && (item.href === "/bookings" || item.href === "/messages")) {
-                              return null;
-                            }
-                            const isActive = location === item.href || location.startsWith(item.href + "/");
-                            return (
-                              <SheetClose asChild key={item.href}>
-                                <button
-                                  onClick={() => handleNavigation(item.href)}
-                                  className={cn(
-                                    "w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors",
-                                    "hover:bg-muted/50",
-                                    isActive && "bg-primary/10 text-primary font-medium"
-                                  )}
-                                >
-                                  <item.icon className="h-5 w-5" />
-                                  <span className="flex-1 text-left">{item.label}</span>
-                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                                </button>
-                              </SheetClose>
-                            );
-                          })}
-                          {sectionIdx < drawerSections.length - 1 && <Separator className="my-2" />}
-                        </>
-                      )}
+                      <div className="px-4 py-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          {section.title}
+                        </p>
+                      </div>
+                      {section.items.map((item) => {
+                        const isActive = location === item.href || location.startsWith(item.href + "/");
+                        return (
+                          <SheetClose asChild key={item.href}>
+                            <button
+                              onClick={() => handleNavigation(item.href)}
+                              className={cn(
+                                "w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors",
+                                "hover:bg-muted/50",
+                                isActive && "bg-primary/10 text-primary font-medium"
+                              )}
+                            >
+                              <item.icon className="h-5 w-5" />
+                              <span className="flex-1 text-left">{item.label}</span>
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                          </SheetClose>
+                        );
+                      })}
+                      {sectionIdx < siteNavSections.length - 1 && <Separator className="my-2" />}
                     </div>
                   ))}
                 </div>
 
-                {/* Drawer Footer */}
-                {isAuthenticated && (
-                  <div className="mt-auto border-t p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-muted-foreground">Appearance</span>
-                      <ThemeToggle />
-                    </div>
-                    <Button
-                      variant="outline"
-                      className="w-full text-destructive hover:text-destructive"
-                      onClick={handleLogout}
-                      disabled={logoutMutation.isPending}
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      {logoutMutation.isPending ? "Logging out..." : "Log Out"}
-                    </Button>
+                {/* Drawer Footer with Appearance */}
+                <div className="mt-auto border-t p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Appearance</span>
+                    <ThemeToggle />
                   </div>
-                )}
+                </div>
               </SheetContent>
             </Sheet>
           </div>
@@ -372,9 +301,9 @@ export function Header() {
 
           {/* RIGHT: Desktop Hamburger + Auth / Mobile Profile */}
           <div className="flex items-center gap-2">
-            {/* Desktop Hamburger Menu (for full menu) */}
-            <Sheet>
-              <SheetTrigger asChild>
+            {/* Desktop Hamburger Menu - Popover for site navigation */}
+            <Popover>
+              <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -383,151 +312,49 @@ export function Header() {
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[350px] p-0 overflow-y-auto">
-                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                {/* Same drawer content for desktop */}
-                <div className="sticky top-0 bg-background z-10 p-4 border-b">
-                  <div className="flex items-center gap-3">
-                    <img src="/awthar.png" alt="Awthar" className="w-10 h-10 object-contain" />
-                    <div>
-                      <span className="font-bold text-xl">Awthar</span>
-                      {isAuthenticated && (
-                        <p className="text-xs text-muted-foreground">
-                          {isProviderMode ? "Provider Mode" : "Customer Mode"}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {isAuthenticated ? (
-                  <div className="p-4 border-b bg-muted/30">
-                    <div className="flex items-center gap-3 mb-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={user?.profileImageUrl || undefined} />
-                        <AvatarFallback className="text-sm font-medium">
-                          {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">
-                          {user?.firstName} {user?.lastName}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <SheetClose asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => setLocation("/profile")}
-                        >
-                          <User className="h-4 w-4 mr-1" />
-                          Profile
-                        </Button>
-                      </SheetClose>
-                      {(userCanBeProvider || user?.role === "provider") && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => setMode(isCustomerMode ? "provider" : "customer")}
-                        >
-                          {isCustomerMode ? (
-                            <>
-                              <Building2 className="h-4 w-4 mr-1" />
-                              Host
-                            </>
-                          ) : (
-                            <>
-                              <Users className="h-4 w-4 mr-1" />
-                              Buy
-                            </>
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-4 border-b">
-                    <div className="flex gap-2">
-                      <SheetClose asChild>
-                        <Button className="flex-1" onClick={() => setLocation("/login")}>
-                          Log In
-                        </Button>
-                      </SheetClose>
-                      <SheetClose asChild>
-                        <Button variant="outline" className="flex-1" onClick={() => setLocation("/signup")}>
-                          Sign Up
-                        </Button>
-                      </SheetClose>
-                    </div>
-                  </div>
-                )}
-
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-64 p-0 max-h-[80vh] overflow-y-auto">
+                {/* Site Navigation Sections */}
                 <div className="py-2">
-                  {drawerSections.map((section, sectionIdx) => (
+                  {siteNavSections.map((section, sectionIdx) => (
                     <div key={section.title}>
-                      {(!isAuthenticated && (section.title === "For Customers" && section.items.some(i => i.href === "/bookings" || i.href === "/messages"))) ? null : (
-                        <>
-                          <div className="px-4 py-2">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                              {section.title}
-                            </p>
-                          </div>
-                          {section.items.map((item) => {
-                            if (!isAuthenticated && (item.href === "/bookings" || item.href === "/messages")) {
-                              return null;
-                            }
-                            const isActive = location === item.href || location.startsWith(item.href + "/");
-                            return (
-                              <SheetClose asChild key={item.href}>
-                                <Link
-                                  href={item.href}
-                                  className={cn(
-                                    "w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors",
-                                    "hover:bg-muted/50",
-                                    isActive && "bg-primary/10 text-primary font-medium"
-                                  )}
-                                >
-                                  <item.icon className="h-5 w-5" />
-                                  <span className="flex-1 text-left">{item.label}</span>
-                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                                </Link>
-                              </SheetClose>
-                            );
-                          })}
-                          {sectionIdx < drawerSections.length - 1 && <Separator className="my-2" />}
-                        </>
-                      )}
+                      <div className="px-3 py-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          {section.title}
+                        </p>
+                      </div>
+                      {section.items.map((item) => {
+                        const isActive = location === item.href || location.startsWith(item.href + "/");
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className={cn(
+                              "w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors",
+                              "hover:bg-muted/50",
+                              isActive && "bg-primary/10 text-primary font-medium"
+                            )}
+                          >
+                            <item.icon className="h-4 w-4" />
+                            <span className="flex-1 text-left">{item.label}</span>
+                          </Link>
+                        );
+                      })}
+                      {sectionIdx < siteNavSections.length - 1 && <Separator className="my-2" />}
                     </div>
                   ))}
                 </div>
 
-                {isAuthenticated && (
-                  <div className="mt-auto border-t p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-muted-foreground">Appearance</span>
-                      <ThemeToggle />
-                    </div>
-                    <SheetClose asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full text-destructive hover:text-destructive"
-                        onClick={handleLogout}
-                        disabled={logoutMutation.isPending}
-                      >
-                        <LogOut className="h-4 w-4 mr-2" />
-                        {logoutMutation.isPending ? "Logging out..." : "Log Out"}
-                      </Button>
-                    </SheetClose>
+                {/* Appearance Toggle */}
+                <Separator />
+                <div className="p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Appearance</span>
+                    <ThemeToggle />
                   </div>
-                )}
-              </SheetContent>
-            </Sheet>
+                </div>
+              </PopoverContent>
+            </Popover>
 
             {/* Desktop Auth Buttons */}
             {!isAuthenticated && (
@@ -608,17 +435,45 @@ export function Header() {
                     </>
                   )}
 
+                  {/* User Activity Section */}
+                  {isProviderMode ? (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/messages">
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          <span>Messages</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/bookings">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          <span>My Bookings</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/messages">
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          <span>My Messages</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/favorites">
+                          <Heart className="mr-2 h-4 w-4" />
+                          <span>My Favorites</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  <DropdownMenuSeparator />
+
+                  {/* Account Settings */}
                   <DropdownMenuItem asChild>
                     <Link href="/profile">
                       <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </Link>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem asChild>
-                    <Link href={isProviderMode ? "/dashboard/settings" : "/profile"}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
+                      <span>Profile Settings</span>
                     </Link>
                   </DropdownMenuItem>
 
