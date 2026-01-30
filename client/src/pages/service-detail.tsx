@@ -2,15 +2,17 @@ import { useState } from "react";
 import { useRoute, Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageGallery } from "@/components/image-gallery";
-import { ProviderCard } from "@/components/provider-card";
 import { BookingForm } from "@/components/booking-form";
 import { ReviewsList } from "@/components/reviews-list";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 import {
   Dialog,
   DialogContent,
@@ -27,22 +29,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Star, Eye, MessageCircle, MapPin, Share2, Flag, Heart, Loader2, Calendar, Info, Map as MapIcon, ShieldCheck, ArrowLeft } from "lucide-react";
+import {
+  Star,
+  Eye,
+  MessageCircle,
+  MapPin,
+  Share2,
+  Flag,
+  Heart,
+  Loader2,
+  Calendar,
+  Map as MapIcon,
+  ShieldCheck,
+  ChevronRight,
+  Clock,
+  CheckCircle,
+  Phone,
+  BadgeCheck,
+  Home,
+  Briefcase,
+  ArrowRight,
+} from "lucide-react";
 import { Service, ProviderProfile, User, Category } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { getImageUrl } from "@/lib/image-utils";
-
 import { MapView } from "@/components/map-view";
+import { ServiceCard } from "@/components/service-card";
 
 type ServiceWithRelations = Service & {
   provider: ProviderProfile & { user: User };
@@ -56,14 +72,29 @@ export default function ServiceDetailPage() {
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
-  
+
   const [reportOpen, setReportOpen] = useState(false);
   const [reportType, setReportType] = useState("");
   const [reportReason, setReportReason] = useState("");
+  const [activeSection, setActiveSection] = useState<"about" | "reviews" | "location">("about");
 
   const { data: service, isLoading } = useQuery<ServiceWithRelations>({
     queryKey: [`/api/services/${id}`],
     enabled: !!id,
+  });
+
+  // Fetch similar services
+  const { data: similarServices } = useQuery<ServiceWithRelations[]>({
+    queryKey: [`/api/services`, { category: service?.category?.slug, limit: 4 }],
+    enabled: !!service?.category?.slug,
+    queryFn: async () => {
+      const res = await fetch(`/api/services?category=${service?.category?.slug}&limit=4`);
+      if (!res.ok) throw new Error("Failed to fetch similar services");
+      const data = await res.json();
+      // Filter out current service and return
+      const services = data.services ?? data;
+      return services.filter((s: ServiceWithRelations) => s.id !== id);
+    },
   });
 
   // Check favorite status
@@ -91,7 +122,9 @@ export default function ServiceDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/favorites/check", id] });
       toast({
         title: isFavorited ? "Removed from Favorites" : "Saved to Favorites",
-        description: isFavorited ? "Service removed from your list." : "Service saved to your favorites list.",
+        description: isFavorited
+          ? "Service removed from your list."
+          : "Service saved to your favorites list.",
       });
     },
     onError: (error: Error) => {
@@ -192,325 +225,494 @@ export default function ServiceDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        <Skeleton className="h-[400px] w-full" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-4">
-            <Skeleton className="h-10 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-            <Skeleton className="h-[200px] w-full" />
-          </div>
-          <div className="lg:col-span-1">
-            <Skeleton className="h-[300px] w-full" />
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex-1 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">
+          <Skeleton className="h-5 w-64 mb-6" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <Skeleton className="h-[400px] w-full rounded-xl" />
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-[200px] w-full" />
+            </div>
+            <div className="lg:col-span-1">
+              <Skeleton className="h-[400px] w-full rounded-xl" />
+            </div>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   if (!service) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold mb-4">Service Not Found</h1>
-        <p className="text-muted-foreground mb-8">
-          The service you are looking for does not exist or has been removed.
-        </p>
-        <Link href="/browse">
-          <Button>Browse Services</Button>
-        </Link>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center px-4">
+            <h1 className="text-2xl font-bold mb-4">Service Not Found</h1>
+            <p className="text-muted-foreground mb-8">
+              The service you are looking for does not exist or has been removed.
+            </p>
+            <Button asChild>
+              <Link href="/browse">Browse Services</Link>
+            </Button>
+          </div>
+        </div>
+        <Footer />
       </div>
     );
   }
 
+  const provider = service.provider;
+  const providerUser = provider.user;
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
-        {/* Back Button */}
-        <div className="mb-6">
-          <Link href="/browse">
-            <Button variant="ghost" className="pl-0 hover:pl-2 transition-all gap-2 text-muted-foreground hover:text-primary">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Browse
-            </Button>
-          </Link>
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
+
+      {/* Breadcrumbs */}
+      <div className="border-b bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-3">
+          <nav className="flex items-center gap-2 text-sm">
+            <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
+              <Home className="h-4 w-4" />
+            </Link>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <Link href="/browse" className="text-muted-foreground hover:text-foreground transition-colors">
+              Services
+            </Link>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <Link
+              href={`/category/${service.category?.slug}`}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {service.category?.nameEn}
+            </Link>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <span className="text-foreground font-medium truncate max-w-[200px]">
+              {service.titleEn}
+            </span>
+          </nav>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          {/* Left Column: Media & Info (8/12) */}
-          <div className="lg:col-span-8 space-y-8">
-            <div className="space-y-6">
-              <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                <div className="space-y-2 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5 font-semibold">
-                      {service.category.nameEn}
-                    </Badge>
-                    {service.isFeatured && (
-                      <Badge className="bg-secondary text-secondary-foreground shadow-sm">
-                        Featured Service
-                      </Badge>
-                    )}
-                  </div>
-                  <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground leading-tight">
-                    {service.titleEn}
-                  </h1>
-                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1.5 font-medium text-foreground">
-                      <Star className="w-4 h-4 fill-warning text-warning" />
-                      <span>{service.provider.rating || "New"}</span>
-                      <span className="text-muted-foreground font-normal">({service.provider.totalReviews} reviews)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4" />
-                      <span>{service.location?.area || "Area"}, {service.location?.city || "City"}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Eye className="w-4 h-4" />
-                      <span>{service.viewCount} views</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" className="rounded-full h-10 w-10 shadow-sm" onClick={handleShare}>
-                    <Share2 className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className={cn("rounded-full h-10 w-10 shadow-sm transition-colors", isFavorited && "text-red-500 border-red-100 bg-red-50")} 
-                    onClick={handleFavoriteClick}
-                  >
-                    <Heart className={cn("w-4 h-4", isFavorited && "fill-current")} />
-                  </Button>
-                </div>
-              </div>
-
+      <div className="flex-1">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-6">
               {/* Image Gallery */}
-              <div className="rounded-2xl overflow-hidden shadow-md">
+              <div className="rounded-2xl overflow-hidden border-2 bg-card">
                 <ImageGallery images={(service.images || []).map(getImageUrl)} />
               </div>
-            </div>
 
-            {/* Content Tabs */}
-            <Tabs defaultValue="about" className="w-full">
-              <TabsList className="w-full justify-start h-12 bg-muted/50 p-1 mb-8 rounded-xl border border-border/50">
-                <TabsTrigger value="about" className="rounded-lg px-6 data-[state=active]:shadow-sm">
-                   <Info className="w-4 h-4 mr-2" />
-                   About
-                </TabsTrigger>
-                <TabsTrigger value="reviews" className="rounded-lg px-6 data-[state=active]:shadow-sm">
-                   <MessageCircle className="w-4 h-4 mr-2" />
-                   Reviews ({service.provider.totalReviews})
-                </TabsTrigger>
-                <TabsTrigger value="location" className="rounded-lg px-6 data-[state=active]:shadow-sm">
-                   <MapIcon className="w-4 h-4 mr-2" />
-                   Location
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="about" className="space-y-8 focus-visible:outline-none">
-                <div className="prose prose-slate max-w-none">
-                  <p className="whitespace-pre-wrap leading-relaxed text-lg text-muted-foreground">
-                    {service.descriptionEn}
-                  </p>
+              {/* Title & Quick Info */}
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary" className="rounded-full">
+                    {service.category?.nameEn}
+                  </Badge>
+                  {service.isFeatured && (
+                    <Badge className="rounded-full bg-amber-500/10 text-amber-600 border-amber-200">
+                      Featured
+                    </Badge>
+                  )}
+                  {provider.verificationStatus === "verified" && (
+                    <Badge className="rounded-full bg-green-500/10 text-green-600 border-green-200">
+                      <BadgeCheck className="h-3 w-3 mr-1" />
+                      Verified Provider
+                    </Badge>
+                  )}
                 </div>
 
-                {service.tags && service.tags.length > 0 && (
-                  <div className="space-y-3">
-                    <h3 className="font-bold text-lg">Key Expertise</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {service.tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="px-4 py-1.5 rounded-full bg-muted/30 border-border/50 font-medium transition-colors hover:bg-muted">
-                          {tag}
-                        </Badge>
-                      ))}
+                <h1 className="text-2xl md:text-3xl font-bold">{service.titleEn}</h1>
+
+                {/* Quick Stats Row */}
+                <div className="flex flex-wrap items-center gap-4 text-sm">
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span>
+                      {service.location?.area || service.location?.city || "UAE"}
+                      {service.location?.emirate && `, ${service.location.emirate}`}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                    <span>{service.viewCount} views</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                    <span className="font-semibold">{provider.rating || "New"}</span>
+                    <span className="text-muted-foreground">({provider.totalReviews} reviews)</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                    onClick={handleShare}
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "rounded-full",
+                      isFavorited && "text-red-500 border-red-200 bg-red-50"
+                    )}
+                    onClick={handleFavoriteClick}
+                  >
+                    <Heart className={cn("h-4 w-4 mr-2", isFavorited && "fill-current")} />
+                    {isFavorited ? "Saved" : "Save"}
+                  </Button>
+                  <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="rounded-full text-muted-foreground">
+                        <Flag className="h-4 w-4 mr-2" />
+                        Report
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Report Listing</DialogTitle>
+                        <DialogDescription>
+                          Help us keep the marketplace safe. Why are you reporting this?
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label>Reason</Label>
+                          <Select onValueChange={setReportType}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a reason" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="spam">Spam or Misleading</SelectItem>
+                              <SelectItem value="inappropriate">Inappropriate Content</SelectItem>
+                              <SelectItem value="fraud">Fraud or Scam</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Details</Label>
+                          <Textarea
+                            placeholder="Tell us more..."
+                            className="min-h-[100px]"
+                            value={reportReason}
+                            onChange={(e) => setReportReason(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setReportOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => reportMutation.mutate()}
+                          disabled={!reportType || !reportReason || reportMutation.isPending}
+                        >
+                          {reportMutation.isPending && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          )}
+                          Submit Report
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+
+              {/* Section Navigation */}
+              <div className="flex items-center gap-1 border-b">
+                {[
+                  { id: "about", label: "About", icon: Briefcase },
+                  { id: "reviews", label: `Reviews (${provider.totalReviews})`, icon: MessageCircle },
+                  { id: "location", label: "Location", icon: MapIcon },
+                ].map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => setActiveSection(section.id as any)}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors",
+                      activeSection === section.id
+                        ? "border-primary text-primary"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <section.icon className="h-4 w-4" />
+                    {section.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Section Content */}
+              <div className="min-h-[300px]">
+                {activeSection === "about" && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="font-semibold text-lg mb-3">Description</h3>
+                      <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                        {service.descriptionEn}
+                      </p>
+                    </div>
+
+                    {service.tags && service.tags.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold text-lg mb-3">Expertise</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {service.tags.map((tag) => (
+                            <Badge key={tag} variant="outline" className="rounded-full px-3 py-1">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <Separator />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <Card className="border-2">
+                        <CardContent className="p-4 text-center">
+                          <ShieldCheck className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                          <p className="font-medium">Verified</p>
+                          <p className="text-xs text-muted-foreground">Identity Confirmed</p>
+                        </CardContent>
+                      </Card>
+                      <Card className="border-2">
+                        <CardContent className="p-4 text-center">
+                          <CheckCircle className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+                          <p className="font-medium">{provider.completedJobs}+ Jobs</p>
+                          <p className="text-xs text-muted-foreground">Completed</p>
+                        </CardContent>
+                      </Card>
+                      <Card className="border-2">
+                        <CardContent className="p-4 text-center">
+                          <Clock className="h-8 w-8 text-purple-500 mx-auto mb-2" />
+                          <p className="font-medium">{provider.responseTime || "< 1"}h</p>
+                          <p className="text-xs text-muted-foreground">Response Time</p>
+                        </CardContent>
+                      </Card>
                     </div>
                   </div>
                 )}
 
-                <Separator />
+                {activeSection === "reviews" && (
+                  <Card className="border-2">
+                    <CardContent className="p-6">
+                      <ReviewsList providerId={service.providerId} />
+                    </CardContent>
+                  </Card>
+                )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                   <div className="space-y-4">
-                      <h3 className="font-bold text-lg">Why choose this provider?</h3>
-                      <ul className="space-y-3">
-                        <li className="flex items-center gap-3 text-sm text-muted-foreground">
-                           <ShieldCheck className="w-5 h-5 text-success" />
-                           <span>Verified Identity & License</span>
-                        </li>
-                        <li className="flex items-center gap-3 text-sm text-muted-foreground">
-                           <Star className="w-5 h-5 text-warning fill-warning" />
-                           <span>Top Rated Performance</span>
-                        </li>
-                        <li className="flex items-center gap-3 text-sm text-muted-foreground">
-                           <Calendar className="w-5 h-5 text-primary" />
-                           <span>Available for Immediate Booking</span>
-                        </li>
-                      </ul>
-                   </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="reviews" className="focus-visible:outline-none">
-                 <div className="bg-card rounded-2xl border p-6 md:p-8 shadow-sm">
-                    <ReviewsList providerId={service.providerId} />
-                 </div>
-              </TabsContent>
-
-              <TabsContent value="location" className="focus-visible:outline-none space-y-6">
-                <div className="bg-card rounded-2xl border p-6 md:p-8 shadow-sm">
-                  <div className="flex items-start gap-4 mb-6">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-                        <MapPin className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-lg">
-                        {service.location?.area || "Area"}, {service.location?.city || "City"}
-                      </p>
-                      <p className="text-muted-foreground">
-                        {service.location?.emirate || "Emirate"}, UAE
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="w-full h-[400px] rounded-xl overflow-hidden border shadow-inner">
-                    {service.latitude && service.longitude ? (
-                      <MapView 
-                        services={[service]} 
-                        center={[parseFloat(service.latitude.toString()), parseFloat(service.longitude.toString())]}
-                        zoom={14}
-                        className="w-full h-full"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">
-                        <div className="text-center">
-                          <MapPin className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                          <p className="font-medium">Map location not provided</p>
+                {activeSection === "location" && (
+                  <Card className="border-2">
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <MapPin className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">
+                            {service.location?.area || "Area"}, {service.location?.city || "City"}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {service.location?.emirate || "Emirate"}, UAE
+                          </p>
                         </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
 
-          {/* Right Column: Booking & Actions (4/12) */}
-          <div className="lg:col-span-4">
-            <div className="sticky top-24 space-y-6">
-              {/* Pricing & Booking Card */}
-              <Card className="rounded-2xl shadow-xl border-none ring-1 ring-border/50 overflow-hidden">
-                <CardHeader className="bg-primary/5 pb-6">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-primary">
-                      {service.pricingType === "fixed" ? (
-                        `AED ${service.priceMin}`
-                      ) : service.pricingType === "hourly" ? (
-                        `AED ${service.priceMin}/hr`
-                      ) : (
-                        "Quote"
-                      )}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {service.pricingType === "fixed" ? "Fixed Price" : service.pricingType === "hourly" ? "Hourly Rate" : "Starting Price"}
-                    </span>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6 space-y-6">
-                  <BookingForm
-                    serviceId={service.id}
-                    providerId={service.providerId}
-                    service={service}
-                  />
-
-                  <Separator />
-
-                  <div className="flex flex-col gap-3">
-                    <Button 
-                        size="lg" 
-                        variant="secondary" 
-                        className="w-full font-bold h-12"
-                        onClick={handleMessageProvider}
-                        disabled={createConversationMutation.isPending}
-                    >
-                        {createConversationMutation.isPending ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <div className="h-[350px] rounded-xl overflow-hidden border">
+                        {service.latitude && service.longitude ? (
+                          <MapView
+                            services={[service]}
+                            center={[
+                              parseFloat(service.latitude.toString()),
+                              parseFloat(service.longitude.toString()),
+                            ]}
+                            zoom={14}
+                            className="w-full h-full"
+                          />
                         ) : (
-                            <MessageCircle className="w-4 h-4 mr-2" />
-                        )}
-                        Contact Provider
-                    </Button>
-
-                    <div className="flex items-center justify-center py-2">
-                       <Dialog open={reportOpen} onOpenChange={setReportOpen}>
-                        <DialogTrigger asChild>
-                          <button className="text-xs text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1 font-medium">
-                            <Flag className="w-3 h-3" />
-                            Report this listing
-                          </button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                          <DialogHeader>
-                            <DialogTitle>Report Listing</DialogTitle>
-                            <DialogDescription>
-                              Help us keep the marketplace safe. Why are you reporting this?
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                              <Label>Reason</Label>
-                              <Select onValueChange={setReportType}>
-                                <SelectTrigger className="rounded-lg">
-                                  <SelectValue placeholder="Select a reason" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="spam">Spam or Misleading</SelectItem>
-                                  <SelectItem value="inappropriate">Inappropriate Content</SelectItem>
-                                  <SelectItem value="fraud">Fraud or Scam</SelectItem>
-                                  <SelectItem value="other">Other</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Details</Label>
-                              <Textarea 
-                                placeholder="Tell us more..." 
-                                className="min-h-[100px] rounded-lg"
-                                value={reportReason}
-                                onChange={(e) => setReportReason(e.target.value)}
-                              />
+                          <div className="w-full h-full bg-muted flex items-center justify-center">
+                            <div className="text-center text-muted-foreground">
+                              <MapPin className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                              <p>Map location not provided</p>
                             </div>
                           </div>
-                          <DialogFooter>
-                            <Button variant="outline" onClick={() => setReportOpen(false)} className="rounded-lg">Cancel</Button>
-                            <Button 
-                              variant="destructive" 
-                              className="rounded-lg"
-                              onClick={() => reportMutation.mutate()}
-                              disabled={!reportType || !reportReason || reportMutation.isPending}
-                            >
-                              {reportMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                              Submit Report
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              {/* Similar Services */}
+              {similarServices && similarServices.length > 0 && (
+                <div className="pt-8 border-t">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold">Similar Services</h2>
+                    <Button variant="ghost" asChild className="text-primary">
+                      <Link href={`/category/${service.category?.slug}`}>
+                        View All
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Link>
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {similarServices.slice(0, 2).map((s) => (
+                      <ServiceCard key={s.id} service={s} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Sidebar */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-20 space-y-4">
+                {/* Price Card */}
+                <Card className="border-2 overflow-hidden">
+                  <div className="bg-primary/5 p-4 border-b">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-primary">
+                        {service.pricingType === "fixed"
+                          ? `AED ${service.priceMin}`
+                          : service.pricingType === "hourly"
+                          ? `AED ${service.priceMin}`
+                          : "Custom"}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {service.pricingType === "hourly" && "/hr"}
+                        {service.pricingType === "fixed" && "fixed"}
+                        {service.pricingType === "custom" && "quote"}
+                      </span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                  <CardContent className="p-4 space-y-4">
+                    <BookingForm
+                      serviceId={service.id}
+                      providerId={service.providerId}
+                      service={service}
+                    />
+                  </CardContent>
+                </Card>
 
-              {/* Provider Info Summary */}
-              <ProviderCard 
-                provider={service.provider} 
-                onMessage={handleMessageProvider}
-                isMessageLoading={createConversationMutation.isPending}
-              />
+                {/* Provider Card */}
+                <Card className="border-2">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3 mb-4">
+                      <Avatar className="h-14 w-14 border-2">
+                        <AvatarImage src={providerUser.profileImageUrl || undefined} />
+                        <AvatarFallback className="text-lg font-bold">
+                          {providerUser.firstName?.[0]}
+                          {providerUser.lastName?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/provider/${provider.id}`}
+                            className="font-semibold hover:text-primary truncate"
+                          >
+                            {provider.companyName ||
+                              `${providerUser.firstName} ${providerUser.lastName}`}
+                          </Link>
+                          {provider.verificationStatus === "verified" && (
+                            <BadgeCheck className="h-5 w-5 text-green-500 flex-shrink-0" />
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {provider.providerType === "licensed_professional"
+                            ? "Licensed Professional"
+                            : "Freelancer"}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                          <span className="text-sm font-medium">{provider.rating || "New"}</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({provider.totalReviews} reviews)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mb-4 text-center">
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <p className="text-lg font-bold">{provider.completedJobs}</p>
+                        <p className="text-xs text-muted-foreground">Jobs Done</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <p className="text-lg font-bold">{provider.responseTime || "< 1"}h</p>
+                        <p className="text-xs text-muted-foreground">Response</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Button
+                        className="w-full"
+                        onClick={handleMessageProvider}
+                        disabled={createConversationMutation.isPending}
+                      >
+                        {createConversationMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                        )}
+                        Contact Provider
+                      </Button>
+                      <Button variant="outline" className="w-full" asChild>
+                        <Link href={`/provider/${provider.id}`}>View Profile</Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile Sticky CTA */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur border-t lg:hidden z-40">
+        <div className="flex items-center gap-3">
+          <div className="flex-1">
+            <p className="text-xs text-muted-foreground">Starting from</p>
+            <p className="text-xl font-bold text-primary">
+              AED {service.priceMin}
+              {service.pricingType === "hourly" && <span className="text-sm font-normal">/hr</span>}
+            </p>
+          </div>
+          <Button
+            size="lg"
+            className="px-8"
+            onClick={handleMessageProvider}
+            disabled={createConversationMutation.isPending}
+          >
+            {createConversationMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Contact"
+            )}
+          </Button>
+        </div>
+      </div>
+
+      <div className="lg:block hidden">
+        <Footer />
+      </div>
+      {/* Add padding for mobile sticky CTA */}
+      <div className="h-24 lg:hidden" />
     </div>
   );
 }
