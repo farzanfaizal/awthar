@@ -130,27 +130,58 @@ export const verifySupabaseToken: RequestHandler = async (req, res, next) => {
     });
 
     if (!user) {
-      // Auto-create user on first API call (sync from Supabase)
-      const authProvider = getAuthProvider(decoded);
-      const { firstName, lastName } = extractName(decoded);
-      const avatarUrl = decoded.user_metadata?.avatar_url ||
-                       decoded.user_metadata?.picture ||
-                       null;
+      // Check if this is a legacy user (exists by email but no supabaseId)
+      const legacyUser = await db.query.users.findFirst({
+        where: eq(users.email, decoded.email),
+      });
 
-      const [newUser] = await db
-        .insert(users)
-        .values({
-          supabaseId: decoded.sub,
-          email: decoded.email,
-          emailVerified: !!decoded.email_confirmed_at,
-          authProvider,
-          firstName,
-          lastName,
-          profileImageUrl: avatarUrl,
-        })
-        .returning();
+      if (legacyUser) {
+        // Update legacy user with Supabase ID (migration from old auth)
+        const authProvider = getAuthProvider(decoded);
+        const { firstName, lastName } = extractName(decoded);
+        const avatarUrl = decoded.user_metadata?.avatar_url ||
+                         decoded.user_metadata?.picture ||
+                         null;
 
-      user = newUser;
+        const [updatedUser] = await db
+          .update(users)
+          .set({
+            supabaseId: decoded.sub,
+            emailVerified: !!decoded.email_confirmed_at,
+            authProvider,
+            // Only update name/avatar if they don't exist
+            firstName: legacyUser.firstName || firstName,
+            lastName: legacyUser.lastName || lastName,
+            profileImageUrl: legacyUser.profileImageUrl || avatarUrl,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, legacyUser.id))
+          .returning();
+
+        user = updatedUser;
+      } else {
+        // Auto-create new user on first API call (sync from Supabase)
+        const authProvider = getAuthProvider(decoded);
+        const { firstName, lastName } = extractName(decoded);
+        const avatarUrl = decoded.user_metadata?.avatar_url ||
+                         decoded.user_metadata?.picture ||
+                         null;
+
+        const [newUser] = await db
+          .insert(users)
+          .values({
+            supabaseId: decoded.sub,
+            email: decoded.email,
+            emailVerified: !!decoded.email_confirmed_at,
+            authProvider,
+            firstName,
+            lastName,
+            profileImageUrl: avatarUrl,
+          })
+          .returning();
+
+        user = newUser;
+      }
     } else {
       // Update email verified status if changed
       if (user.emailVerified !== !!decoded.email_confirmed_at) {
