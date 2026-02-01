@@ -410,7 +410,7 @@ export default function Browse() {
 
       <div className="flex-1 bg-gradient-to-b from-muted/50 to-muted/20">
         {/* Page Header */}
-        <div className="bg-background/95 backdrop-blur-md border-b sticky top-16 z-40">
+        <div className="bg-background border-b">
           <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">
             {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
@@ -634,7 +634,7 @@ export default function Browse() {
           <div className="flex gap-8">
             {/* Desktop Sidebar */}
             <aside className="hidden md:block w-72 flex-shrink-0">
-              <div className="sticky top-24">
+              <div className="sticky top-20">
                 <Card className="border-2 shadow-md overflow-hidden">
                   <CardContent className="p-0">
                     {/* Header */}
