@@ -1,13 +1,10 @@
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import { migrate } from 'drizzle-orm/neon-serverless/migrator';
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import ws from 'ws';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import postgres from 'postgres';
 import { config } from 'dotenv';
 
 // Load .env without validation
 config();
-
-neonConfig.webSocketConstructor = ws;
 
 async function runMigrations() {
   console.log('⏳ Running migrations...');
@@ -17,15 +14,18 @@ async function runMigrations() {
     process.exit(1);
   }
 
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  const db = drizzle(pool);
+  // Use max 1 connection for migrations
+  const client = postgres(process.env.DATABASE_URL, { max: 1 });
+  const db = drizzle(client);
 
   try {
     await migrate(db, { migrationsFolder: './migrations' });
     console.log('✅ Migrations completed successfully');
+    await client.end();
     process.exit(0);
   } catch (error) {
     console.error('❌ Migration failed:', error);
+    await client.end();
     process.exit(1);
   }
 }
