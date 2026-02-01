@@ -695,7 +695,7 @@ export default function Browse() {
                   }
                 />
               ) : viewMode === "map" ? (
-                <div className="h-[calc(100vh-200px)] md:h-[600px] rounded-2xl overflow-hidden border-2 shadow-md">
+                <div className="h-[500px] md:h-[600px] rounded-2xl overflow-hidden border-2 shadow-md">
                   <MapView
                     services={services}
                     center={
