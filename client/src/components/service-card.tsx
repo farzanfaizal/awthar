@@ -3,7 +3,7 @@ import { Service, ProviderProfile, User } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Shield, Star, MapPin } from "lucide-react";
+import { BadgeCheck, Star, MapPin } from "lucide-react";
 import { getImageUrl } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
 import { getImageVariant, getImageSrcSet, getImageSizes } from "@/lib/image-variants";
@@ -19,50 +19,15 @@ export function ServiceCard({ service, className }: ServiceCardProps) {
   const provider = service.provider;
   const user = provider.user;
 
-  // Determine pricing display
-  const renderPrice = () => {
-    switch (service.pricingType) {
-      case "fixed":
-        return (
-          <div className="flex flex-col items-end">
-            <span className="text-2xl font-bold text-primary">
-              AED {service.priceMin}
-            </span>
-            <span className="text-xs text-muted-foreground">Fixed Price</span>
-          </div>
-        );
-      case "hourly":
-        return (
-          <div className="flex flex-col items-end">
-            <span className="text-2xl font-bold text-primary">
-              AED {service.priceMin}
-              <span className="text-sm font-normal text-muted-foreground">/hr</span>
-            </span>
-            <span className="text-xs text-muted-foreground">Hourly Rate</span>
-          </div>
-        );
-      case "custom":
-        return (
-          <div className="flex flex-col items-end">
-             <span className="text-2xl font-bold text-primary">
-              {service.priceMin ? `AED ${service.priceMin}+` : "Custom"}
-            </span>
-            <span className="text-xs text-muted-foreground">Starting At</span>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
     <Link href={`/service/${service.id}`}>
-      <Card 
+      <Card
         className={cn(
-          "group h-full flex flex-col overflow-hidden border-2 transition-all duration-300 hover:shadow-lg active:shadow-md cursor-pointer rounded-xl",
+          "group h-full flex flex-col overflow-hidden border-2 transition-all duration-300 hover:shadow-xl hover:border-primary/30 active:shadow-md cursor-pointer rounded-xl bg-card",
           className
         )}
       >
+        {/* Image Section */}
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           {service.images && service.images.length > 0 ? (
             <img
@@ -74,71 +39,96 @@ export function ServiceCard({ service, className }: ServiceCardProps) {
               loading="lazy"
             />
           ) : (
-             <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-muted-foreground">
+            <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-muted-foreground">
               No Image
-             </div>
+            </div>
           )}
 
-          {/* Badges Overlay */}
-          <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
-            {service.isFeatured && (
-              <Badge variant="secondary" className="shadow-sm">
+          {/* Gradient overlay for better contrast */}
+          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
+
+          {/* Featured Badge */}
+          {service.isFeatured && (
+            <div className="absolute top-3 right-3">
+              <Badge className="bg-primary/90 text-primary-foreground border-0 rounded-full px-3 py-1 shadow-md font-medium">
                 Featured
               </Badge>
-            )}
-             {/* New Badge logic could go here based on createdAt */}
-          </div>
+            </div>
+          )}
         </div>
 
         <CardContent className="flex flex-1 flex-col p-5">
           {/* Provider Info Row */}
-          <div className="flex items-start justify-between gap-3 mb-3">
-             <div className="flex items-center gap-2 min-w-0">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0 border border-border">
-                    {user.profileImageUrl ? (
-                        <img
-                          src={getImageVariant(getImageUrl(user.profileImageUrl), "thumbnail")}
-                          alt={user.firstName || "Provider"}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                    ) : (
-                        <span className="text-xs font-bold text-primary">{user.firstName?.[0]}</span>
-                    )}
-                </div>
-                <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground font-medium truncate flex items-center gap-1">
-                        {provider.companyName || `${user.firstName} ${user.lastName}`}
-                        {provider.verificationStatus === 'verified' && (
-                            <Shield className="h-3 w-3 text-success fill-success/10" />
-                        )}
-                    </p>
-                     <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3 fill-warning text-warning" />
-                        <span className="text-xs font-bold text-foreground">{provider.rating || "New"}</span>
-                        <span className="text-xs text-muted-foreground">({provider.totalReviews})</span>
-                    </div>
-                </div>
-             </div>
+          <div className="flex items-center gap-3 mb-3">
+            {/* Avatar */}
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0 border-2 border-border">
+              {user.profileImageUrl ? (
+                <img
+                  src={getImageVariant(getImageUrl(user.profileImageUrl), "thumbnail")}
+                  alt={user.firstName || "Provider"}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <span className="text-sm font-bold text-primary">{user.firstName?.[0]}</span>
+              )}
+            </div>
+
+            {/* Provider Details */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-semibold truncate">
+                  {provider.companyName || `${user.firstName} ${user.lastName}`}
+                </p>
+                {provider.verificationStatus === 'verified' && (
+                  <BadgeCheck className="h-4 w-4 text-primary flex-shrink-0" />
+                )}
+              </div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Star className="h-3 w-3 fill-warning text-warning" />
+                <span className="font-medium text-foreground">{provider.rating || "New"}</span>
+                <span>({provider.totalReviews} reviews)</span>
+              </div>
+            </div>
           </div>
 
           {/* Service Title */}
-          <h3 className="font-bold text-lg leading-tight mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-base leading-snug mb-2 line-clamp-2 group-hover:text-primary transition-colors">
             {service.titleEn}
           </h3>
 
-           {/* Location */}
-           <div className="flex items-center gap-1 text-xs text-muted-foreground mb-4">
-                <MapPin className="h-3 w-3" />
-                <span>{service.location?.emirate || "UAE"}</span>
-                {service.location?.city && <span>• {service.location.city}</span>}
+          {/* Location */}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
+            <div className="w-5 h-5 rounded bg-muted flex items-center justify-center flex-shrink-0">
+              <MapPin className="h-3 w-3" />
             </div>
+            <span className="truncate">
+              {service.location?.emirate || "UAE"}
+              {service.location?.city && ` • ${service.location.city}`}
+            </span>
+          </div>
 
           {/* Footer: Price & CTA */}
-          <div className="mt-auto pt-4 border-t flex items-center justify-between">
-            {renderPrice()}
-            <Button size="sm" variant="outline" className="h-9 px-4 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-colors">
-                View
+          <div className="mt-auto pt-4 border-t border-border/50 flex items-center justify-between">
+            {/* Price - Left aligned */}
+            <div>
+              <span className="text-xl font-bold text-primary">
+                AED {service.priceMin || "—"}
+              </span>
+              {service.pricingType === "hourly" && (
+                <span className="text-sm text-muted-foreground">/hr</span>
+              )}
+              {service.pricingType === "custom" && service.priceMin && (
+                <span className="text-sm text-muted-foreground">+</span>
+              )}
+            </div>
+
+            {/* CTA Button */}
+            <Button
+              size="sm"
+              className="h-9 px-5 rounded-lg font-medium"
+            >
+              View Details
             </Button>
           </div>
         </CardContent>
