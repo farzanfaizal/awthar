@@ -419,15 +419,10 @@ export default function Browse() {
             <span className="font-medium">Browse Services</span>
           </div>
 
-          {/* Title - Simplified */}
+          {/* Title - Bayut Style */}
           <h1 className="text-xl md:text-2xl font-bold">
             Browse Services{locationName && <span className="text-muted-foreground font-normal"> in {locationName}</span>}
           </h1>
-          {!isLoading && totalCount > 0 && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {totalCount} service{totalCount === 1 ? "" : "s"} available
-            </p>
-          )}
         </div>
       </div>
 
@@ -442,7 +437,7 @@ export default function Browse() {
               <Input
                 type="search"
                 placeholder="Search services..."
-                className="pl-9 h-10 rounded-lg border-2 text-sm w-full"
+                className="pl-9 h-10 rounded-lg border text-sm w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -514,7 +509,7 @@ export default function Browse() {
             <div className="flex items-center gap-2 w-full md:w-auto md:flex-1">
               <Sheet open={showMobileFilters} onOpenChange={setShowMobileFilters}>
                 <SheetTrigger asChild className="md:hidden">
-                  <Button variant="outline" size="sm" className="h-10 px-3 border-2 relative flex-1">
+                  <Button variant="outline" size="sm" className="h-10 px-3 border relative flex-1">
                     Filters
                     {activeFilterCount > 0 && (
                       <Badge variant="default" className="ml-2 rounded-full h-5 w-5 p-0 flex items-center justify-center text-xs">
@@ -542,7 +537,7 @@ export default function Browse() {
 
               {/* Sort - Consistent height and spacing */}
               <Select value={appliedFilters.sortBy} onValueChange={handleSortChange}>
-                <SelectTrigger className="h-10 text-sm border-2 w-full md:w-[120px] flex-1 md:flex-none">
+                <SelectTrigger className="h-10 text-sm border w-full md:w-[120px] flex-1 md:flex-none">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -575,53 +570,36 @@ export default function Browse() {
             </div>
           </div>
 
-          {/* Quick Filter Pills + Active Category Pills */}
-          <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
-            {quickFilters.map((filter) => (
-              <button
-                key={filter.id}
-                onClick={() => handleQuickFilter(filter.id)}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border",
-                  quickFilterState[filter.id]
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background hover:bg-muted border-border"
-                )}
-              >
-                <filter.icon className="h-3 w-3" />
-                {filter.label}
-              </button>
-            ))}
-
-            {/* Active Category Pills */}
-            {appliedFilters.categories.map((slug) => {
-              const cat = categories?.find((c) => c.slug === slug);
-              return (
-                <Badge
-                  key={slug}
-                  variant="secondary"
-                  className="rounded-full pl-2 pr-1.5 py-1 gap-1 text-xs whitespace-nowrap"
-                >
-                  {cat?.nameEn || slug}
-                  <button
-                    onClick={() => handleRemoveCategory(slug)}
-                    className="hover:bg-muted rounded-full"
+          {/* Active Category Pills + Clear All */}
+          {appliedFilters.categories.length > 0 && (
+            <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+              {appliedFilters.categories.map((slug) => {
+                const cat = categories?.find((c) => c.slug === slug);
+                return (
+                  <Badge
+                    key={slug}
+                    variant="secondary"
+                    className="rounded-full pl-2 pr-1.5 py-1 gap-1 text-xs whitespace-nowrap"
                   >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              );
-            })}
+                    {cat?.nameEn || slug}
+                    <button
+                      onClick={() => handleRemoveCategory(slug)}
+                      className="hover:bg-muted rounded-full"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                );
+              })}
 
-            {activeFilterCount > 0 && (
               <button
                 onClick={handleClearAllFilters}
                 className="text-xs text-muted-foreground hover:text-destructive whitespace-nowrap ml-2"
               >
                 Clear all
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -648,7 +626,7 @@ export default function Browse() {
               }
             />
           ) : viewMode === "map" ? (
-            <div className="h-[500px] md:h-[600px] rounded-xl overflow-hidden border shadow-sm">
+            <div className="fixed top-[calc(4rem+3.5rem)] left-0 right-0 bottom-0 md:top-[calc(4rem+3.25rem)] z-30">
               <MapView
                 services={services}
                 center={

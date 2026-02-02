@@ -53,7 +53,7 @@ export function LocationFilter({
         <Button
           variant="outline"
           className={cn(
-            "h-10 justify-between border-2 hover:border-primary/30 transition-colors",
+            "h-10 justify-between border hover:border-primary/30 transition-colors",
             hasLocation && "border-primary/20 bg-primary/5"
           )}
         >
@@ -149,7 +149,7 @@ export function CategoryFilter({
         <Button
           variant="outline"
           className={cn(
-            "h-10 justify-between border-2 hover:border-primary/30 transition-colors",
+            "h-10 justify-between border hover:border-primary/30 transition-colors",
             selectedCount > 0 && "border-primary/20 bg-primary/5"
           )}
         >
@@ -218,7 +218,7 @@ export function PriceFilter({ priceRange, onPriceChange }: PriceFilterProps) {
         <Button
           variant="outline"
           className={cn(
-            "h-10 justify-between border-2 hover:border-primary/30 transition-colors",
+            "h-10 justify-between border hover:border-primary/30 transition-colors",
             hasCustomRange && "border-primary/20 bg-primary/5"
           )}
         >
@@ -284,7 +284,7 @@ export function MoreFiltersButton({
         <Button
           variant="outline"
           className={cn(
-            "h-10 justify-between border-2 hover:border-primary/30 transition-colors relative",
+            "h-10 justify-between border hover:border-primary/30 transition-colors relative",
             activeCount > 0 && "border-primary/20 bg-primary/5"
           )}
         >
