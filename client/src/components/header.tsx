@@ -52,47 +52,40 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/useAuth";
+import { useSupabaseAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
 import { useAppMode } from "@/context/app-mode-context";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
 
 export function Header() {
   const { isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
+  const { signOut } = useSupabaseAuth();
   const { mode, setMode, isCustomerMode, isProviderMode, userCanBeProvider, isAppModeLoading } = useAppMode();
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/logout", {});
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.clear();
+  const handleLogout = async () => {
+    setIsDrawerOpen(false);
+    setIsLoggingOut(true);
+    try {
+      await signOut();
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
       });
       setLocation("/");
-      window.location.href = "/";
-    },
-    onError: (error: Error) => {
+    } catch (error: any) {
       toast({
         title: "Logout failed",
         description: error.message || "Failed to log out. Please try again.",
         variant: "destructive",
       });
-    },
-  });
-
-  const handleLogout = () => {
-    setIsDrawerOpen(false);
-    logoutMutation.mutate();
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const handleNavigation = (href: string) => {
@@ -495,11 +488,11 @@ export function Header() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={handleLogout}
-                    disabled={logoutMutation.isPending}
+                    disabled={isLoggingOut}
                     className="text-destructive focus:text-destructive"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>{logoutMutation.isPending ? "Logging out..." : "Log out"}</span>
+                    <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
