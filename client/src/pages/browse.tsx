@@ -8,22 +8,12 @@ import {
   Map as MapIcon,
   X,
   BadgeCheck,
-  Filter,
-  List,
   ChevronRight,
-  DollarSign,
-  Grid3X3,
 } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Slider } from "@/components/ui/slider";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -41,6 +31,11 @@ import {
   SheetTrigger,
   SheetFooter,
 } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Separator } from "@/components/ui/separator";
 import { useLocation } from "wouter";
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { Service, ProviderProfile, User, Category } from "@shared/schema";
@@ -51,6 +46,12 @@ import { ServiceCard } from "@/components/service-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ServiceCardSkeleton } from "@/components/skeletons";
 import { cn } from "@/lib/utils";
+import {
+  LocationFilter,
+  CategoryFilter,
+  PriceFilter,
+  MoreFiltersButton,
+} from "@/components/browse-filters";
 
 type ServiceWithRelations = Service & {
   provider: ProviderProfile & { user: User };
@@ -91,9 +92,9 @@ export default function Browse() {
     const params = new URLSearchParams(window.location.search);
     return params.get("search") || "";
   });
-  const [showFilters, setShowFilters] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  const [priceRange, setPriceRange] = useState([0, 2000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
   const [radius, setRadius] = useState(25);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [quickFilterState, setQuickFilterState] = useState<Record<string, boolean>>({
@@ -149,17 +150,19 @@ export default function Browse() {
   }, [latitude, longitude]);
 
   const handleApplyFilters = () => {
-    setAppliedFilters((prev) => ({
-      ...prev,
+    setAppliedFilters({
       search: searchQuery,
       categories: selectedCategories,
       minPrice: priceRange[0],
       maxPrice: priceRange[1],
+      sortBy: appliedFilters.sortBy,
+      latitude: appliedFilters.latitude,
+      longitude: appliedFilters.longitude,
       radius: radius,
       verifiedOnly: quickFilterState.verified,
-      minRating: quickFilterState.topRated ? 4 : undefined,
-    }));
-    setShowFilters(false);
+      minRating: quickFilterState.topRated ? 4 : appliedFilters.minRating,
+    });
+    setShowMobileFilters(false);
   };
 
   const handleSortChange = (value: string) => {
@@ -172,7 +175,7 @@ export default function Browse() {
     setAppliedFilters((prev) => ({
       ...prev,
       verifiedOnly: newState.verified,
-      minRating: newState.topRated ? 4 : undefined,
+      minRating: newState.topRated ? 4 : prev.minRating,
     }));
   };
 
@@ -280,26 +283,24 @@ export default function Browse() {
   }, [handleObserver]);
 
   const { data: categories } = useQuery<Category[]>({
-    queryKey: ["categories"],
-    queryFn: async () => {
-      const res = await fetch("/api/categories");
-      if (!res.ok) throw new Error("Failed to fetch categories");
-      return res.json();
-    },
+    queryKey: ["/api/categories"],
   });
 
-  // Count active filters
+  // Count active filters for "More Filters" badge
+  const moreFiltersCount =
+    (appliedFilters.verifiedOnly ? 1 : 0) +
+    (appliedFilters.minRating && !quickFilterState.topRated ? 1 : 0);
+
   const activeFilterCount =
     appliedFilters.categories.length +
     (appliedFilters.latitude ? 1 : 0) +
     (appliedFilters.minPrice > 0 || appliedFilters.maxPrice < 2000 ? 1 : 0) +
-    (appliedFilters.verifiedOnly ? 1 : 0) +
-    (appliedFilters.minRating ? 1 : 0);
+    moreFiltersCount;
 
-  // Filter sidebar content
-  const filterContent = (
+  // Mobile filter sheet content
+  const mobileFilterContent = (
     <div className="space-y-6">
-      {/* Location Filter */}
+      {/* Location */}
       <div>
         <h3 className="font-semibold text-sm mb-3">Location</h3>
         {appliedFilters.latitude && appliedFilters.longitude ? (
@@ -347,9 +348,7 @@ export default function Browse() {
             Use my location
           </Button>
         )}
-        {locationError && (
-          <p className="text-xs text-destructive mt-2">{locationError}</p>
-        )}
+        {locationError && <p className="text-xs text-destructive mt-2">{locationError}</p>}
       </div>
 
       <Separator />
@@ -362,7 +361,7 @@ export default function Browse() {
             {categories?.map((cat) => (
               <div key={cat.id} className="flex items-center space-x-2">
                 <Checkbox
-                  id={`cat-${cat.slug}`}
+                  id={`mobile-cat-${cat.slug}`}
                   checked={selectedCategories.includes(cat.slug)}
                   onCheckedChange={(checked) => {
                     if (checked) {
@@ -372,7 +371,7 @@ export default function Browse() {
                     }
                   }}
                 />
-                <Label htmlFor={`cat-${cat.slug}`} className="text-sm cursor-pointer">
+                <Label htmlFor={`mobile-cat-${cat.slug}`} className="text-sm cursor-pointer">
                   {cat.nameEn}
                 </Label>
               </div>
@@ -383,7 +382,7 @@ export default function Browse() {
 
       <Separator />
 
-      {/* Price Range */}
+      {/* Price */}
       <div>
         <h3 className="font-semibold text-sm mb-3">Price Range (AED)</h3>
         <div className="space-y-4">
@@ -392,7 +391,7 @@ export default function Browse() {
             max={2000}
             step={50}
             value={priceRange}
-            onValueChange={setPriceRange}
+            onValueChange={(vals) => setPriceRange(vals as [number, number])}
           />
           <div className="flex items-center justify-between text-sm">
             <span className="bg-muted px-2 py-1 rounded">{priceRange[0]}</span>
@@ -405,71 +404,146 @@ export default function Browse() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
 
-      <div className="flex-1 bg-muted/30">
-        {/* Sticky Search Bar */}
-        <div className="bg-background border-b sticky top-16 z-40">
-          <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-3">
-            {/* Compact Search Row */}
-            <div className="flex items-center gap-2 md:gap-3">
-              {/* Search Input */}
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search services..."
-                  className="pl-9 h-10 rounded-lg border text-sm"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleApplyFilters();
+      {/* Breadcrumb + Title Section */}
+      <div className="border-b bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm mb-2">
+            <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">
+              Home
+            </Link>
+            <ChevronRight className="h-3 w-3 text-muted-foreground" />
+            <span className="font-medium">Browse Services</span>
+          </div>
+
+          {/* Title */}
+          <h1 className="text-2xl md:text-3xl font-bold">
+            {totalCount > 0 && !isLoading
+              ? `${totalCount} Service${totalCount === 1 ? "" : "s"}`
+              : isLoading
+              ? "Loading services..."
+              : "Browse Services"}
+            {locationName && <span className="text-muted-foreground"> in {locationName}</span>}
+          </h1>
+        </div>
+      </div>
+
+      {/* Sticky Filter Bar - Bayut Style */}
+      <div className="bg-background border-b sticky top-16 z-40">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-3">
+          {/* Main Filter Row */}
+          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[200px] max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search services..."
+                className="pl-9 h-10 rounded-lg border-2 text-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleApplyFilters();
+                }}
+              />
+            </div>
+
+            {/* Desktop Filter Dropdowns */}
+            <div className="hidden md:flex items-center gap-2 flex-1">
+              <LocationFilter
+                locationName={locationName}
+                radius={radius}
+                loading={locationLoading}
+                error={locationError}
+                hasLocation={!!(appliedFilters.latitude && appliedFilters.longitude)}
+                onRequestLocation={requestLocation}
+                onClearLocation={handleClearLocation}
+                onRadiusChange={(val) => {
+                  setRadius(val);
+                  if (appliedFilters.latitude && appliedFilters.longitude) {
+                    setAppliedFilters((prev) => ({ ...prev, radius: val }));
+                  }
+                }}
+              />
+
+              {categories && (
+                <CategoryFilter
+                  categories={categories}
+                  selectedCategories={selectedCategories}
+                  onToggleCategory={(slug) => {
+                    const newCategories = selectedCategories.includes(slug)
+                      ? selectedCategories.filter((c) => c !== slug)
+                      : [...selectedCategories, slug];
+                    setSelectedCategories(newCategories);
+                    setAppliedFilters((prev) => ({ ...prev, categories: newCategories }));
                   }}
                 />
-              </div>
+              )}
 
-              {/* Mobile Filter Button */}
-              <Sheet open={showFilters} onOpenChange={setShowFilters}>
-                <SheetTrigger asChild className="md:hidden">
-                  <Button variant="outline" size="sm" className="h-10 px-3 relative">
-                    <Filter className="h-4 w-4" />
-                    {activeFilterCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-medium">
-                        {activeFilterCount}
-                      </span>
-                    )}
+              <PriceFilter
+                priceRange={priceRange}
+                onPriceChange={(range) => {
+                  setPriceRange(range);
+                  setAppliedFilters((prev) => ({
+                    ...prev,
+                    minPrice: range[0],
+                    maxPrice: range[1],
+                  }));
+                }}
+              />
+
+              <MoreFiltersButton
+                verifiedOnly={appliedFilters.verifiedOnly}
+                minRating={appliedFilters.minRating}
+                onVerifiedChange={(val) => {
+                  const newState = { ...quickFilterState, verified: val };
+                  setQuickFilterState(newState);
+                  setAppliedFilters((prev) => ({ ...prev, verifiedOnly: val }));
+                }}
+                onMinRatingChange={(val) => {
+                  setAppliedFilters((prev) => ({ ...prev, minRating: val }));
+                }}
+                activeCount={moreFiltersCount}
+              />
+            </div>
+
+            {/* Mobile Filter Button */}
+            <Sheet open={showMobileFilters} onOpenChange={setShowMobileFilters}>
+              <SheetTrigger asChild className="md:hidden">
+                <Button variant="outline" size="sm" className="h-10 px-3 border-2 relative">
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <Badge variant="default" className="ml-2 rounded-full h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl">
+                <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mt-2 mb-3" />
+                <SheetHeader className="text-left">
+                  <SheetTitle className="text-base">Filters</SheetTitle>
+                </SheetHeader>
+                <ScrollArea className="flex-1 py-4">{mobileFilterContent}</ScrollArea>
+                <SheetFooter className="flex-row gap-2 pt-3 border-t bg-background sticky bottom-0 pb-4">
+                  <Button variant="outline" size="sm" className="flex-1" onClick={handleClearAllFilters}>
+                    Clear
                   </Button>
-                </SheetTrigger>
-                <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl">
-                  <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mt-2 mb-3" />
-                  <SheetHeader className="text-left">
-                    <SheetTitle className="flex items-center gap-2 text-base">
-                      <Filter className="h-4 w-4 text-primary" />
-                      Filters
-                      {activeFilterCount > 0 && (
-                        <Badge variant="secondary" className="rounded-full text-xs">
-                          {activeFilterCount}
-                        </Badge>
-                      )}
-                    </SheetTitle>
-                  </SheetHeader>
-                  <ScrollArea className="flex-1 py-4">{filterContent}</ScrollArea>
-                  <SheetFooter className="flex-row gap-2 pt-3 border-t bg-background sticky bottom-0 pb-4">
-                    <Button variant="outline" size="sm" className="flex-1" onClick={handleClearAllFilters}>
-                      Clear
-                    </Button>
-                    <Button size="sm" className="flex-1" onClick={handleApplyFilters}>
-                      Apply
-                    </Button>
-                  </SheetFooter>
-                </SheetContent>
-              </Sheet>
+                  <Button size="sm" className="flex-1" onClick={handleApplyFilters}>
+                    Apply
+                  </Button>
+                </SheetFooter>
+              </SheetContent>
+            </Sheet>
 
-              {/* Sort Dropdown */}
+            {/* Sort + View Toggle */}
+            <div className="flex items-center gap-2 ml-auto">
               <Select value={appliedFilters.sortBy} onValueChange={handleSortChange}>
-                <SelectTrigger className="w-[120px] h-10 text-sm hidden sm:flex">
-                  <SelectValue placeholder="Sort" />
+                <SelectTrigger className="w-[120px] h-10 text-sm border-2">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="newest">Newest</SelectItem>
@@ -479,7 +553,7 @@ export default function Browse() {
                 </SelectContent>
               </Select>
 
-              {/* View Toggle - Desktop */}
+              {/* View Toggle - Desktop Only */}
               <div className="hidden md:flex bg-muted rounded-lg p-1 h-10 items-center">
                 <Button
                   variant={viewMode === "list" ? "default" : "ghost"}
@@ -499,169 +573,116 @@ export default function Browse() {
                 </Button>
               </div>
             </div>
-
-            {/* Quick Filter Pills - Horizontal Scroll */}
-            <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
-              {quickFilters.map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => handleQuickFilter(filter.id)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border",
-                    quickFilterState[filter.id]
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background hover:bg-muted border-border"
-                  )}
-                >
-                  <filter.icon className="h-3 w-3" />
-                  {filter.label}
-                </button>
-              ))}
-
-              {/* Active Pills */}
-              {appliedFilters.categories.map((slug) => {
-                const cat = categories?.find((c) => c.slug === slug);
-                return (
-                  <Badge
-                    key={slug}
-                    variant="secondary"
-                    className="rounded-full pl-2 pr-1.5 py-1 gap-1 text-xs whitespace-nowrap"
-                  >
-                    {cat?.nameEn || slug}
-                    <button
-                      onClick={() => handleRemoveCategory(slug)}
-                      className="hover:bg-muted rounded-full"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                );
-              })}
-
-              {activeFilterCount > 0 && (
-                <button
-                  onClick={handleClearAllFilters}
-                  className="text-xs text-muted-foreground hover:text-destructive whitespace-nowrap"
-                >
-                  Clear all
-                </button>
-              )}
-            </div>
           </div>
-        </div>
 
-        {/* Title Row */}
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-3 border-b bg-background">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm">
-              <Link href="/" className="text-muted-foreground hover:text-primary">Home</Link>
-              <ChevronRight className="h-3 w-3 text-muted-foreground" />
-              <span className="font-medium">
-                {totalCount > 0 ? `${totalCount} Services` : isLoading ? "Loading..." : "Browse Services"}
-              </span>
-              {locationName && (
-                <span className="text-muted-foreground">in {locationName}</span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4 pb-24 md:pb-6">
-          <div className="flex gap-6">
-            {/* Desktop Sidebar */}
-            <aside className="hidden md:block w-64 flex-shrink-0">
-              <div className="sticky top-32">
-                <Card className="border shadow-sm">
-                  <CardContent className="p-0">
-                    {/* Header */}
-                    <div className="flex items-center justify-between p-4 border-b">
-                      <h2 className="font-semibold text-sm">Filters</h2>
-                      {activeFilterCount > 0 && (
-                        <button
-                          className="text-xs text-muted-foreground hover:text-destructive"
-                          onClick={handleClearAllFilters}
-                        >
-                          Reset
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Filter Sections */}
-                    <div className="p-4 space-y-4">
-                      {filterContent}
-                    </div>
-
-                    {/* Apply Button */}
-                    <div className="p-4 pt-0">
-                      <Button size="sm" className="w-full" onClick={handleApplyFilters}>
-                        Apply Filters
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </aside>
-
-            {/* Results */}
-            <div className="flex-1 min-w-0">
-              {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <ServiceCardSkeleton key={i} />
-                  ))}
-                </div>
-              ) : services.length === 0 ? (
-                <EmptyState
-                  icon={Search}
-                  title="No services found"
-                  description="Try adjusting your filters"
-                  className="py-12"
-                  action={
-                    <Button variant="outline" size="sm" onClick={handleClearAllFilters}>
-                      <X className="h-4 w-4 mr-2" />
-                      Clear Filters
-                    </Button>
-                  }
-                />
-              ) : viewMode === "map" ? (
-                <div className="h-[400px] md:h-[500px] rounded-xl overflow-hidden border shadow-sm">
-                  <MapView
-                    services={services}
-                    center={
-                      appliedFilters.latitude && appliedFilters.longitude
-                        ? [appliedFilters.latitude, appliedFilters.longitude]
-                        : [25.2048, 55.2708]
-                    }
-                  />
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {services.map((service) => (
-                    <ServiceCard key={service.id} service={service} />
-                  ))}
-                </div>
-              )}
-
-              {/* Infinite scroll trigger */}
-              <div ref={loadMoreRef} className="mt-8 flex justify-center">
-                {isFetchingNextPage && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span className="text-sm">Loading more...</span>
-                  </div>
+          {/* Quick Filter Pills + Active Category Pills */}
+          <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+            {quickFilters.map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => handleQuickFilter(filter.id)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border",
+                  quickFilterState[filter.id]
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background hover:bg-muted border-border"
                 )}
-              </div>
+              >
+                <filter.icon className="h-3 w-3" />
+                {filter.label}
+              </button>
+            ))}
 
-              {hasNextPage && !isFetchingNextPage && services.length > 0 && (
-                <div className="mt-4 flex justify-center">
-                  <Button variant="outline" onClick={() => fetchNextPage()}>
-                    Load More
-                  </Button>
-                </div>
-              )}
-            </div>
+            {/* Active Category Pills */}
+            {appliedFilters.categories.map((slug) => {
+              const cat = categories?.find((c) => c.slug === slug);
+              return (
+                <Badge
+                  key={slug}
+                  variant="secondary"
+                  className="rounded-full pl-2 pr-1.5 py-1 gap-1 text-xs whitespace-nowrap"
+                >
+                  {cat?.nameEn || slug}
+                  <button
+                    onClick={() => handleRemoveCategory(slug)}
+                    className="hover:bg-muted rounded-full"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              );
+            })}
+
+            {activeFilterCount > 0 && (
+              <button
+                onClick={handleClearAllFilters}
+                className="text-xs text-muted-foreground hover:text-destructive whitespace-nowrap ml-2"
+              >
+                Clear all
+              </button>
+            )}
           </div>
+        </div>
+      </div>
+
+      {/* Main Content - No Sidebar, Full Width */}
+      <div className="flex-1">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 pb-24 md:pb-6">
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <ServiceCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : services.length === 0 ? (
+            <EmptyState
+              icon={Search}
+              title="No services found"
+              description="Try adjusting your filters to see more results"
+              className="py-12"
+              action={
+                <Button variant="outline" size="sm" onClick={handleClearAllFilters}>
+                  <X className="h-4 w-4 mr-2" />
+                  Clear Filters
+                </Button>
+              }
+            />
+          ) : viewMode === "map" ? (
+            <div className="h-[500px] md:h-[600px] rounded-xl overflow-hidden border shadow-sm">
+              <MapView
+                services={services}
+                center={
+                  appliedFilters.latitude && appliedFilters.longitude
+                    ? [appliedFilters.latitude, appliedFilters.longitude]
+                    : [25.2048, 55.2708]
+                }
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {services.map((service) => (
+                <ServiceCard key={service.id} service={service} />
+              ))}
+            </div>
+          )}
+
+          {/* Infinite scroll trigger */}
+          <div ref={loadMoreRef} className="mt-8 flex justify-center">
+            {isFetchingNextPage && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-sm">Loading more...</span>
+              </div>
+            )}
+          </div>
+
+          {hasNextPage && !isFetchingNextPage && services.length > 0 && (
+            <div className="mt-4 flex justify-center">
+              <Button variant="outline" onClick={() => fetchNextPage()}>
+                Load More
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
