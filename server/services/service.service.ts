@@ -6,10 +6,35 @@ import type { InsertService } from "@shared/schema";
 
 export class ServiceService {
   static async getCategories() {
-    return db.query.categories.findMany({
-      where: eq(categories.isActive, true),
-      orderBy: [categories.displayOrder],
-    });
+    // Get categories with service counts
+    const result = await db
+      .select({
+        id: categories.id,
+        nameEn: categories.nameEn,
+        nameAr: categories.nameAr,
+        slug: categories.slug,
+        descriptionEn: categories.descriptionEn,
+        descriptionAr: categories.descriptionAr,
+        iconName: categories.iconName,
+        parentId: categories.parentId,
+        displayOrder: categories.displayOrder,
+        isActive: categories.isActive,
+        createdAt: categories.createdAt,
+        serviceCount: sql<number>`count(${services.id})::int`.as("serviceCount"),
+      })
+      .from(categories)
+      .leftJoin(
+        services,
+        and(
+          eq(services.categoryId, categories.id),
+          eq(services.status, "active")
+        )
+      )
+      .where(eq(categories.isActive, true))
+      .groupBy(categories.id)
+      .orderBy(categories.displayOrder);
+
+    return result;
   }
 
   static async getCategoryBySlug(slug: string) {
