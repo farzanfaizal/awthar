@@ -409,9 +409,9 @@ export default function Browse() {
 
       {/* Breadcrumb + Title Section */}
       <div className="border-b bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm mb-2">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-3 md:py-4">
+          {/* Breadcrumb - Desktop Only */}
+          <div className="hidden md:flex items-center gap-2 text-sm mb-2">
             <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">
               Home
             </Link>
@@ -419,30 +419,30 @@ export default function Browse() {
             <span className="font-medium">Browse Services</span>
           </div>
 
-          {/* Title */}
-          <h1 className="text-2xl md:text-3xl font-bold">
-            {totalCount > 0 && !isLoading
-              ? `${totalCount} Service${totalCount === 1 ? "" : "s"}`
-              : isLoading
-              ? "Loading services..."
-              : "Browse Services"}
-            {locationName && <span className="text-muted-foreground"> in {locationName}</span>}
+          {/* Title - Simplified */}
+          <h1 className="text-xl md:text-2xl font-bold">
+            Browse Services{locationName && <span className="text-muted-foreground font-normal"> in {locationName}</span>}
           </h1>
+          {!isLoading && totalCount > 0 && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {totalCount} service{totalCount === 1 ? "" : "s"} available
+            </p>
+          )}
         </div>
       </div>
 
       {/* Sticky Filter Bar - Bayut Style */}
-      <div className="bg-background border-b sticky top-16 z-40">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-3">
+      <div className="bg-background border-b sticky top-16 z-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-2.5 md:py-3">
           {/* Main Filter Row */}
-          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-            {/* Search Input */}
-            <div className="relative flex-1 min-w-[200px] max-w-md">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Search Input - Full width on mobile */}
+            <div className="relative w-full md:flex-1 md:min-w-[200px] md:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search services..."
-                className="pl-9 h-10 rounded-lg border-2 text-sm"
+                className="pl-9 h-10 rounded-lg border-2 text-sm w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -510,39 +510,39 @@ export default function Browse() {
               />
             </div>
 
-            {/* Mobile Filter Button */}
-            <Sheet open={showMobileFilters} onOpenChange={setShowMobileFilters}>
-              <SheetTrigger asChild className="md:hidden">
-                <Button variant="outline" size="sm" className="h-10 px-3 border-2 relative">
-                  Filters
-                  {activeFilterCount > 0 && (
-                    <Badge variant="default" className="ml-2 rounded-full h-5 w-5 p-0 flex items-center justify-center text-xs">
-                      {activeFilterCount}
-                    </Badge>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl">
-                <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mt-2 mb-3" />
-                <SheetHeader className="text-left">
-                  <SheetTitle className="text-base">Filters</SheetTitle>
-                </SheetHeader>
-                <ScrollArea className="flex-1 py-4">{mobileFilterContent}</ScrollArea>
-                <SheetFooter className="flex-row gap-2 pt-3 border-t bg-background sticky bottom-0 pb-4">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={handleClearAllFilters}>
-                    Clear
+            {/* Mobile Filter Button + Sort - Second Row on Mobile */}
+            <div className="flex items-center gap-2 w-full md:w-auto md:flex-1">
+              <Sheet open={showMobileFilters} onOpenChange={setShowMobileFilters}>
+                <SheetTrigger asChild className="md:hidden">
+                  <Button variant="outline" size="sm" className="h-10 px-3 border-2 relative flex-1">
+                    Filters
+                    {activeFilterCount > 0 && (
+                      <Badge variant="default" className="ml-2 rounded-full h-5 w-5 p-0 flex items-center justify-center text-xs">
+                        {activeFilterCount}
+                      </Badge>
+                    )}
                   </Button>
-                  <Button size="sm" className="flex-1" onClick={handleApplyFilters}>
-                    Apply
-                  </Button>
-                </SheetFooter>
-              </SheetContent>
-            </Sheet>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[75vh] rounded-t-2xl">
+                  <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mt-2 mb-3" />
+                  <SheetHeader className="text-left">
+                    <SheetTitle className="text-base">Filters</SheetTitle>
+                  </SheetHeader>
+                  <ScrollArea className="flex-1 py-4">{mobileFilterContent}</ScrollArea>
+                  <SheetFooter className="flex-row gap-2 pt-3 border-t bg-background sticky bottom-0 pb-4">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={handleClearAllFilters}>
+                      Clear
+                    </Button>
+                    <Button size="sm" className="flex-1" onClick={handleApplyFilters}>
+                      Apply
+                    </Button>
+                  </SheetFooter>
+                </SheetContent>
+              </Sheet>
 
-            {/* Sort + View Toggle */}
-            <div className="flex items-center gap-2 ml-auto">
+              {/* Sort - Consistent height and spacing */}
               <Select value={appliedFilters.sortBy} onValueChange={handleSortChange}>
-                <SelectTrigger className="w-[120px] h-10 text-sm border-2">
+                <SelectTrigger className="h-10 text-sm border-2 w-full md:w-[120px] flex-1 md:flex-none">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -554,7 +554,7 @@ export default function Browse() {
               </Select>
 
               {/* View Toggle - Desktop Only */}
-              <div className="hidden md:flex bg-muted rounded-lg p-1 h-10 items-center">
+              <div className="hidden md:flex bg-muted rounded-lg p-1 h-10 items-center ml-auto">
                 <Button
                   variant={viewMode === "list" ? "default" : "ghost"}
                   size="icon"
@@ -627,7 +627,7 @@ export default function Browse() {
 
       {/* Main Content - No Sidebar, Full Width */}
       <div className="flex-1">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 pb-24 md:pb-6">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 pb-28 md:pb-6">
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {Array.from({ length: 8 }).map((_, i) => (
@@ -688,7 +688,7 @@ export default function Browse() {
 
       {/* Mobile Floating Map/List Toggle Button */}
       {services.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 md:hidden">
           <Button
             onClick={() => setViewMode(viewMode === "list" ? "map" : "list")}
             className="rounded-full px-6 h-14 shadow-2xl bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary-foreground/20 font-semibold"
