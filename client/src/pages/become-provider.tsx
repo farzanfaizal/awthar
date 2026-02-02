@@ -27,8 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Briefcase, Building2, Users } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loader2, Briefcase, Building2, Users, CheckCircle2, ArrowRight } from "lucide-react";
 import { Header } from "@/components/header";
 
 // Extend the schema to make certain fields required for the form
@@ -103,136 +103,167 @@ export default function BecomeProviderPage() {
     return null;
   }
 
+  // Redirect existing providers to dashboard
+  if (user.role === "provider") {
+    setLocation("/dashboard");
+    return null;
+  }
+
+  const benefits = [
+    "Reach thousands of customers in the UAE",
+    "Set your own prices and schedule",
+    "Get paid securely through the platform",
+    "Build your reputation with reviews",
+  ];
+
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-background">
       <Header />
-      <div className="container max-w-3xl py-12 px-4">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-2">Become a Service Provider</h1>
-          <p className="text-muted-foreground">
-            Start your journey with Awthar. Fill out your profile to get started.
-          </p>
+      <div className="max-w-5xl mx-auto px-4 py-6 md:py-8">
+        {/* Compact Header */}
+        <div className="mb-6 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Briefcase className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold">Become a Service Provider</h1>
+            <p className="text-sm text-muted-foreground">Start earning by offering your services</p>
+          </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Provider Profile</CardTitle>
-            <CardDescription>
-              This information will be displayed on your public profile.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                
-                <FormField
-                  control={form.control}
-                  name="providerType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Provider Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select provider type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="casual_tasker">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 flex-shrink-0" />
-                              <span>Freelancer / Casual Tasker</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="licensed_professional">
-                            <div className="flex items-center gap-2">
-                              <Building2 className="h-4 w-4 flex-shrink-0" />
-                              <span>Licensed Professional / Company</span>
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Select "Freelancer" for individuals or "Licensed Professional" for registered businesses.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        <div className="grid md:grid-cols-5 gap-6">
+          {/* Benefits Sidebar */}
+          <div className="md:col-span-2 order-2 md:order-1">
+            <Card className="border bg-muted/30 sticky top-20">
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-sm mb-3">Why join Awthar?</h3>
+                <ul className="space-y-2.5">
+                  {benefits.map((benefit, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-muted-foreground">{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
 
-                <FormField
-                  control={form.control}
-                  name="companyName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Display Name / Company Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Ahmed's Plumbing or FixIt LLC" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          {/* Form */}
+          <div className="md:col-span-3 order-1 md:order-2">
+            <Card className="border">
+              <CardContent className="p-4 md:p-5">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
-                <FormField
-                  control={form.control}
-                  name="bio"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Bio & Experience</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Tell customers about your skills, experience, and what services you offer..." 
-                          className="min-h-[120px]"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    <FormField
+                      control={form.control}
+                      name="providerType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm">Provider Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-10">
+                                <SelectValue placeholder="Select provider type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="casual_tasker">
+                                <div className="flex items-center gap-2">
+                                  <Users className="h-4 w-4 flex-shrink-0" />
+                                  <span>Freelancer / Casual Tasker</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="licensed_professional">
+                                <div className="flex items-center gap-2">
+                                  <Building2 className="h-4 w-4 flex-shrink-0" />
+                                  <span>Licensed Professional / Company</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Business Phone</FormLabel>
-                        <FormControl>
-                          <Input placeholder="+971 50 000 0000" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="companyName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm">Display Name / Company Name</FormLabel>
+                          <FormControl>
+                            <Input className="h-10" placeholder="e.g. Ahmed's Plumbing or FixIt LLC" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="serviceRadius"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Service Radius (km)</FormLabel>
-                        <FormControl>
-                          <Input type="number" min="1" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          How far are you willing to travel?
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                    <FormField
+                      control={form.control}
+                      name="bio"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm">Bio & Experience</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Tell customers about your skills, experience, and services..."
+                              className="min-h-[100px] resize-none"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                <Button type="submit" className="w-full" size="lg" disabled={mutation.isPending}>
-                  {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Create Provider Profile
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm">Business Phone</FormLabel>
+                            <FormControl>
+                              <Input className="h-10" placeholder="+971 50 000 0000" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="serviceRadius"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm">Service Radius (km)</FormLabel>
+                            <FormControl>
+                              <Input className="h-10" type="number" min="1" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <Button type="submit" className="w-full h-11 mt-2" disabled={mutation.isPending}>
+                      {mutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <ArrowRight className="mr-2 h-4 w-4" />
+                      )}
+                      Create Provider Profile
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

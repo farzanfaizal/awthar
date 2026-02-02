@@ -113,7 +113,10 @@ export function Header() {
     );
   }
 
-  // Desktop nav items
+  // Check if user is already a provider (has provider profile)
+  const isExistingProvider = userCanBeProvider || user?.role === "provider";
+
+  // Desktop nav items - hide "List Your Service" for existing providers
   const desktopNavItems = isProviderMode
     ? [
         { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -123,7 +126,8 @@ export function Header() {
       ]
     : [
         { href: "/browse", label: "Find Services", icon: Search },
-        { href: "/become-provider", label: "List Your Service", icon: Briefcase },
+        // Only show "List Your Service" for non-providers
+        ...(isExistingProvider ? [] : [{ href: "/become-provider", label: "List Your Service", icon: Briefcase }]),
         { href: "/categories", label: "Categories", icon: Grid3X3 },
         { href: "/how-it-works", label: "How It Works", icon: HelpCircle },
       ];
@@ -150,13 +154,14 @@ export function Header() {
             { href: "/categories", label: "Categories", icon: Grid3X3 },
           ],
         },
-        {
+        // Only show "For Providers" section for non-providers
+        ...(isExistingProvider ? [] : [{
           title: "For Providers",
           items: [
             { href: "/become-provider", label: "List Your Service", icon: Briefcase },
             { href: "/pricing", label: "Pricing", icon: Tag },
           ],
-        },
+        }]),
         {
           title: "Support",
           items: [
