@@ -34,6 +34,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { useLocation } from "wouter";
@@ -70,10 +71,27 @@ type PaginatedResponse = {
 
 const PAGE_SIZE = 12;
 
-// Quick filter options
-const quickFilters = [
-  { id: "verified", label: "Verified Only", icon: BadgeCheck },
-  { id: "topRated", label: "4+ Stars", icon: Star },
+// UAE areas for location autocomplete
+const UAE_AREAS = [
+  { name: "Dubai Marina", city: "Dubai", lat: 25.0805, lng: 55.1403 },
+  { name: "Downtown Dubai", city: "Dubai", lat: 25.1972, lng: 55.2744 },
+  { name: "JLT (Jumeirah Lake Towers)", city: "Dubai", lat: 25.0693, lng: 55.1442 },
+  { name: "Business Bay", city: "Dubai", lat: 25.1851, lng: 55.2628 },
+  { name: "Jumeirah", city: "Dubai", lat: 25.2154, lng: 55.2553 },
+  { name: "Deira", city: "Dubai", lat: 25.2697, lng: 55.3095 },
+  { name: "Bur Dubai", city: "Dubai", lat: 25.2532, lng: 55.2925 },
+  { name: "Al Barsha", city: "Dubai", lat: 25.1000, lng: 55.2000 },
+  { name: "Palm Jumeirah", city: "Dubai", lat: 25.1124, lng: 55.1390 },
+  { name: "Dubai Silicon Oasis", city: "Dubai", lat: 25.1212, lng: 55.3773 },
+  { name: "Abu Dhabi City", city: "Abu Dhabi", lat: 24.4539, lng: 54.3773 },
+  { name: "Al Reem Island", city: "Abu Dhabi", lat: 24.4978, lng: 54.4031 },
+  { name: "Yas Island", city: "Abu Dhabi", lat: 24.4883, lng: 54.6078 },
+  { name: "Sharjah City", city: "Sharjah", lat: 25.3463, lng: 55.4209 },
+  { name: "Al Nahda", city: "Sharjah", lat: 25.3050, lng: 55.3700 },
+  { name: "Ajman City", city: "Ajman", lat: 25.4052, lng: 55.5136 },
+  { name: "Fujairah City", city: "Fujairah", lat: 25.1288, lng: 56.3265 },
+  { name: "Ras Al Khaimah", city: "RAK", lat: 25.7895, lng: 55.9432 },
+  { name: "Al Ain", city: "Abu Dhabi", lat: 24.2075, lng: 55.7447 },
 ];
 
 export default function Browse() {
@@ -97,6 +115,10 @@ export default function Browse() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
   const [radius, setRadius] = useState(25);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [manualLocationSearch, setManualLocationSearch] = useState("");
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [quickFilterState, setQuickFilterState] = useState<Record<string, boolean>>({
     verified: false,
     topRated: false,
@@ -159,24 +181,15 @@ export default function Browse() {
       latitude: appliedFilters.latitude,
       longitude: appliedFilters.longitude,
       radius: radius,
-      verifiedOnly: quickFilterState.verified,
-      minRating: quickFilterState.topRated ? 4 : appliedFilters.minRating,
+      verifiedOnly: verifiedOnly,
+      minRating: selectedRating ?? undefined,
     });
     setShowMobileFilters(false);
+    setShowLocationSuggestions(false);
   };
 
   const handleSortChange = (value: string) => {
     setAppliedFilters((prev) => ({ ...prev, sortBy: value }));
-  };
-
-  const handleQuickFilter = (filterId: string) => {
-    const newState = { ...quickFilterState, [filterId]: !quickFilterState[filterId] };
-    setQuickFilterState(newState);
-    setAppliedFilters((prev) => ({
-      ...prev,
-      verifiedOnly: newState.verified,
-      minRating: newState.topRated ? 4 : prev.minRating,
-    }));
   };
 
   const handleClearLocation = () => {
@@ -258,7 +271,6 @@ export default function Browse() {
     });
 
   const services = data?.pages.flatMap((page) => page.services) ?? [];
-  const totalCount = data?.pages[0]?.pagination?.total ?? 0;
 
   // Intersection observer for auto-loading
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -297,12 +309,76 @@ export default function Browse() {
     (appliedFilters.minPrice > 0 || appliedFilters.maxPrice < 2000 ? 1 : 0) +
     moreFiltersCount;
 
+  // Filter UAE areas based on search input
+  const filteredAreas = manualLocationSearch.length > 0
+    ? UAE_AREAS.filter(
+        (area) =>
+          area.name.toLowerCase().includes(manualLocationSearch.toLowerCase()) ||
+          area.city.toLowerCase().includes(manualLocationSearch.toLowerCase())
+      )
+    : UAE_AREAS;
+
+  // Handle selecting a location from suggestions
+  const handleSelectArea = (area: typeof UAE_AREAS[0]) => {
+    setLocationName(`${area.name}, ${area.city}`);
+    setAppliedFilters((prev) => ({
+      ...prev,
+      latitude: area.lat,
+      longitude: area.lng,
+      radius: radius,
+    }));
+    setManualLocationSearch("");
+    setShowLocationSuggestions(false);
+  };
+
   // Mobile filter sheet content
   const mobileFilterContent = (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Location */}
       <div>
-        <h3 className="font-semibold text-sm mb-3">Location</h3>
+        <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-primary" />
+          Location
+        </h3>
+
+        {/* Manual Location Search */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search area or city..."
+            className="pl-9 h-10 text-sm"
+            value={manualLocationSearch}
+            onChange={(e) => {
+              setManualLocationSearch(e.target.value);
+              setShowLocationSuggestions(true);
+            }}
+            onFocus={() => setShowLocationSuggestions(true)}
+          />
+        </div>
+
+        {/* Location Suggestions Dropdown */}
+        {showLocationSuggestions && manualLocationSearch.length > 0 && (
+          <div className="bg-background border rounded-lg shadow-lg max-h-[160px] overflow-y-auto mb-3">
+            {filteredAreas.length > 0 ? (
+              filteredAreas.slice(0, 6).map((area) => (
+                <button
+                  key={area.name}
+                  className="w-full text-left px-3 py-2 hover:bg-muted text-sm flex items-center gap-2 transition-colors"
+                  onClick={() => handleSelectArea(area)}
+                >
+                  <MapPin className="w-3 h-3 text-muted-foreground" />
+                  <span>{area.name}</span>
+                  <span className="text-muted-foreground text-xs ml-auto">{area.city}</span>
+                </button>
+              ))
+            ) : (
+              <div className="px-3 py-2 text-sm text-muted-foreground">No areas found</div>
+            )}
+          </div>
+        )}
+
+        {/* Current Location Display or GPS Button */}
         {appliedFilters.latitude && appliedFilters.longitude ? (
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
@@ -345,7 +421,7 @@ export default function Browse() {
             ) : (
               <MapPin className="w-4 h-4 mr-2" />
             )}
-            Use my location
+            Use my current location
           </Button>
         )}
         {locationError && <p className="text-xs text-destructive mt-2">{locationError}</p>}
@@ -356,7 +432,7 @@ export default function Browse() {
       {/* Categories */}
       <div>
         <h3 className="font-semibold text-sm mb-3">Categories</h3>
-        <ScrollArea className="h-[180px]">
+        <ScrollArea className="h-[140px]">
           <div className="space-y-2">
             {categories?.map((cat) => (
               <div key={cat.id} className="flex items-center space-x-2">
@@ -399,6 +475,49 @@ export default function Browse() {
             <span className="bg-muted px-2 py-1 rounded">{priceRange[1]}</span>
           </div>
         </div>
+      </div>
+
+      <Separator />
+
+      {/* Rating */}
+      <div>
+        <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+          <Star className="w-4 h-4 text-yellow-500" />
+          Minimum Rating
+        </h3>
+        <div className="flex gap-2">
+          {[null, 3, 4, 4.5].map((rating) => (
+            <button
+              key={rating ?? "any"}
+              onClick={() => setSelectedRating(rating)}
+              className={cn(
+                "flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all border",
+                selectedRating === rating
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background hover:bg-muted border-border"
+              )}
+            >
+              {rating === null ? "Any" : `${rating}+`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Verified Only */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <BadgeCheck className="w-4 h-4 text-primary" />
+          <Label htmlFor="verified-toggle" className="text-sm font-medium cursor-pointer">
+            Verified Providers Only
+          </Label>
+        </div>
+        <Switch
+          id="verified-toggle"
+          checked={verifiedOnly}
+          onCheckedChange={setVerifiedOnly}
+        />
       </div>
     </div>
   );
@@ -505,8 +624,22 @@ export default function Browse() {
               />
             </div>
 
-            {/* Mobile Filter Button + Sort - Second Row on Mobile */}
+            {/* Mobile: Sort + Filters | Desktop: Sort + View Toggle */}
             <div className="flex items-center gap-2 w-full md:w-auto md:flex-1">
+              {/* Sort - First on mobile (swapped position) */}
+              <Select value={appliedFilters.sortBy} onValueChange={handleSortChange}>
+                <SelectTrigger className="h-10 text-sm border w-full md:w-[120px] flex-1 md:flex-none">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest</SelectItem>
+                  <SelectItem value="rating">Top Rated</SelectItem>
+                  <SelectItem value="price_asc">Price ↑</SelectItem>
+                  <SelectItem value="price_desc">Price ↓</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Filters - Second on mobile (swapped position) */}
               <Sheet open={showMobileFilters} onOpenChange={setShowMobileFilters}>
                 <SheetTrigger asChild className="md:hidden">
                   <Button variant="outline" size="sm" className="h-10 px-3 border relative flex-1">
@@ -534,19 +667,6 @@ export default function Browse() {
                   </SheetFooter>
                 </SheetContent>
               </Sheet>
-
-              {/* Sort - Consistent height and spacing */}
-              <Select value={appliedFilters.sortBy} onValueChange={handleSortChange}>
-                <SelectTrigger className="h-10 text-sm border w-full md:w-[120px] flex-1 md:flex-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest</SelectItem>
-                  <SelectItem value="rating">Top Rated</SelectItem>
-                  <SelectItem value="price_asc">Price ↑</SelectItem>
-                  <SelectItem value="price_desc">Price ↓</SelectItem>
-                </SelectContent>
-              </Select>
 
               {/* View Toggle - Desktop Only */}
               <div className="hidden md:flex bg-muted rounded-lg p-1 h-10 items-center ml-auto">
