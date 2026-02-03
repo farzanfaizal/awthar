@@ -11,6 +11,7 @@ import { uploadController } from "./controllers/upload.controller";
 import { favoritesController } from "./controllers/favorites.controller";
 import { reportsController } from "./controllers/reports.controller";
 import { analyticsController } from "./controllers/analytics.controller";
+import { locationRouter } from "./controllers/location.controller";
 import { ChatService } from "./services/chat.service";
 import { logger } from "./lib/logger";
 import jwt from "jsonwebtoken";
@@ -40,6 +41,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/favorites", favoritesController);
   app.use("/api/reports", reportsController);
   app.use("/api/analytics", analyticsController);
+  app.use("/api/locations", locationRouter);
 
   // HTTP Server and WebSocket setup
   const httpServer = createServer(app);

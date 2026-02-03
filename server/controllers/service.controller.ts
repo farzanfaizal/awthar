@@ -21,6 +21,7 @@ const searchServicesSchema = z.object({
   latitude: z.string().transform(val => parseFloat(val)).pipe(z.number()).optional(),
   longitude: z.string().transform(val => parseFloat(val)).pipe(z.number()).optional(),
   radius: z.string().transform(val => parseFloat(val)).pipe(z.number().positive()).optional(),
+  paymentMethod: z.union([z.string(), z.array(z.string())]).optional(),
 });
 
 const createServiceSchema = z.object({
@@ -107,6 +108,11 @@ serviceRouter.get("/", asyncHandler(async (req: Request, res: Response) => {
     latitude: validatedQuery.latitude,
     longitude: validatedQuery.longitude,
     radius: validatedQuery.radius,
+    paymentMethods: validatedQuery.paymentMethod
+      ? Array.isArray(validatedQuery.paymentMethod)
+        ? validatedQuery.paymentMethod
+        : [validatedQuery.paymentMethod]
+      : undefined,
   });
 
   // Check if there are more results

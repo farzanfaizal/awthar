@@ -1,0 +1,14 @@
+[
+  {
+    "id": "3e3a8aab-7b82-4488-a62f-1231d078d060",
+    "userId": "c64a6f65-7a94-40d0-9ed0-aa3a84d46b56",
+    "serviceId": "24ebdf66-bef4-49d8-99e3-32d5ae2b668f",
+    "createdAt": "2025-12-04T19:43:12.483Z"
+  },
+  {
+    "id": "b1ea35be-ea73-43e3-b714-4c970bbf0143",
+    "userId": "9b8f1ad6-97a1-40f0-8bcf-50c33cdbf82d",
+    "serviceId": "24ebdf66-bef4-49d8-99e3-32d5ae2b668f",
+    "createdAt": "2026-01-30T08:20:28.492Z"
+  }
+]

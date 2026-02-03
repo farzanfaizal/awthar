@@ -1,0 +1,18 @@
+{
+  "exportDate": "2026-02-01T16:32:09.635Z",
+  "source": "Neon.db",
+  "tables": {
+    "users": 9,
+    "provider_profiles": 6,
+    "categories": 8,
+    "services": 8,
+    "bookings": 14,
+    "reviews": 2,
+    "conversations": 11,
+    "messages": 31,
+    "favorites": 2,
+    "reports": 0,
+    "sessions": 3
+  },
+  "totalRecords": 94
+}

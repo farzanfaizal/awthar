@@ -29,7 +29,8 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, CheckCircle2, MapPin, DollarSign, Image as ImageIcon, FileText, ChevronRight, ChevronLeft } from "lucide-react";
+import { Loader2, CheckCircle2, MapPin, DollarSign, Image as ImageIcon, FileText, ChevronRight, ChevronLeft, CreditCard } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { ImageUpload } from "@/components/image-upload";
 import { LocationPicker } from "@/components/location-picker";
@@ -37,6 +38,13 @@ import { reverseGeocode } from "@/lib/geocoding";
 import { cn } from "@/lib/utils";
 import { Category } from "@shared/schema";
 import { errorHandler } from "@/lib/error-handler";
+
+const PAYMENT_METHODS = [
+  { value: "cash", label: "Cash" },
+  { value: "card", label: "Card" },
+  { value: "bank_transfer", label: "Bank Transfer" },
+  { value: "online", label: "Online Payment" },
+] as const;
 
 const createListingSchema = z.object({
   titleEn: z.string().min(10, "Title must be at least 10 characters").max(100, "Title must not exceed 100 characters"),
@@ -46,6 +54,7 @@ const createListingSchema = z.object({
   priceMin: z.coerce.number().min(0, "Price must be positive"),
   priceMax: z.coerce.number().optional(),
   currency: z.string().default("AED"),
+  paymentMethods: z.array(z.string()).min(1, "Select at least one payment method"),
   emirate: z.string().min(1, "Emirate is required"),
   city: z.string().optional(),
   area: z.string().optional(),
@@ -89,6 +98,7 @@ export default function CreateListingPage() {
       pricingType: "fixed",
       priceMin: 0,
       currency: "AED",
+      paymentMethods: ["cash"],
       emirate: "",
       city: "",
       area: "",
@@ -124,7 +134,7 @@ export default function CreateListingPage() {
     if (step === 1) {
       fieldsToValidate = ["titleEn", "descriptionEn", "categoryId", "tags"];
     } else if (step === 2) {
-      fieldsToValidate = ["pricingType", "priceMin", "priceMax", "emirate", "city", "area"];
+      fieldsToValidate = ["pricingType", "priceMin", "priceMax", "paymentMethods", "emirate", "city", "area"];
     }
 
     const isValid = await form.trigger(fieldsToValidate);
@@ -149,6 +159,7 @@ export default function CreateListingPage() {
         priceMin: data.priceMin.toString(),
         priceMax: data.priceMax?.toString(),
         currency: data.currency,
+        paymentMethods: data.paymentMethods,
         images: uploadedImages,
         location: {
           emirate: data.emirate,
@@ -403,6 +414,49 @@ export default function CreateListingPage() {
                           )}
                         />
                       </div>
+
+                      {/* Payment Methods */}
+                      <FormField
+                        control={form.control}
+                        name="paymentMethods"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <CreditCard className="w-4 h-4" /> Accepted Payment Methods
+                            </FormLabel>
+                            <div className="grid grid-cols-2 gap-3">
+                              {PAYMENT_METHODS.map((method) => (
+                                <FormField
+                                  key={method.value}
+                                  control={form.control}
+                                  name="paymentMethods"
+                                  render={({ field }) => (
+                                    <FormItem
+                                      key={method.value}
+                                      className="flex flex-row items-center space-x-3 space-y-0 rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                                    >
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(method.value)}
+                                          onCheckedChange={(checked) => {
+                                            return checked
+                                              ? field.onChange([...field.value, method.value])
+                                              : field.onChange(field.value?.filter((value: string) => value !== method.value));
+                                          }}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="font-normal cursor-pointer">
+                                        {method.label}
+                                      </FormLabel>
+                                    </FormItem>
+                                  )}
+                                />
+                              ))}
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
                     <Separator />
@@ -504,6 +558,14 @@ export default function CreateListingPage() {
                           <span className="font-medium">
                             {form.getValues("emirate")}
                             {form.getValues("city") ? `, ${form.getValues("city")}` : ""}
+                          </span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-muted-foreground block">Payment Methods</span>
+                          <span className="font-medium">
+                            {form.getValues("paymentMethods")?.map(
+                              (m) => PAYMENT_METHODS.find((p) => p.value === m)?.label
+                            ).join(", ") || "None selected"}
                           </span>
                         </div>
                       </div>

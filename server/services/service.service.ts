@@ -61,6 +61,7 @@ export class ServiceService {
     latitude?: number;
     longitude?: number;
     radius?: number; // in kilometers
+    paymentMethods?: string[];
   }) {
     const conditions = [];
 
@@ -139,6 +140,14 @@ export class ServiceService {
     
     if (filters.maxPrice !== undefined) {
        conditions.push(lte(services.priceMin, filters.maxPrice.toString()));
+    }
+
+    // Payment methods filter - check if any of the selected methods are in the service's payment methods array
+    if (filters.paymentMethods && filters.paymentMethods.length > 0) {
+      // Use array overlap operator && to check if arrays have any common elements
+      conditions.push(
+        sql`${services.paymentMethods} && ARRAY[${sql.join(filters.paymentMethods.map(m => sql`${m}`), sql`, `)}]::text[]`
+      );
     }
 
     // Sorting Logic

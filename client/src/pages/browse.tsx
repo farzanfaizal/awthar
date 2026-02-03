@@ -9,6 +9,7 @@ import {
   X,
   BadgeCheck,
   ChevronRight,
+  CreditCard,
 } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { useLocation } from "wouter";
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
-import { Service, ProviderProfile, User, Category } from "@shared/schema";
+import { Service, ProviderProfile, User, Category, Location } from "@shared/schema";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { MapView } from "@/components/map-view";
 import { reverseGeocode } from "@/lib/geocoding";
@@ -71,28 +72,12 @@ type PaginatedResponse = {
 
 const PAGE_SIZE = 12;
 
-// UAE areas for location autocomplete
-const UAE_AREAS = [
-  { name: "Dubai Marina", city: "Dubai", lat: 25.0805, lng: 55.1403 },
-  { name: "Downtown Dubai", city: "Dubai", lat: 25.1972, lng: 55.2744 },
-  { name: "JLT (Jumeirah Lake Towers)", city: "Dubai", lat: 25.0693, lng: 55.1442 },
-  { name: "Business Bay", city: "Dubai", lat: 25.1851, lng: 55.2628 },
-  { name: "Jumeirah", city: "Dubai", lat: 25.2154, lng: 55.2553 },
-  { name: "Deira", city: "Dubai", lat: 25.2697, lng: 55.3095 },
-  { name: "Bur Dubai", city: "Dubai", lat: 25.2532, lng: 55.2925 },
-  { name: "Al Barsha", city: "Dubai", lat: 25.1000, lng: 55.2000 },
-  { name: "Palm Jumeirah", city: "Dubai", lat: 25.1124, lng: 55.1390 },
-  { name: "Dubai Silicon Oasis", city: "Dubai", lat: 25.1212, lng: 55.3773 },
-  { name: "Abu Dhabi City", city: "Abu Dhabi", lat: 24.4539, lng: 54.3773 },
-  { name: "Al Reem Island", city: "Abu Dhabi", lat: 24.4978, lng: 54.4031 },
-  { name: "Yas Island", city: "Abu Dhabi", lat: 24.4883, lng: 54.6078 },
-  { name: "Sharjah City", city: "Sharjah", lat: 25.3463, lng: 55.4209 },
-  { name: "Al Nahda", city: "Sharjah", lat: 25.3050, lng: 55.3700 },
-  { name: "Ajman City", city: "Ajman", lat: 25.4052, lng: 55.5136 },
-  { name: "Fujairah City", city: "Fujairah", lat: 25.1288, lng: 56.3265 },
-  { name: "Ras Al Khaimah", city: "RAK", lat: 25.7895, lng: 55.9432 },
-  { name: "Al Ain", city: "Abu Dhabi", lat: 24.2075, lng: 55.7447 },
-];
+const PAYMENT_METHODS = [
+  { value: "cash", label: "Cash" },
+  { value: "card", label: "Card" },
+  { value: "bank_transfer", label: "Bank Transfer" },
+  { value: "online", label: "Online Payment" },
+] as const;
 
 export default function Browse() {
   const [location] = useLocation();
@@ -119,6 +104,7 @@ export default function Browse() {
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([]);
   const [quickFilterState, setQuickFilterState] = useState<Record<string, boolean>>({
     verified: false,
     topRated: false,
@@ -137,6 +123,7 @@ export default function Browse() {
       radius: params.get("radius") ? parseFloat(params.get("radius")!) : undefined,
       verifiedOnly: false,
       minRating: undefined as number | undefined,
+      paymentMethods: [] as string[],
     };
   });
 
@@ -183,6 +170,7 @@ export default function Browse() {
       radius: radius,
       verifiedOnly: verifiedOnly,
       minRating: selectedRating ?? undefined,
+      paymentMethods: selectedPaymentMethods,
     });
     setShowMobileFilters(false);
     setShowLocationSuggestions(false);
@@ -211,6 +199,7 @@ export default function Browse() {
   const handleClearAllFilters = () => {
     setPriceRange([0, 2000]);
     setSelectedCategories([]);
+    setSelectedPaymentMethods([]);
     setSearchQuery("");
     setQuickFilterState({ verified: false, topRated: false });
     setAppliedFilters({
@@ -224,6 +213,7 @@ export default function Browse() {
       radius: undefined,
       verifiedOnly: false,
       minRating: undefined,
+      paymentMethods: [],
     });
     setLocationName(null);
   };
@@ -245,6 +235,10 @@ export default function Browse() {
 
   if (appliedFilters.minRating) {
     queryParams.append("minRating", appliedFilters.minRating.toString());
+  }
+
+  if (appliedFilters.paymentMethods.length > 0) {
+    appliedFilters.paymentMethods.forEach((method) => queryParams.append("paymentMethod", method));
   }
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
@@ -298,10 +292,16 @@ export default function Browse() {
     queryKey: ["/api/categories"],
   });
 
+  // Fetch UAE locations from database
+  const { data: uaeLocations } = useQuery<Location[]>({
+    queryKey: ["/api/locations"],
+  });
+
   // Count active filters for "More Filters" badge
   const moreFiltersCount =
     (appliedFilters.verifiedOnly ? 1 : 0) +
-    (appliedFilters.minRating && !quickFilterState.topRated ? 1 : 0);
+    (appliedFilters.minRating && !quickFilterState.topRated ? 1 : 0) +
+    (appliedFilters.paymentMethods.length > 0 ? 1 : 0);
 
   const activeFilterCount =
     appliedFilters.categories.length +
@@ -311,20 +311,20 @@ export default function Browse() {
 
   // Filter UAE areas based on search input
   const filteredAreas = manualLocationSearch.length > 0
-    ? UAE_AREAS.filter(
+    ? (uaeLocations || []).filter(
         (area) =>
           area.name.toLowerCase().includes(manualLocationSearch.toLowerCase()) ||
-          area.city.toLowerCase().includes(manualLocationSearch.toLowerCase())
+          area.emirate.toLowerCase().includes(manualLocationSearch.toLowerCase())
       )
-    : UAE_AREAS;
+    : (uaeLocations || []);
 
   // Handle selecting a location from suggestions
-  const handleSelectArea = (area: typeof UAE_AREAS[0]) => {
-    setLocationName(`${area.name}, ${area.city}`);
+  const handleSelectArea = (area: Location) => {
+    setLocationName(`${area.name}, ${area.emirate}`);
     setAppliedFilters((prev) => ({
       ...prev,
-      latitude: area.lat,
-      longitude: area.lng,
+      latitude: parseFloat(area.lat),
+      longitude: parseFloat(area.lng),
       radius: radius,
     }));
     setManualLocationSearch("");
@@ -369,7 +369,7 @@ export default function Browse() {
                 >
                   <MapPin className="w-3 h-3 text-muted-foreground" />
                   <span>{area.name}</span>
-                  <span className="text-muted-foreground text-xs ml-auto">{area.city}</span>
+                  <span className="text-muted-foreground text-xs ml-auto">{area.emirate}</span>
                 </button>
               ))
             ) : (
@@ -499,6 +499,36 @@ export default function Browse() {
             >
               {rating === null ? "Any" : `${rating}+`}
             </button>
+          ))}
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Payment Methods */}
+      <div>
+        <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+          <CreditCard className="w-4 h-4 text-primary" />
+          Payment Methods
+        </h3>
+        <div className="grid grid-cols-2 gap-2">
+          {PAYMENT_METHODS.map((method) => (
+            <div key={method.value} className="flex items-center space-x-2">
+              <Checkbox
+                id={`mobile-payment-${method.value}`}
+                checked={selectedPaymentMethods.includes(method.value)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedPaymentMethods([...selectedPaymentMethods, method.value]);
+                  } else {
+                    setSelectedPaymentMethods(selectedPaymentMethods.filter((m) => m !== method.value));
+                  }
+                }}
+              />
+              <Label htmlFor={`mobile-payment-${method.value}`} className="text-sm cursor-pointer">
+                {method.label}
+              </Label>
+            </div>
           ))}
         </div>
       </div>
@@ -651,13 +681,13 @@ export default function Browse() {
                     )}
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="bottom" className="h-[75vh] rounded-t-2xl">
-                  <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mt-2 mb-3" />
-                  <SheetHeader className="text-left">
+                <SheetContent side="bottom" className="h-[80vh] rounded-t-2xl flex flex-col">
+                  <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mt-2 mb-2 flex-none" />
+                  <SheetHeader className="text-left flex-none pb-2">
                     <SheetTitle className="text-base">Filters</SheetTitle>
                   </SheetHeader>
-                  <ScrollArea className="flex-1 py-4">{mobileFilterContent}</ScrollArea>
-                  <SheetFooter className="flex-row gap-2 pt-3 border-t bg-background sticky bottom-0 pb-4">
+                  <ScrollArea className="flex-1 -mx-6 px-6">{mobileFilterContent}</ScrollArea>
+                  <SheetFooter className="flex-row gap-2 pt-3 border-t bg-background flex-none mt-auto">
                     <Button variant="outline" size="sm" className="flex-1" onClick={handleClearAllFilters}>
                       Clear
                     </Button>

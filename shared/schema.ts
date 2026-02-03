@@ -99,6 +99,21 @@ export const categories = pgTable("categories", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// UAE Locations/Areas for filtering and autocomplete
+export const locations = pgTable("locations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 255 }).notNull(),
+  nameAr: varchar("name_ar", { length: 255 }),
+  emirate: varchar("emirate", { length: 100 }).notNull(),
+  lat: decimal("lat", { precision: 10, scale: 7 }).notNull(),
+  lng: decimal("lng", { precision: 10, scale: 7 }).notNull(),
+  popular: boolean("popular").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("locations_emirate_idx").on(table.emirate),
+  index("locations_popular_idx").on(table.popular),
+]);
+
 // Service listings
 export const services = pgTable("services", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -127,6 +142,7 @@ export const services = pgTable("services", {
   latitude: decimal("latitude", { precision: 10, scale: 7 }),
   longitude: decimal("longitude", { precision: 10, scale: 7 }),
   tags: text("tags").array(),
+  paymentMethods: text("payment_methods").array(), // ['cash', 'card', 'bank_transfer', 'online']
   viewCount: integer("view_count").default(0).notNull(),
   contactCount: integer("contact_count").default(0).notNull(),
   isFeatured: boolean("is_featured").default(false).notNull(),
@@ -364,6 +380,11 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   createdAt: true,
 });
 
+export const insertLocationSchema = createInsertSchema(locations).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertServiceSchema = createInsertSchema(services, {
   location: z.object({
     emirate: z.string().optional(),
@@ -427,6 +448,9 @@ export type InsertProviderProfile = z.infer<typeof insertProviderProfileSchema>;
 
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
+
+export type Location = typeof locations.$inferSelect;
+export type InsertLocation = z.infer<typeof insertLocationSchema>;
 
 export type Service = typeof services.$inferSelect;
 export type InsertService = z.infer<typeof insertServiceSchema>;

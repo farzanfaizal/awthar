@@ -1,0 +1,158 @@
+[
+  {
+    "id": "fececd69-c092-47dc-a93c-c4793cff1bf0",
+    "userId": "5586e1a3-fe6e-466a-aadb-32a2f8376a9d",
+    "providerType": "licensed_professional",
+    "companyName": "Al-Mansouri Technical Services",
+    "bio": "Certified plumber and electrician with 15 years of experience in Dubai. Specialized in emergency repairs and home maintenance.",
+    "phone": "+971500000001",
+    "verificationStatus": "verified",
+    "verificationDocuments": null,
+    "subscriptionTier": "free",
+    "rating": "4.90",
+    "ratingSum": 245,
+    "totalReviews": 50,
+    "completedJobs": 120,
+    "responseTime": 60,
+    "languages": null,
+    "serviceRadius": 25,
+    "serviceAreas": {
+      "emirates": [
+        "Dubai",
+        "Sharjah"
+      ]
+    },
+    "isPremium": true,
+    "createdAt": "2025-11-28T11:57:16.894Z",
+    "updatedAt": "2025-11-28T11:57:16.894Z"
+  },
+  {
+    "id": "cefc51a1-b56b-4ef6-8c26-1fbb810db8e6",
+    "userId": "20c486da-79c2-45ad-b7c1-0ed3c498fc3e",
+    "providerType": "licensed_professional",
+    "companyName": "Sara Cleaning Solutions LLC",
+    "bio": "Professional cleaning services for homes and offices. We use eco-friendly products and have a team of trained staff.",
+    "phone": "+971500000002",
+    "verificationStatus": "verified",
+    "verificationDocuments": null,
+    "subscriptionTier": "free",
+    "rating": "4.80",
+    "ratingSum": 432,
+    "totalReviews": 90,
+    "completedJobs": 200,
+    "responseTime": 120,
+    "languages": null,
+    "serviceRadius": 25,
+    "serviceAreas": {
+      "emirates": [
+        "Dubai",
+        "Abu Dhabi"
+      ]
+    },
+    "isPremium": true,
+    "createdAt": "2025-11-28T11:57:17.230Z",
+    "updatedAt": "2025-11-28T11:57:17.230Z"
+  },
+  {
+    "id": "aa929f27-c708-4659-978b-8f3fc1d026ea",
+    "userId": "0f5a0fa1-4d4f-427f-a5a8-0cbb6c0dddb0",
+    "providerType": "casual_tasker",
+    "companyName": "Mo Tech Support",
+    "bio": "IT expert offering computer repair, network setup, and software troubleshooting. Fast and reliable service.",
+    "phone": "+971500000003",
+    "verificationStatus": "verified",
+    "verificationDocuments": null,
+    "subscriptionTier": "free",
+    "rating": "5.00",
+    "ratingSum": 100,
+    "totalReviews": 20,
+    "completedJobs": 45,
+    "responseTime": 30,
+    "languages": null,
+    "serviceRadius": 25,
+    "serviceAreas": {
+      "emirates": [
+        "Abu Dhabi"
+      ]
+    },
+    "isPremium": false,
+    "createdAt": "2025-11-28T11:57:17.561Z",
+    "updatedAt": "2025-11-28T11:57:17.561Z"
+  },
+  {
+    "id": "60317496-5abd-4e83-a08c-75dac3b36f0d",
+    "userId": "3dc124b5-4c9b-4254-8217-ddc42deceaa0",
+    "providerType": "licensed_professional",
+    "companyName": "Quick Move LLC",
+    "bio": "Reliable moving and packing services for residential and commercial relocations. We handle your belongings with care.",
+    "phone": "+971500000004",
+    "verificationStatus": "verified",
+    "verificationDocuments": null,
+    "subscriptionTier": "free",
+    "rating": "4.70",
+    "ratingSum": 141,
+    "totalReviews": 30,
+    "completedJobs": 80,
+    "responseTime": 45,
+    "languages": null,
+    "serviceRadius": 25,
+    "serviceAreas": {
+      "emirates": [
+        "Dubai",
+        "Sharjah",
+        "Ajman"
+      ]
+    },
+    "isPremium": false,
+    "createdAt": "2025-11-28T11:57:17.882Z",
+    "updatedAt": "2025-11-28T11:57:17.882Z"
+  },
+  {
+    "id": "a2d4510d-a8b4-42d3-a01a-5307ceb9446e",
+    "userId": "f388d4f9-07d8-4d91-9dad-43ad1f16e9af",
+    "providerType": "casual_tasker",
+    "companyName": "Fatima Private Tutoring",
+    "bio": "Experienced math and science tutor for high school students. Bilingual (Arabic/English).",
+    "phone": "+971500000005",
+    "verificationStatus": "verified",
+    "verificationDocuments": null,
+    "subscriptionTier": "free",
+    "rating": "4.90",
+    "ratingSum": 98,
+    "totalReviews": 20,
+    "completedJobs": 60,
+    "responseTime": 90,
+    "languages": null,
+    "serviceRadius": 25,
+    "serviceAreas": {
+      "emirates": [
+        "Dubai"
+      ]
+    },
+    "isPremium": false,
+    "createdAt": "2025-11-28T11:57:18.210Z",
+    "updatedAt": "2025-11-28T11:57:18.210Z"
+  },
+  {
+    "id": "66222afc-38c5-4343-a336-ccd14412194d",
+    "userId": "9b8f1ad6-97a1-40f0-8bcf-50c33cdbf82d",
+    "providerType": "casual_tasker",
+    "companyName": "cdadd",
+    "bio": "vbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "phone": "+9711111111",
+    "verificationStatus": "unverified",
+    "verificationDocuments": null,
+    "subscriptionTier": "free",
+    "rating": "0.00",
+    "ratingSum": 0,
+    "totalReviews": 0,
+    "completedJobs": 1,
+    "responseTime": null,
+    "languages": null,
+    "serviceRadius": 25,
+    "serviceAreas": null,
+    "isPremium": false,
+    "createdAt": "2025-12-04T08:27:15.099Z",
+    "updatedAt": "2025-12-05T14:39:23.951Z"
+  }
+]
