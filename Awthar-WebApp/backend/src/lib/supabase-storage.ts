@@ -48,9 +48,9 @@ export class SupabaseStorage {
 
     await s3Client.send(command);
 
-    // Return direct Supabase public URL
-    const endpoint = process.env.SUPABASE_ENDPOINT || "";
-    return `${endpoint}/object/public/${BUCKET_NAME}/${filename}`;
+    // Return direct Supabase public URL (uses SUPABASE_URL, not S3 endpoint)
+    const supabaseUrl = process.env.SUPABASE_URL || "";
+    return `${supabaseUrl}/storage/v1/object/public/${BUCKET_NAME}/${filename}`;
   }
 
   /**
