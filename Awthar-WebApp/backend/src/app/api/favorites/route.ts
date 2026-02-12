@@ -3,11 +3,11 @@ import { getUserFromRequest } from "@/lib/auth";
 import { handleApiError, BadRequestError } from "@/lib/errors";
 import { addFavoriteSchema } from "@/shared/validators";
 import { db } from "@/lib/db";
-import { favorites, services } from "@/shared/schema";
-import { eq, and } from "drizzle-orm";
+import { favorites } from "@/shared/schema";
+import { eq, and, desc } from "drizzle-orm";
 
 /**
- * GET /api/favorites - Get user's favorite services
+ * GET /api/favorites - Get user's favorite services with full provider data
  */
 export async function GET(request: NextRequest) {
   try {
@@ -16,17 +16,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const userFavorites = await db
-      .select({
-        id: favorites.id,
-        serviceId: favorites.serviceId,
-        createdAt: favorites.createdAt,
-        service: services,
-      })
-      .from(favorites)
-      .innerJoin(services, eq(favorites.serviceId, services.id))
-      .where(eq(favorites.userId, user.id))
-      .orderBy(favorites.createdAt);
+    const userFavorites = await db.query.favorites.findMany({
+      where: eq(favorites.userId, user.id),
+      orderBy: [desc(favorites.createdAt)],
+      with: {
+        service: {
+          with: {
+            provider: {
+              with: { user: true },
+            },
+            category: true,
+          },
+        },
+      },
+    });
 
     return NextResponse.json(userFavorites);
   } catch (error) {

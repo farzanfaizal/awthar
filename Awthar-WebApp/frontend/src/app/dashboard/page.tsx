@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ListPlus, MessageSquare, BarChart3, Eye, MessageCircle, Award } from "lucide-react";
+import { ListPlus, MessageSquare, BarChart3, Eye, MessageCircle, Award, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { getQueryFn } from "@/lib/query-client";
 
@@ -17,11 +18,25 @@ interface DashboardStats {
   reviewCount: number;
 }
 
+interface ConversationPreview {
+  id: string;
+  lastMessage?: string;
+  lastMessageAt?: string;
+  otherUser?: { firstName: string; lastName: string; profileImageUrl?: string };
+}
+
 export default function DashboardPage() {
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/analytics/dashboard"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
+
+  const { data: conversations } = useQuery<ConversationPreview[]>({
+    queryKey: ["/api/conversations?role=provider"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+
+  const recentMessages = (conversations || []).slice(0, 4);
 
   return (
     <DashboardLayout>
@@ -82,6 +97,46 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Recent Messages */}
+        {recentMessages.length > 0 && (
+          <Card className="rounded-xl">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Recent Messages</CardTitle>
+                <CardDescription>Latest conversations</CardDescription>
+              </div>
+              <Link href="/messages">
+                <Button variant="ghost" size="sm">View All<ArrowRight className="h-4 w-4 ml-1" /></Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {recentMessages.map((conv) => (
+                  <Link key={conv.id} href={`/messages?conversation=${conv.id}`}>
+                    <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={conv.otherUser?.profileImageUrl} />
+                        <AvatarFallback>{conv.otherUser?.firstName?.[0] || "?"}{conv.otherUser?.lastName?.[0] || ""}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {conv.otherUser ? `${conv.otherUser.firstName} ${conv.otherUser.lastName}` : "Unknown User"}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">{conv.lastMessage || "No messages yet"}</p>
+                      </div>
+                      {conv.lastMessageAt && !isNaN(new Date(conv.lastMessageAt).getTime()) && (
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {new Date(conv.lastMessageAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tips */}
         <Card className="rounded-xl">

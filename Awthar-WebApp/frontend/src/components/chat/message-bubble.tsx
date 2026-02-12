@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import type { Message, User } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import Image from "next/image";
 
 interface MessageBubbleProps {
@@ -51,7 +51,10 @@ export function MessageBubble({ message, isOwn, sender }: MessageBubbleProps) {
         )}
 
         <span className="text-[10px] text-muted-foreground mt-1 px-1">
-          {format(new Date(message.createdAt), "p")}
+          {(() => {
+            const d = new Date(message.createdAt);
+            return isValid(d) ? format(d, "p") : "";
+          })()}
         </span>
       </div>
     </div>

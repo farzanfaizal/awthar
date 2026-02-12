@@ -11,6 +11,24 @@ const supabase = createBrowserClient(
 );
 
 /**
+ * Transforms a Supabase Realtime payload (snake_case Postgres columns)
+ * into the camelCase shape the frontend expects.
+ */
+function transformRealtimeMessage(raw: Record<string, unknown>) {
+  return {
+    id: raw.id,
+    conversationId: raw.conversation_id,
+    senderId: raw.sender_id,
+    content: raw.content,
+    attachments: raw.attachments ?? null,
+    status: raw.status ?? "sent",
+    createdAt: raw.created_at
+      ? new Date(raw.created_at as string).toISOString()
+      : new Date().toISOString(),
+  };
+}
+
+/**
  * Subscribes to Supabase Realtime INSERT events on the `messages` table
  * filtered by conversation_id. Automatically appends new messages to
  * the TanStack Query cache for `/api/messages/{conversationId}`.
@@ -33,7 +51,7 @@ export function useSupabaseRealtime(conversationId: string | undefined) {
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
-          const newMessage = payload.new;
+          const newMessage = transformRealtimeMessage(payload.new);
           queryClient.setQueryData(
             [`/api/messages/${conversationId}`],
             (old: any[] | undefined) => {

@@ -39,11 +39,17 @@ export default function BookingsPage() {
 
   const cancelMutation = useMutation({
     mutationFn: (id: string) => apiDelete(`/api/bookings/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+    onSuccess: (_data, cancelledId) => {
+      // Optimistically update the cache so the UI reflects the cancellation instantly
+      queryClient.setQueryData<BookingWithDetails[]>(
+        ["/api/bookings?role=customer"],
+        (old) => old?.map((b) => b.id === cancelledId ? { ...b, status: "cancelled" } : b),
+      );
       toast({ title: "Booking Cancelled", description: "Your booking has been cancelled." });
     },
     onError: (error: Error) => {
+      // Refetch to restore correct state on failure
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings?role=customer"] });
       toast({ title: "Failed", description: error.message, variant: "destructive" });
     },
   });

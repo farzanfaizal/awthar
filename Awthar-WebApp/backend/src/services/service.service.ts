@@ -2,6 +2,24 @@ import { db } from "@/lib/db";
 import { services, categories, insertServiceSchema } from "@/shared/schema";
 import type { InsertService } from "@/shared/schema";
 import { eq, and, desc, sql, lte, inArray } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
+
+type SearchFilters = {
+  category?: string | string[];
+  search?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  providerId?: string;
+  limit?: number;
+  offset?: number;
+  sortBy?: "price_asc" | "price_desc" | "rating" | "newest";
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
+  paymentMethods?: string[];
+  verifiedOnly?: boolean;
+  minRating?: number;
+};
 
 export class ServiceService {
   static async getCategories() {
@@ -42,21 +60,12 @@ export class ServiceService {
     });
   }
 
-  static async searchServices(filters: {
-    category?: string | string[];
-    search?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    providerId?: string;
-    limit?: number;
-    offset?: number;
-    sortBy?: "price_asc" | "price_desc" | "rating" | "newest";
-    latitude?: number;
-    longitude?: number;
-    radius?: number;
-    paymentMethods?: string[];
-  }) {
-    const conditions = [];
+  /**
+   * Builds WHERE conditions shared by searchServices and countServices.
+   * Returns null if filters resolve to an impossible match (e.g. unknown category).
+   */
+  private static async buildConditions(filters: SearchFilters): Promise<SQL[] | null> {
+    const conditions: SQL[] = [];
 
     if (filters.providerId) {
       conditions.push(eq(services.providerId, filters.providerId));
@@ -65,11 +74,9 @@ export class ServiceService {
       conditions.push(eq(services.status, "active"));
     }
 
-    // Haversine radius search
     if (filters.latitude && filters.longitude && filters.radius) {
       conditions.push(sql`${services.latitude} IS NOT NULL`);
       conditions.push(sql`${services.longitude} IS NOT NULL`);
-
       const haversine = sql`
         (6371 * acos(
           cos(radians(${filters.latitude})) *
@@ -92,18 +99,15 @@ export class ServiceService {
         const categoryRecords = await db.query.categories.findMany({
           where: inArray(categories.slug, validCategories),
         });
-
         const categoryIds = categoryRecords.map((c) => c.id);
-
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         validCategories.forEach((c) => {
           if (uuidRegex.test(c)) categoryIds.push(c);
         });
-
         if (categoryIds.length > 0) {
           conditions.push(inArray(services.categoryId, categoryIds));
         } else {
-          return [];
+          return null; // No matching categories — zero results
         }
       }
     }
@@ -133,6 +137,25 @@ export class ServiceService {
       );
     }
 
+    if (filters.verifiedOnly) {
+      conditions.push(
+        sql`${services.providerId} IN (SELECT id FROM provider_profiles WHERE verification_status = 'verified')`
+      );
+    }
+
+    if (filters.minRating !== undefined && filters.minRating > 0) {
+      conditions.push(
+        sql`${services.providerId} IN (SELECT id FROM provider_profiles WHERE CAST(rating AS DECIMAL) >= ${filters.minRating})`
+      );
+    }
+
+    return conditions;
+  }
+
+  static async searchServices(filters: SearchFilters) {
+    const conditions = await ServiceService.buildConditions(filters);
+    if (!conditions) return [];
+
     let orderByClause = [desc(services.createdAt)];
 
     if (filters.sortBy === "price_asc") {
@@ -140,7 +163,7 @@ export class ServiceService {
     } else if (filters.sortBy === "price_desc") {
       orderByClause = [sql`CAST(${services.priceMin} AS DECIMAL) DESC`];
     } else if (filters.sortBy === "rating") {
-      orderByClause = [desc(services.viewCount)]; // Uses view count as popularity proxy
+      orderByClause = [desc(services.viewCount)];
     } else if (filters.sortBy === "newest") {
       orderByClause = [desc(services.createdAt)];
     }
@@ -159,6 +182,18 @@ export class ServiceService {
       limit: filters.limit || 20,
       offset: filters.offset || 0,
     });
+  }
+
+  static async countServices(filters: SearchFilters): Promise<number> {
+    const conditions = await ServiceService.buildConditions(filters);
+    if (!conditions) return 0;
+
+    const result = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(services)
+      .where(and(...conditions));
+
+    return result[0]?.count ?? 0;
   }
 
   static async getServiceById(id: string) {

@@ -14,6 +14,8 @@ export const searchServicesSchema = z.object({
   longitude: z.string().transform((val) => parseFloat(val)).pipe(z.number()).optional(),
   radius: z.string().transform((val) => parseFloat(val)).pipe(z.number().positive()).optional(),
   paymentMethod: z.union([z.string(), z.array(z.string())]).optional(),
+  verifiedOnly: z.string().transform((val) => val === "true").pipe(z.boolean()).optional(),
+  minRating: z.string().transform((val) => parseFloat(val)).pipe(z.number().min(0).max(5)).optional(),
 });
 
 export const createServiceSchema = z.object({

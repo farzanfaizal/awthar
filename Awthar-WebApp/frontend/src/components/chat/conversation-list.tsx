@@ -1,6 +1,6 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, isValid } from "date-fns";
 import { MessageSquare } from "lucide-react";
 import { ConversationItemSkeleton } from "@/components/skeletons";
 import { cn } from "@/lib/utils";
@@ -64,7 +64,7 @@ export function ConversationList({ conversations, activeId, onSelect, isLoading,
             <div className="flex-1 overflow-hidden">
               <div className="flex items-center justify-between">
                 <span className="font-medium truncate text-sm">{name}</span>
-                {conv.lastMessageAt && (
+                {conv.lastMessageAt && isValid(new Date(conv.lastMessageAt)) && (
                   <span className="text-[10px] text-muted-foreground flex-shrink-0">
                     {formatDistanceToNow(new Date(conv.lastMessageAt), { addSuffix: true })}
                   </span>

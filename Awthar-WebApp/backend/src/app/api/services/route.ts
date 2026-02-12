@@ -26,14 +26,12 @@ export async function GET(request: NextRequest) {
     const limit = validatedQuery.limit ?? 20;
     const offset = validatedQuery.offset ?? 0;
 
-    const services = await ServiceService.searchServices({
+    const filterParams = {
       category: validatedQuery.category,
       search: validatedQuery.search,
       minPrice: validatedQuery.minPrice,
       maxPrice: validatedQuery.maxPrice,
       providerId,
-      limit: limit + 1,
-      offset,
       sortBy: validatedQuery.sortBy,
       latitude: validatedQuery.latitude,
       longitude: validatedQuery.longitude,
@@ -43,14 +41,22 @@ export async function GET(request: NextRequest) {
           ? validatedQuery.paymentMethod
           : [validatedQuery.paymentMethod]
         : undefined,
-    });
+      verifiedOnly: validatedQuery.verifiedOnly,
+      minRating: validatedQuery.minRating,
+    };
 
-    const hasMore = services.length > limit;
-    const results = hasMore ? services.slice(0, limit) : services;
+    const [allServices, total] = await Promise.all([
+      ServiceService.searchServices({ ...filterParams, limit: limit + 1, offset }),
+      ServiceService.countServices(filterParams),
+    ]);
+
+    const hasMore = allServices.length > limit;
+    const results = hasMore ? allServices.slice(0, limit) : allServices;
 
     return NextResponse.json({
       services: results,
-      pagination: { offset, limit, hasMore, total: results.length },
+      total,
+      pagination: { offset, limit, hasMore, total },
     });
   } catch (error) {
     return handleApiError(error, { path: "/api/services", method: "GET" });
